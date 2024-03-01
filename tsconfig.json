@@ -14,8 +14,14 @@
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
+    "esModuleInterop": true,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   }
 }
