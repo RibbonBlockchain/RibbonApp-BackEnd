@@ -27,18 +27,23 @@ export class AuthService {
     });
 
     const alreadyHasOTP = otp?.id;
-    const otpStillValid = hasTimeExpired(otp.expiresAt);
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt);
     if (alreadyHasOTP && otpStillValid) throw new BadRequestException(RESPONSE.OTP_ALREADY_SENT);
 
     const { code, expiresAt } = quickOTP();
 
     await this.provider.db
       .insert(VerificationCode)
-      .values({ code, expiresAt: expiresAt.date, phone: user.phone, reason: 'SMS_ONBOARDING' });
+      .values({ code, expiresAt: expiresAt.date, phone: body.phone, reason: 'SMS_ONBOARDING' })
+      .onConflictDoUpdate({
+        target: VerificationCode.phone,
+        set: { code, expiresAt: expiresAt.date },
+        where: eq(VerificationCode.phone, body.phone),
+      });
 
     // TODO: use queues for sending SMS
     // TODO: update twilio to an SMS service
-    await this.twilio.sendVerificationCode(code, user.phone);
+    await this.twilio.sendVerificationCode(code, body.phone);
     return {};
   }
 }
