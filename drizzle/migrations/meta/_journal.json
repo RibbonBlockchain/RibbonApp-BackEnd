@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1709313351723,
+      "tag": "0000_medical_sphinx",
+      "breakpoints": true
+    }
+  ]
+}
