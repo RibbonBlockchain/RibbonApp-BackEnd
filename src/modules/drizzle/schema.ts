@@ -22,10 +22,8 @@ export const User = ribbonSchema.table('user', {
   lastName: varchar('last_name'),
   email: varchar('email').unique(),
   phone: varchar('phone').unique(),
-  countryCode: varchar('country_code'),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
-  referrerId: integer('referrer_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

@@ -14,4 +14,11 @@ export class AuthController {
     const data = await this.auth.HttpHandleRequestOnboardingOTP(body);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @Version(VERSION_ONE)
+  @Post('/onboard/otp/verify')
+  async HttpHandleVerifyOnboardingOTP(@Body() body: Dto.VerifyOnboardingOTP) {
+    const data = await this.auth.HttpHandleVerifyOnboardingOTP(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 }

@@ -1,12 +1,12 @@
 import * as Dto from './dto';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
-import { User, VerificationCode } from '../drizzle/schema';
+import { Auth, User, VerificationCode } from '../drizzle/schema';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -44,6 +44,28 @@ export class AuthService {
     // TODO: use queues for sending SMS
     // TODO: update twilio to an SMS service
     await this.twilio.sendVerificationCode(code, body.phone);
+    return {};
+  }
+
+  async HttpHandleVerifyOnboardingOTP(body: Dto.VerifyOnboardingOTP) {
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: and(eq(VerificationCode.code, body.code), eq(VerificationCode.phone, body.phone)),
+    });
+
+    const hasOTP = otp?.id;
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt);
+    if (!hasOTP || !otpStillValid) throw new BadRequestException(RESPONSE.OTP_INVALID);
+
+    await this.provider.db.transaction(async (tx) => {
+      const [user] = await tx
+        .insert(User)
+        .values({ phone: body.phone, role: 'PATIENT', status: 'ACTIVE' })
+        .returning({ id: User.id });
+
+      await tx.insert(Auth).values({ userId: user.id });
+      await tx.update(VerificationCode).set({ expiresAt: new Date() }).where(eq(VerificationCode.phone, body.phone));
+    });
+
     return {};
   }
 }
