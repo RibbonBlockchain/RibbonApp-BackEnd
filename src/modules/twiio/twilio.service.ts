@@ -16,10 +16,14 @@ export class TwilioService {
   ) {}
 
   async sendVerificationCode(code: string, to: string): Promise<Dto.TSendVerificationCode> {
-    const from = this.TWILIO_PHONE_NUMBER;
-    const body = `Your Ribbon App verification code is: ${code}`;
-    const res = await this.createMessage({ to, from, body });
-    return res?.status;
+    try {
+      const from = this.TWILIO_PHONE_NUMBER;
+      const body = `Your Ribbon App verification code is: ${code}`;
+      const res = await this.createMessage({ to, from, body });
+      return res?.status;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   private async createMessage(payload: Dto.TSendSMS) {
