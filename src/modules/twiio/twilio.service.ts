@@ -24,7 +24,6 @@ export class TwilioService {
 
   private async createMessage(payload: Dto.TSendSMS) {
     const [data, error] = await go(() => this.client.messages.create(payload));
-    console.log(data, error);
     if (data) return data;
     return this.handleError(error);
   }

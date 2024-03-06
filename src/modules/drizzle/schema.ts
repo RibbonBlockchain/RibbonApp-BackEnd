@@ -30,6 +30,7 @@ export const User = ribbonSchema.table('user', {
 
 export const Auth = ribbonSchema.table('auth', {
   id: serial('id').primaryKey(),
+  pin: varchar('pin'),
   password: varchar('password'),
   accessToken: varchar('access_token'),
   refreshToken: varchar('refresh_token'),
