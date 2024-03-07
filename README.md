@@ -1,38 +1,67 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+API CI:
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Front End CI production:
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Front End CI staging:
 
-## Description
+Home page: [ribbon-app.vercel.app](https://ribbon-app.vercel.app)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Staging: [ribbon-app.vercel.app/](https://ribbon-app.vercel.app)
 
-## Installation
+Production: [ribbon-app.vercel.app/](https://ribbon-app.vercel.app)
+
+## [RibbonProtocol <a href="https://ibb.co/pfpWc5b"><img src="https://i.ibb.co/8rVzqtN/ribbon-app-logo-copy.png" alt="ribbon-app-logo-copy" border="0"></a>](https://ribbon-app.vercel.app)
+
+[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](/LICENSE)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg?style=flat-square)](/contributing.md)
+
+Ribbon Protocol is a universal health coverage rewards and loyalty platform that aims to modify health and wellness behavior through incentivization and rewardable tasks.
+
+The Ribbon App intertwines Universal Basic Income with Universal Health Coverage, utilizing World ID users health & socioeconomic data to enhance global well-being. The protocol rewards users for activities that help assess their wellness and socioeconomic needs, while linking them to equitable UBI and personalized services.
+
+Rewards and Incentives are distributed in points and WLD tokens, on the Optimism Mainnet network which is a Layer 2 network of the Ethereum blockchain.
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Packages](#packages)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+- [Resources](#resources)
+
+## Packages
+
+This RibbonProtocol App contains JavaScript tools and applications that enables users to earn tokenized universal basic income. The ribbon app consists of three key components right now; this will change in time. These are as follows:
+
+| Name                                                                                           | Description                                                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`@ribbonprotocol/api`](https://github.com/RibbonBlockchain/RibbonApp-BackEnd)                 | Backend API built with Typescript and NestJS restful API that handles data capture for users and all system wide interactions. |
+| [`@ribbonprotoccol/frontend`](https://github.com/RibbonBlockchain/RibbonApp)                   | Frontend NextJS application that users interact with. [Link](https://ribbon-app.vercel.app)                                    |
+| [`@ribbonprotoccol/admin-panel`](https://github.com/RibbonBlockchain/RibbonAdminPanelFrontEnd) | Frontend NextJS application for admin management.                                                                              |
+
+Each section has it's own repository and has it's own readme within the package that explains how to set it up and get running with that specific component.
+
+## Requirements
+
+This project requires `node >=18.0.0`, `npm >=10.x.x` and `pnpm >=8.x.x`. A unix shell is also required.
+
+- [Installing Node](https://docs.npmjs.com/getting-started/installing-node)
+- [Installing pnpm](https://pnpm.io/7.x/installation)
+- [UNIX Shell (Windows users)](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+
+## Getting Started
+
+To get started, clone the repo and install its dependencies:
 
 ```bash
-$ pnpm install
+git clone https://github.com/RibbonBlockchain/RibbonApp-BackEnd.git
+cd RibbonApp-BackEnd
+pnpm install
 ```
 
-## Running the app
+For development purposes there's a top-level `start:dev` script that will watch and continuously compile all packages concurrently:
 
 ```bash
 # development
@@ -45,29 +74,44 @@ $ pnpm run start:dev
 $ pnpm run start:prod
 ```
 
-## Test
+Open [http://localhost:3000](http://localhost:3000) to access the API.
 
-```bash
-# unit tests
-$ pnpm run test
+For next steps, take a look at documentation for the individual package(s) you want to run and/or develop. Each package can be run from the root directory using pnpm or npm.
 
-# e2e tests
-$ pnpm run test:e2e
+## Configuration
 
-# test coverage
-$ pnpm run test:cov
-```
+See `.env.example` file to see the configurations used in this project.
 
-## Support
+Environment Variables
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+PORT: Port number the server should listen on (Default is 3000).
 
-## Stay in touch
+Database
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+A postgress database URL was used to connect to to the server
 
-## License
+## Deployment
 
-Nest is [MIT licensed](LICENSE).
+The app is deployed using [render](https://render.com/)
+
+## Contributing
+
+Thanks for your interest in RibbonProtocol App. There are many ways you can contribute. To start, take a few minutes to look over the official guide:
+
+**[Read the "Contributing to RibbonProtocol App" Guide &raquo;](/contributing.md)**
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes and commit them.
+4. Push to your fork and submit a pull request.
+
+We happily await your pull requests and/or involvement in our [issues page](https://github.com/RibbonBlockchain/RibbonApp-BackEnd/issues) and hope to see your username on our [list of contributors](https://github.com/RibbonBlockchain/RibbonApp-BackEnd) 🎉🎉🎉
+
+## Resources
+
+To get a full idea of what RibbonProtocol is about, be sure to take a look at these other resources
+
+1. [Website](https://ribbon-app.vercel.app)
+2. [Twitter]()
