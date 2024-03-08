@@ -16,20 +16,25 @@ export class TwilioService {
   ) {}
 
   async sendVerificationCode(code: string, to: string): Promise<Dto.TSendVerificationCode> {
-    const from = this.TWILIO_PHONE_NUMBER;
-    const body = `Your Ribbon App verification code is: ${code}`;
-    const res = await this.createMessage({ to, from, body });
-    return res?.status;
+    try {
+      const from = this.TWILIO_PHONE_NUMBER;
+      const body = `Your Ribbon App verification code is: ${code}`;
+      const res = await this.createMessage({ to, from, body });
+      return res?.status;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   private async createMessage(payload: Dto.TSendSMS) {
+    console.log(payload);
     const [data, error] = await go(() => this.client.messages.create(payload));
-    console.log(data, error);
     if (data) return data;
     return this.handleError(error);
   }
 
   private handleError(error: any): any {
+    console.log(error);
     throw new InternalServerErrorException({
       cause: error.response.data,
       message: RESPONSE.SERVER_ERROR,

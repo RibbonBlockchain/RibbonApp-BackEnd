@@ -16,9 +16,9 @@ async function bootstrap() {
   app.enableCors({});
   app.useGlobalFilters(new ExceptionsFilter());
   app.enableVersioning({ type: VersioningType.URI });
-  app.setGlobalPrefix(GLOBAL_PREFIX, { exclude: [] });
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(new ValidationPipe(validationPipeOptions));
+  app.setGlobalPrefix(GLOBAL_PREFIX, { exclude: ['/health-check'] });
 
   await app.listen(port);
 }

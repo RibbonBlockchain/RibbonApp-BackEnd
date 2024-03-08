@@ -3,6 +3,11 @@ import { serial, pgEnum, integer, varchar, pgSchema, timestamp } from 'drizzle-o
 
 export const ribbonSchema = pgSchema('ribbon');
 
+export type TAuth = typeof Auth.$inferInsert;
+export type TUser = typeof User.$inferSelect & {
+  auth: TAuth;
+};
+
 export const RoleMap = ['PATIENT'] as const;
 export const RoleEnum = pgEnum('role', RoleMap);
 export type TRole = (typeof RoleEnum.enumValues)[number];
@@ -22,16 +27,15 @@ export const User = ribbonSchema.table('user', {
   lastName: varchar('last_name'),
   email: varchar('email').unique(),
   phone: varchar('phone').unique(),
-  countryCode: varchar('country_code'),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
-  referrerId: integer('referrer_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const Auth = ribbonSchema.table('auth', {
   id: serial('id').primaryKey(),
+  pin: varchar('pin'),
   password: varchar('password'),
   accessToken: varchar('access_token'),
   refreshToken: varchar('refresh_token'),

@@ -1,1 +1,1 @@
-export type TResult<T> = [T, null] | [null, any];
+export type TResult<T, E> = [T, null] | [null, E];
