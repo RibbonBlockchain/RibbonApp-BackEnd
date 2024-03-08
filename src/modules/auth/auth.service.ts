@@ -8,7 +8,7 @@ import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
-import { Auth, User, VerificationCode } from '../drizzle/schema';
+import { Auth, TUser, User, VerificationCode } from '../drizzle/schema';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -19,6 +19,11 @@ export class AuthService {
     private readonly twilio: TwilioService,
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
+
+  async HttpHandleGetAuth(user: TUser) {
+    user.auth = undefined;
+    return user;
+  }
 
   async HttpHandlePhoneAuth(body: Dto.HandlePhoneAuth) {
     const user = await this.provider.db.query.User.findFirst({ where: eq(User.phone, body.phone) });

@@ -3,6 +3,11 @@ import { serial, pgEnum, integer, varchar, pgSchema, timestamp } from 'drizzle-o
 
 export const ribbonSchema = pgSchema('ribbon');
 
+export type TAuth = typeof Auth.$inferInsert;
+export type TUser = typeof User.$inferSelect & {
+  auth: TAuth;
+};
+
 export const RoleMap = ['PATIENT'] as const;
 export const RoleEnum = pgEnum('role', RoleMap);
 export type TRole = (typeof RoleEnum.enumValues)[number];

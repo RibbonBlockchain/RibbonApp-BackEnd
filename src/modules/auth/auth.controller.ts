@@ -1,12 +1,23 @@
 import * as Dto from './dto';
+import { TUser } from '../drizzle/schema';
 import { RESPONSE } from '@/core/responses';
 import { AuthService } from './auth.service';
 import { VERSION_ONE } from '@/core/constants';
-import { Body, Controller, Post, Version } from '@nestjs/common';
+import { ReqUser } from './decorators/user.decorator';
+import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
+import { Body, Controller, Get, Post, Version } from '@nestjs/common';
 
 @Controller('/auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
+
+  @Get('/')
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  async HttpHandleGetAuth(@ReqUser() user: TUser) {
+    const data = await this.auth.HttpHandleGetAuth(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 
   @Post('/phone')
   @Version(VERSION_ONE)
