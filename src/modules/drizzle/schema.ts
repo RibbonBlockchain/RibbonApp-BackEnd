@@ -8,7 +8,7 @@ export type TUser = typeof User.$inferSelect & {
   auth: TAuth;
 };
 
-export const RoleMap = ['PATIENT'] as const;
+export const RoleMap = ['ADMIN', 'SUPER_ADMIN', 'PATIENT'] as const;
 export const RoleEnum = pgEnum('role', RoleMap);
 export type TRole = (typeof RoleEnum.enumValues)[number];
 
