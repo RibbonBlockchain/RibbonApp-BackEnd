@@ -16,8 +16,22 @@ export class AdminService {
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
-  async HttpHandleLogout(user: TUser) {
+  async HttpHandleLogout(user: TUser | undefined) {
+    if (!user) return {};
+
     await this.provider.db.update(Auth).set({ accessToken: null, refreshToken: null }).where(eq(Auth.userId, user.id));
+    return {};
+  }
+
+  async HttpHandleChangePassword(body: Dto.AdminChangePasswordBody, reqUser: TUser) {
+    const hasValidPassword = await this.argon.verify(body.oldPassword, reqUser.auth.password);
+    if (!hasValidPassword) throw new BadRequestException(RESPONSE.INVALID_CREDENTIALS);
+
+    await this.provider.db
+      .update(Auth)
+      .set({ password: await this.argon.hash(body.newPassword) })
+      .where(eq(Auth.userId, reqUser.id));
+
     return {};
   }
 

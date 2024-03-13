@@ -11,7 +11,7 @@ if (!('DATABASE_URL' in process.env)) {
   throw new Error('DATABASE_URL not found on .env');
 }
 
-const admins = [{ email: 'superadmin@ribbon.com', password: 'password' }];
+const admins = [{ email: 'superadmin@ribbon.com', password: 'Password123?' }];
 
 const main = async () => {
   const client = new Pool({
