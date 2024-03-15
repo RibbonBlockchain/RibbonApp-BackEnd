@@ -19,6 +19,13 @@ export class AuthController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
+  @Post('/logout')
+  @Version(VERSION_ONE)
+  async HttpHandleLogout(@ReqUser() user: TUser | undefined) {
+    const data = await this.auth.HttpHandleLogout(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
   @Post('/phone')
   @Version(VERSION_ONE)
   async HttpHandlePhoneAuth(@Body() body: Dto.HandlePhoneAuth) {

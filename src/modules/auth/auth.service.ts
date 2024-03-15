@@ -25,6 +25,13 @@ export class AuthService {
     return user;
   }
 
+  async HttpHandleLogout(user: TUser | undefined) {
+    if (!user) return {};
+
+    await this.provider.db.update(Auth).set({ accessToken: null, refreshToken: null }).where(eq(Auth.userId, user.id));
+    return {};
+  }
+
   async HttpHandlePhoneAuth(body: Dto.HandlePhoneAuth) {
     const user = await this.provider.db.query.User.findFirst({ where: eq(User.phone, body.phone) });
 
