@@ -19,6 +19,20 @@ export class AuthController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
+  @Post('/phone/check')
+  @Version(VERSION_ONE)
+  async HttpHandleCheckPhone(@Body() body: Dto.HandleCheckPhone) {
+    const data = await this.auth.HttpHandleCheckPhone(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Post('/login/phone')
+  @Version(VERSION_ONE)
+  async HttpHandlePhoneLogin(@Body() body: Dto.HandlePhoneLogin) {
+    const data = await this.auth.HttpHandlePhoneLogin(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
   @Post('/logout')
   @Version(VERSION_ONE)
   async HttpHandleLogout(@ReqUser() user: TUser | undefined) {
@@ -26,31 +40,24 @@ export class AuthController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
-  @Post('/phone')
   @Version(VERSION_ONE)
-  async HttpHandlePhoneAuth(@Body() body: Dto.HandlePhoneAuth) {
-    const data = await this.auth.HttpHandlePhoneAuth(body);
+  @Post('/signup/phone/request')
+  async HttpHandlePhoneSignUp(@Body() body: Dto.HandlePhoneSignUp) {
+    const data = await this.auth.HttpHandlePhoneSignUp(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 
   @Version(VERSION_ONE)
-  @Post('/phone/verify')
-  async HttpHandleVerifyPhoneAuthOTP(@Body() body: Dto.VerifyPhoneAuthOTP) {
-    const data = await this.auth.HttpHandleVerifyPhoneAuthOTP(body);
+  @Post('/signup/phone/verify')
+  async HttpHandleVerifyPhoneSignUp(@Body() body: Dto.VerifyPhoneSignUp) {
+    const data = await this.auth.HttpHandleVerifyPhoneSignUp(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 
   @Version(VERSION_ONE)
-  @Post('/phone/onboard')
+  @Post('/signup/phone/pin')
   async HttpHandlePhoneOnboard(@Body() body: Dto.PhoneOnboard) {
     const data = await this.auth.HttpHandlePhoneOnboard(body);
-    return { data, message: RESPONSE.SUCCESS };
-  }
-
-  @Post('/pin/verify')
-  @Version(VERSION_ONE)
-  async HttpHandleVerifyAuthPin(@Body() body: Dto.VerifyAuthPin) {
-    const data = await this.auth.HttpHandleVerifyAuthPin(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 }

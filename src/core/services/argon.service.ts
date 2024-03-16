@@ -9,8 +9,6 @@ export class ArgonService {
   async hash(plain: string): Promise<string> {
     const options: any = this.config.get('argon2')!;
 
-    console.log(this.config.get('argon2'));
-
     return (await Argon2.hash(plain, options)).toString();
   }
 

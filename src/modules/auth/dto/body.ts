@@ -1,12 +1,18 @@
 import { IsNotEmpty, IsNumberString, IsPhoneNumber, Length } from 'class-validator';
 
-export class HandlePhoneAuth {
+export class HandleCheckPhone {
   @IsNotEmpty()
   @IsPhoneNumber()
   phone: string;
 }
 
-export class VerifyAuthPin {
+export class HandlePhoneSignUp {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+}
+
+export class HandlePhoneLogin {
   @IsNotEmpty()
   @IsPhoneNumber()
   phone: string;
@@ -17,7 +23,7 @@ export class VerifyAuthPin {
   pin: string;
 }
 
-export class VerifyPhoneAuthOTP {
+export class VerifyPhoneSignUp {
   @IsNotEmpty()
   @IsPhoneNumber()
   phone: string;

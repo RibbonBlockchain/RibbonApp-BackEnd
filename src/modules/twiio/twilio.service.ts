@@ -27,14 +27,12 @@ export class TwilioService {
   }
 
   private async createMessage(payload: Dto.TSendSMS) {
-    console.log(payload);
     const [data, error] = await go(() => this.client.messages.create(payload));
     if (data) return data;
     return this.handleError(error);
   }
 
   private handleError(error: any): any {
-    console.log(error);
     throw new InternalServerErrorException({
       cause: error.response.data,
       message: RESPONSE.SERVER_ERROR,
