@@ -29,7 +29,9 @@ const main = async () => {
         .onConflictDoNothing()
         .returning();
 
-      await tx.insert(Auth).values({ userId: user.id, password: await Argon2.hash(admin.password) });
+      if (user?.id) {
+        await tx.insert(Auth).values({ userId: user.id, password: await Argon2.hash(admin.password) });
+      }
     });
   });
 };
