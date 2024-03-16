@@ -26,6 +26,7 @@ const main = async () => {
       const [user] = await tx
         .insert(User)
         .values({ email: admin.email, firstName: 'Super', lastName: 'Admin', role: 'SUPER_ADMIN', status: 'ACTIVE' })
+        .onConflictDoNothing()
         .returning();
 
       await tx.insert(Auth).values({ userId: user.id, password: await Argon2.hash(admin.password) });
