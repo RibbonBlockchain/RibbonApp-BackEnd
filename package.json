@@ -19,6 +19,7 @@
     "migrate:generate": "npx drizzle-kit generate:pg",
     "migrate:deploy": "npx ts-node ./drizzle/migrate.ts && npm run migrate:seed",
     "migrate:seed": "npx ts-node ./drizzle/seed.ts",
+    "migrate:all": "npm run migrate:generate && npm run migrate:deploy",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
