@@ -11,4 +11,6 @@ export const RESPONSE = {
   INVALID_CREDENTIALS: 'Invalid credentials',
 
   SERVER_ERROR: 'A error occurred while processing your request',
+
+  INVALID_TASK: 'Invalid task',
 };
