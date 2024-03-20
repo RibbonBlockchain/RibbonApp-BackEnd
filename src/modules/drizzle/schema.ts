@@ -16,7 +16,7 @@ export const UserStatusMap = ['ACTIVE', 'ONBOARDING'] as const;
 export const UserStatusEnum = pgEnum('user_status', UserStatusMap);
 export type TUserStatus = (typeof UserStatusEnum.enumValues)[number];
 
-export const VerificationCodeReasonMap = ['SMS_ONBOARDING'] as const;
+export const VerificationCodeReasonMap = ['SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
 export const VerificationCodeReasonEnum = pgEnum('verification_code_reason', VerificationCodeReasonMap);
 export type TVerificationCodeReason = (typeof VerificationCodeReasonEnum.enumValues)[number];
 
@@ -57,6 +57,17 @@ export const VerificationCode = ribbonSchema.table('verification_code', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const Wallet = ribbonSchema.table('wallet', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  balance: integer('balance').default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 export const UserRelations = relations(User, ({ one }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
+  wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
 }));

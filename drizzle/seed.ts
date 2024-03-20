@@ -11,7 +11,7 @@ if (!('DATABASE_URL' in process.env)) {
   throw new Error('DATABASE_URL not found on .env');
 }
 
-const admins = [{ email: 'superadmin@ribbon.com', password: 'Password123?' }];
+const admins = [{ email: 'superadmin@ribbon.com', password: 'Password123?', pin: '0000' }];
 
 const main = async () => {
   const client = new Pool({
@@ -25,12 +25,21 @@ const main = async () => {
     admins.forEach(async (admin) => {
       const [user] = await tx
         .insert(User)
-        .values({ email: admin.email, firstName: 'Super', lastName: 'Admin', role: 'SUPER_ADMIN', status: 'ACTIVE' })
+        .values({
+          email: admin.email,
+          firstName: 'Super',
+          lastName: 'Admin',
+          role: 'SUPER_ADMIN',
+          status: 'ACTIVE',
+          phone: '+2349026503960',
+        })
         .onConflictDoNothing()
         .returning();
 
       if (user?.id) {
-        await tx.insert(Auth).values({ userId: user.id, password: await Argon2.hash(admin.password) });
+        await tx
+          .insert(Auth)
+          .values({ userId: user.id, password: await Argon2.hash(admin.password), pin: await Argon2.hash(admin.pin) });
       }
     });
   });

@@ -8,7 +8,7 @@ import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
-import { Auth, TUser, User, VerificationCode } from '../drizzle/schema';
+import { Auth, TUser, User, VerificationCode, Wallet } from '../drizzle/schema';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -112,6 +112,8 @@ export class AuthService {
         .insert(User)
         .values({ phone: body.phone, role: 'PATIENT', status: 'ACTIVE' })
         .returning({ id: User.id });
+
+      await this.provider.db.insert(Wallet).values({ userId: user.id, balance: 0 }).execute();
 
       await tx.insert(Auth).values({ userId: user.id, pin });
       await tx.update(VerificationCode).set({ expiresAt: new Date() }).where(eq(VerificationCode.phone, body.phone));

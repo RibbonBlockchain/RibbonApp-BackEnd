@@ -6,10 +6,17 @@ import { AppController } from './app.controller';
 import { AuthModule } from '../auth/auth.module';
 import { AdminModule } from '../admin/admin.module';
 import { DrizzleModule } from '../drizzle/drizzle.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   providers: [AppService],
   controllers: [AppController],
-  imports: [AuthModule, AdminModule, DrizzleModule, ConfigModule.forRoot({ load: [config], isGlobal: true })],
+  imports: [
+    AuthModule,
+    UserModule,
+    AdminModule,
+    DrizzleModule,
+    ConfigModule.forRoot({ load: [config], isGlobal: true }),
+  ],
 })
 export class AppModule {}
