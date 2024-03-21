@@ -1,11 +1,11 @@
-import { Body, Controller, Post, Version } from '@nestjs/common';
-import { UserService } from './user.service';
-import { HandlePhoneVerification, HandleVerifyPhone } from './dto/request';
-import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
 import { TUser } from '../drizzle/schema';
-import { ReqUser } from '../auth/decorators/user.decorator';
-import { VERSION_ONE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
+import { UserService } from './user.service';
+import { VERSION_ONE } from '@/core/constants';
+import { ReqUser } from '../auth/decorators/user.decorator';
+import { Body, Controller, Post, Version } from '@nestjs/common';
+import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
+import { HandlePhoneVerification, HandleVerifyPhone } from './dto/request';
 
 @Controller('user')
 export class UserController {
@@ -18,8 +18,8 @@ export class UserController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
-  @Version(VERSION_ONE)
   @AuthGuard()
+  @Version(VERSION_ONE)
   @Post('/phone/verify')
   async HttpHandleVerifyPhone(@Body() body: HandleVerifyPhone, @ReqUser() user: TUser) {
     const data = await this.userService.HttpHandleVerifyPhone(body, user);

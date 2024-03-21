@@ -82,9 +82,12 @@ export const Wallet = ribbonSchema.table('wallet', {
 export const Task = ribbonSchema.table('task', {
   id: serial('id').primaryKey(),
   name: varchar('name'),
+  slug: varchar('slug').unique().notNull(),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
   reward: integer('reward').default(0),
+  point: integer('point').default(0),
+  duration: integer('duration').default(60),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -123,7 +126,7 @@ export const Answer = ribbonSchema.table('answer', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const UserTaskActivity = ribbonSchema.table('user_task_activity', {
+export const TaskActivity = ribbonSchema.table('task_activity', {
   id: serial('id').primaryKey(),
   taskId: integer('task_id')
     .notNull()
@@ -139,12 +142,12 @@ export const UserTaskActivity = ribbonSchema.table('user_task_activity', {
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
-  activities: many(UserTaskActivity),
+  activities: many(TaskActivity),
 }));
 
 export const TaskRelations = relations(Task, ({ many }) => ({
   questions: many(Question),
-  activities: many(UserTaskActivity),
+  activities: many(TaskActivity),
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
@@ -162,7 +165,7 @@ export const AnswerRelations = relations(Answer, ({ one }) => ({
   user: one(User, { fields: [Answer.userId], references: [User.id] }),
 }));
 
-export const UserTaskActivityRelations = relations(UserTaskActivity, ({ one }) => ({
-  task: one(Task, { fields: [UserTaskActivity.taskId], references: [Task.id] }),
-  user: one(User, { fields: [UserTaskActivity.userId], references: [User.id] }),
+export const TaskActivityRelations = relations(TaskActivity, ({ one }) => ({
+  task: one(Task, { fields: [TaskActivity.taskId], references: [Task.id] }),
+  user: one(User, { fields: [TaskActivity.userId], references: [User.id] }),
 }));

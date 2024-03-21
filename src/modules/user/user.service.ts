@@ -1,12 +1,12 @@
+import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import { hasTimeExpired } from '@/core/utils';
 import { quickOTP } from '@/core/utils/code';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
 import { TDbProvider } from '../drizzle/drizzle.module';
-import { TUser, User, VerificationCode, Wallet } from '../drizzle/schema';
 import { TwilioService } from '../twiio/twilio.service';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { TUser, User, VerificationCode, Wallet } from '../drizzle/schema';
 import { HandlePhoneVerification, HandleVerifyPhone } from './dto/request';
 
 @Injectable()

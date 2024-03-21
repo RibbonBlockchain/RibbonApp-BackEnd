@@ -1,9 +1,9 @@
 import { Pool } from 'pg';
 import * as env from 'dotenv';
 import * as Argon2 from 'argon2';
-import { isProduction } from '../src/core/utils';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Auth, User } from '../src/modules/drizzle/schema';
+import { createSlug, isProduction } from '../src/core/utils';
+import { Auth, Task, User } from '../src/modules/drizzle/schema';
 
 env.config();
 
@@ -11,7 +11,22 @@ if (!('DATABASE_URL' in process.env)) {
   throw new Error('DATABASE_URL not found on .env');
 }
 
-const admins = [{ email: 'superadmin@ribbon.com', password: 'Password123?', pin: '0000' }];
+const admins = [
+  {
+    pin: '0000',
+    lastName: 'Admin',
+    firstName: 'Super',
+    phone: '+2349026503960',
+    password: 'Password123?',
+    status: 'ACTIVE' as const,
+    role: 'SUPER_ADMIN' as const,
+    email: 'superadmin@ribbon.com',
+  },
+];
+
+const tasks = [
+  { duration: 60, title: 'Verify your phone number', description: 'Verify your phone number', point: 15, reward: 3 },
+];
 
 const main = async () => {
   const client = new Pool({
@@ -22,16 +37,28 @@ const main = async () => {
   const db = drizzle(client);
 
   await db.transaction(async (tx) => {
+    tasks.forEach(async (task) => {
+      await tx.insert(Task).values({
+        type: 'APP',
+        name: task.title,
+        point: task.point,
+        reward: task.reward,
+        duration: task.duration,
+        slug: createSlug(task.title),
+        description: task.description,
+      });
+    });
+
     admins.forEach(async (admin) => {
       const [user] = await tx
         .insert(User)
         .values({
+          role: admin.role,
+          phone: admin.phone,
           email: admin.email,
-          firstName: 'Super',
-          lastName: 'Admin',
-          role: 'SUPER_ADMIN',
-          status: 'ACTIVE',
-          phone: '+2349026503960',
+          status: admin.status,
+          lastName: admin.lastName,
+          firstName: admin.firstName,
         })
         .onConflictDoNothing()
         .returning();
