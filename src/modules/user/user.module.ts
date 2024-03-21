@@ -9,4 +9,5 @@ import { TwilioModule } from '../twiio/twilio.module';
   controllers: [UserController],
   providers: [UserService, TokenService],
 })
+@Module({})
 export class UserModule {}

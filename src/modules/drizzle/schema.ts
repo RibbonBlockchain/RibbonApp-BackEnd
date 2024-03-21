@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { serial, pgEnum, integer, varchar, pgSchema, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { date, serial, pgEnum, integer, varchar, pgSchema, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
 
 export const ribbonSchema = pgSchema('ribbon');
 
@@ -11,6 +11,10 @@ export type TUser = typeof User.$inferSelect & {
 export const RoleMap = ['ADMIN', 'SUPER_ADMIN', 'PATIENT'] as const;
 export const RoleEnum = pgEnum('role', RoleMap);
 export type TRole = (typeof RoleEnum.enumValues)[number];
+
+export const GenderMap = ['MALE', 'FEMALE', 'OTHER'] as const;
+export const GenderEnum = pgEnum('gender', GenderMap);
+export type TGender = (typeof GenderEnum.enumValues)[number];
 
 export const UserStatusMap = ['ACTIVE', 'ONBOARDING'] as const;
 export const UserStatusEnum = pgEnum('user_status', UserStatusMap);
@@ -37,8 +41,12 @@ export const User = ribbonSchema.table('user', {
   avatar: varchar('avatar'),
   firstName: varchar('first_name'),
   lastName: varchar('last_name'),
+  otherNames: varchar('other_names'),
   email: varchar('email').unique(),
   phone: varchar('phone').unique(),
+  gender: GenderEnum('gender'),
+  dob: date('dob'),
+  socials: jsonb('socals'),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

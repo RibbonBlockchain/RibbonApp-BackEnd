@@ -1,11 +1,11 @@
+import * as Dto from './dto';
 import { TUser } from '../drizzle/schema';
 import { RESPONSE } from '@/core/responses';
 import { UserService } from './user.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
-import { Body, Controller, Post, Version } from '@nestjs/common';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { HandlePhoneVerification, HandleVerifyPhone } from './dto/request';
+import { Body, Controller, Patch, Post, Version } from '@nestjs/common';
 
 @Controller('user')
 export class UserController {
@@ -13,7 +13,7 @@ export class UserController {
 
   @Version(VERSION_ONE)
   @Post('/phone/change')
-  async HttpHandlePhoneVerification(@Body() body: HandlePhoneVerification) {
+  async HttpHandlePhoneVerification(@Body() body: Dto.HandlePhoneVerification) {
     const data = await this.userService.HttpHandlePhoneVerification(body);
     return { data, message: RESPONSE.SUCCESS };
   }
@@ -21,8 +21,15 @@ export class UserController {
   @AuthGuard()
   @Version(VERSION_ONE)
   @Post('/phone/verify')
-  async HttpHandleVerifyPhone(@Body() body: HandleVerifyPhone, @ReqUser() user: TUser) {
+  async HttpHandleVerifyPhone(@Body() body: Dto.HandleVerifyPhone, @ReqUser() user: TUser) {
     const data = await this.userService.HttpHandleVerifyPhone(body, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Patch('/profile')
+  async HttpHandleUpdateProfile(@Body() body: Dto.HandleUpdateProfile, user: TUser) {
+    const data = await this.userService.HttpHandleUpdateProfile(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 }

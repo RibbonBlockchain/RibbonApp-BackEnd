@@ -1,3 +1,4 @@
+import * as Dto from './dto';
 import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
@@ -7,7 +8,6 @@ import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { TUser, User, VerificationCode, Wallet } from '../drizzle/schema';
-import { HandlePhoneVerification, HandleVerifyPhone } from './dto/request';
 
 @Injectable()
 export class UserService {
@@ -16,7 +16,12 @@ export class UserService {
     private readonly twilio: TwilioService,
   ) {}
 
-  async HttpHandlePhoneVerification(body: HandlePhoneVerification) {
+  async HttpHandleUpdateProfile(body: Dto.HandleUpdateProfile, user: TUser) {
+    console.log(user, body);
+    return {};
+  }
+
+  async HttpHandlePhoneVerification(body: Dto.HandlePhoneVerification) {
     const user = await this.provider.db.query.User.findFirst({ where: eq(User.phone, body.phone) });
 
     const isExistingUser = user?.id;
@@ -45,14 +50,10 @@ export class UserService {
     return { exists: false };
   }
 
-  async HttpHandleVerifyPhone(body: HandleVerifyPhone, user: TUser) {
-    console.log(body);
-    console.log(user.phone);
+  async HttpHandleVerifyPhone(body: Dto.HandleVerifyPhone, user: TUser) {
     const otp = await this.provider.db.query.VerificationCode.findFirst({
       where: and(eq(VerificationCode.code, body.code), eq(VerificationCode.reason, 'PHONE_VERIFICATION')),
     });
-
-    console.log(otp);
 
     const hasOTP = otp?.id || body.code === '000000';
     const otpStillValid = !hasTimeExpired(otp?.expiresAt) || body.code === '000000';
