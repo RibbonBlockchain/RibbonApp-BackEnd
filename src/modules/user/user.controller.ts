@@ -28,7 +28,8 @@ export class UserController {
 
   @AuthGuard()
   @Patch('/profile')
-  async HttpHandleUpdateProfile(@Body() body: Dto.HandleUpdateProfile, user: TUser) {
+  @Version(VERSION_ONE)
+  async HttpHandleUpdateProfile(@Body() body: Dto.HandleUpdateProfile, @ReqUser() user: TUser) {
     const data = await this.userService.HttpHandleUpdateProfile(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }

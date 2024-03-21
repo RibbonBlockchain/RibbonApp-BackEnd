@@ -18,6 +18,11 @@ export class UserService {
 
   async HttpHandleUpdateProfile(body: Dto.HandleUpdateProfile, user: TUser) {
     console.log(user, body);
+
+    await this.provider.db
+      .update(User)
+      .set({ firstName: body.firstName, lastName: body.lastName, otherNames: body.otherNames });
+
     return {};
   }
 

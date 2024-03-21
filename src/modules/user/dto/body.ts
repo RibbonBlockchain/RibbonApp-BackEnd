@@ -1,6 +1,5 @@
 import {
   Length,
-  IsEnum,
   IsEmail,
   IsString,
   IsOptional,
@@ -9,7 +8,7 @@ import {
   IsPhoneNumber,
   IsNumberString,
 } from 'class-validator';
-import { GenderEnum, TGender } from '@/modules/drizzle/schema';
+import { TGender } from '@/modules/drizzle/schema';
 
 export class HandleUpdateProfile {
   @IsString()
@@ -27,8 +26,8 @@ export class HandleUpdateProfile {
   @IsOptional()
   otherNames: string;
 
+  @IsString()
   @IsOptional()
-  @IsEnum(GenderEnum)
   gender: TGender;
 
   @IsEmail()
