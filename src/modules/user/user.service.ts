@@ -17,11 +17,25 @@ export class UserService {
   ) {}
 
   async HttpHandleUpdateProfile(body: Dto.HandleUpdateProfile, user: TUser) {
-    console.log(user, body);
-
     await this.provider.db
       .update(User)
-      .set({ firstName: body.firstName, lastName: body.lastName, otherNames: body.otherNames });
+      .set({
+        dob: body.dob,
+        email: body.email,
+        gender: body.gender,
+        socials: body.socials,
+        lastName: body.lastName,
+        firstName: body.firstName,
+        otherNames: body.otherNames,
+      })
+      .where(eq(User.id, user.id));
+
+    if (body.email) {
+      const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+      const balance = wallet.balance + 5;
+
+      await this.provider.db.update(Wallet).set({ balance }).where(eq(Wallet.id, wallet.id));
+    }
 
     return {};
   }

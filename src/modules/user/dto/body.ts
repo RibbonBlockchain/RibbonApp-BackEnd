@@ -40,25 +40,8 @@ export class HandleUpdateProfile {
   @IsDateString()
   dob: string;
 
-  @IsString()
-  @IsNotEmpty()
   @IsOptional()
-  discordUsername: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  xUsername: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  instagramUsername: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  linkedInUsername: string;
+  socials: any;
 }
 
 export class HandlePhoneVerification {
