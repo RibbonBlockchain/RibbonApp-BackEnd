@@ -20,8 +20,9 @@ export class AuthService {
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
-  async HttpHandleGetAuth(user: TUser) {
+  async HttpHandleGetAuth(user: TUser | any) {
     user.auth = undefined;
+    user.wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
     return user;
   }
 
