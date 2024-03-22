@@ -13,7 +13,7 @@ if (!('DATABASE_URL' in process.env)) {
 const pool = new Pool({
   max: 1,
   connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+  ssl: !isProduction ? { rejectUnauthorized: false } : undefined,
 });
 
 const db = drizzle(pool, { logger: true });

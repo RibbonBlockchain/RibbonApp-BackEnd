@@ -155,7 +155,8 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
-    return await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
+    const res = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
+    return { data: res };
   }
 
   async HttpHandleGetUserProcessingTasks(user: TUser) {
@@ -168,6 +169,8 @@ export class TaskService {
     userTaskActivity.forEach((task) => {
       processingTasksId.push(task.taskId);
     });
+
+    if (!processingTasksId?.length) return { data: [] };
 
     const tasks = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, processingTasksId) });
     return { data: tasks };
@@ -184,7 +187,7 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
-    const tasks = await this.provider.db.query.Task.findMany();
+    const tasks = await this.provider.db.query.Task.findMany({ with: { questions: { with: { options: true } } } });
 
     const data = tasks.filter((task) => {
       return !completedTasksId.includes(task.id);

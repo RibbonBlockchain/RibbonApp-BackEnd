@@ -26,6 +26,7 @@ const admins = [
 
 const tasks = [
   { duration: 60, title: 'Verify your phone number', description: 'Verify your phone number', point: 15, reward: 3 },
+  { duration: 60, title: 'Complete your profile', description: 'Complete your profile', point: 15, reward: 5 },
 ];
 
 const main = async () => {
