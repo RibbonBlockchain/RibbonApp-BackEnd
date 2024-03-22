@@ -147,9 +147,8 @@ export class AuthService {
         .values({ phone: body.phone, role: 'PATIENT', status: 'ACTIVE' })
         .returning({ id: User.id });
 
-      await this.provider.db.insert(Wallet).values({ userId: user.id, balance: 0 }).execute();
-
       await tx.insert(Auth).values({ userId: user.id, pin });
+      await this.provider.db.insert(Wallet).values({ userId: user.id, balance: 0 });
       await tx.update(VerificationCode).set({ expiresAt: new Date() }).where(eq(VerificationCode.phone, body.phone));
 
       return user;
