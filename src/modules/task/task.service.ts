@@ -193,7 +193,9 @@ export class TaskService {
       return !completedTasksId.includes(task.id);
     });
 
-    return { data };
+    const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
+
+    return { data: res };
   }
 
   async HttpHandleGetUserTaskActivity(user: TUser, taskId: number) {
