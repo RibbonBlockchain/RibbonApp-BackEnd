@@ -33,6 +33,14 @@ export class AuthController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
+  @Version(VERSION_ONE)
+  @Post('/login/world-id')
+  async HttpHandleWorldIdLogin(@Body() body: Dto.HandleWorldIdLogin) {
+    const data = await this.auth.HttpHandleWorldIdLogin(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
   @Post('/logout')
   @Version(VERSION_ONE)
   async HttpHandleLogout(@ReqUser() user: TUser | undefined) {

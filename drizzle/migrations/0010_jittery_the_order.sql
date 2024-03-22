@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."auth" ADD COLUMN "world_id" varchar;

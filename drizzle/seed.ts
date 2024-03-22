@@ -38,15 +38,18 @@ const main = async () => {
 
   await db.transaction(async (tx) => {
     tasks.forEach(async (task) => {
-      await tx.insert(Task).values({
-        type: 'APP',
-        name: task.title,
-        point: task.point,
-        reward: task.reward,
-        duration: task.duration,
-        slug: createSlug(task.title),
-        description: task.description,
-      });
+      await tx
+        .insert(Task)
+        .values({
+          type: 'APP',
+          name: task.title,
+          point: task.point,
+          reward: task.reward,
+          duration: task.duration,
+          slug: createSlug(task.title),
+          description: task.description,
+        })
+        .onConflictDoNothing();
     });
 
     admins.forEach(async (admin) => {

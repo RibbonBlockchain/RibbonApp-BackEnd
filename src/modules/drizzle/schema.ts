@@ -59,6 +59,7 @@ export const Auth = ribbonSchema.table('auth', {
   password: varchar('password'),
   accessToken: varchar('access_token'),
   refreshToken: varchar('refresh_token'),
+  worldId: varchar('world_id'),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
@@ -90,7 +91,7 @@ export const Wallet = ribbonSchema.table('wallet', {
 export const Task = ribbonSchema.table('task', {
   id: serial('id').primaryKey(),
   name: varchar('name'),
-  slug: varchar('slug').unique().notNull(),
+  slug: varchar('slug'),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
   reward: integer('reward').default(0),
@@ -176,4 +177,8 @@ export const AnswerRelations = relations(Answer, ({ one }) => ({
 export const TaskActivityRelations = relations(TaskActivity, ({ one }) => ({
   task: one(Task, { fields: [TaskActivity.taskId], references: [Task.id] }),
   user: one(User, { fields: [TaskActivity.userId], references: [User.id] }),
+}));
+
+export const AuthRelations = relations(Auth, ({ one }) => ({
+  user: one(User, { fields: [Auth.userId], references: [User.id] }),
 }));

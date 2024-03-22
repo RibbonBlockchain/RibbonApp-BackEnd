@@ -51,6 +51,40 @@ export class AuthService {
     if (!isTest && !hasPinValid) throw new ForbiddenException(RESPONSE.INVALID_PIN);
 
     const { accessToken } = await this.GenerateLoginTokens(user.id);
+    return { id: String(user.id), accessToken };
+  }
+
+  async HttpHandleWorldIdLogin(body: Dto.HandleWorldIdLogin) {
+    const auth = await this.provider.db.query.Auth.findFirst({
+      with: { user: true },
+      where: eq(Auth.worldId, body.sub),
+    });
+
+    const isExistingUser = auth?.user?.id;
+
+    if (isExistingUser) {
+      const { accessToken } = await this.GenerateLoginTokens(auth.user.id);
+      return { accessToken };
+    }
+
+    const user = await this.provider.db.transaction(async (tx) => {
+      const [user] = await this.provider.db
+        .insert(User)
+        .values({
+          role: 'PATIENT',
+          status: 'ACTIVE',
+          email: body.email,
+          lastName: body.name,
+          avatar: body.picture,
+          firstName: body.name,
+        })
+        .returning({ id: User.id });
+
+      await tx.insert(Auth).values({ userId: user.id, worldId: body.sub });
+      return user;
+    });
+
+    const { accessToken } = await this.GenerateLoginTokens(user.id);
     return { accessToken };
   }
 
