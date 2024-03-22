@@ -1,1 +1,0 @@
-ALTER TYPE "verification_code_reason" ADD VALUE 'PHONE_VERIFICATION';
