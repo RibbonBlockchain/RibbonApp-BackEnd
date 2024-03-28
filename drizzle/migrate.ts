@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import * as env from 'dotenv';
-// import { isProduction } from '../src/core/utils';
+import { isProduction } from '../src/core/utils';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
@@ -13,8 +13,7 @@ if (!('DATABASE_URL' in process.env)) {
 const pool = new Pool({
   max: 1,
   connectionString: process.env.DATABASE_URL,
-  // ssl: isProduction ? { rejectUnauthorized: false } : undefined,
-  ssl: { rejectUnauthorized: false },
+  ssl: isProduction ? { rejectUnauthorized: false } : undefined,
 });
 
 const db = drizzle(pool, { logger: true });
