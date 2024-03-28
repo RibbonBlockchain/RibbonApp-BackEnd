@@ -81,6 +81,7 @@ export const VerificationCode = ribbonSchema.table('verification_code', {
 export const Wallet = ribbonSchema.table('wallet', {
   id: serial('id').primaryKey(),
   balance: integer('balance').default(0),
+  point: integer('point').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   userId: integer('user_id')
     .notNull()
@@ -90,6 +91,7 @@ export const Wallet = ribbonSchema.table('wallet', {
 
 export const Task = ribbonSchema.table('task', {
   id: serial('id').primaryKey(),
+  image: varchar('image'),
   name: varchar('name'),
   slug: varchar('slug'),
   description: varchar('description'),
@@ -144,6 +146,7 @@ export const TaskActivity = ribbonSchema.table('task_activity', {
     .notNull()
     .references(() => User.id),
   status: UserTaskStatusEnum('status').default('PROCESSING'),
+  completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

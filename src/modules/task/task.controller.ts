@@ -4,7 +4,7 @@ import { TaskService } from './task.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Version } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
 
 @Controller('task')
 export class TaskController {
@@ -62,8 +62,8 @@ export class TaskController {
   @AuthGuard()
   @Get('user/completed')
   @Version(VERSION_ONE)
-  async userCompletedTasks(@ReqUser() user: TUser) {
-    return await this.taskService.HttpHandleGetUserCompletedTasks(user);
+  async userCompletedTasks(@ReqUser() user: TUser, @Query() query: { completedDate: string }) {
+    return await this.taskService.HttpHandleGetUserCompletedTasks(user, query);
   }
 
   @AuthGuard()

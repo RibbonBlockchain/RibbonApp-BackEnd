@@ -133,7 +133,7 @@ export class TaskService {
     if (question.isLast) {
       await this.provider.db
         .update(TaskActivity)
-        .set({ status: 'COMPLETED' })
+        .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
         .where(and(eq(TaskActivity.id, userTaskActivity.id), eq(TaskActivity.userId, user.id)));
       await this.provider.db
         .update(Wallet)
@@ -144,19 +144,29 @@ export class TaskService {
     return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
   }
 
-  async HttpHandleGetUserCompletedTasks(user: TUser) {
+  async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: string }) {
+    const { completedDate } = query;
     const completedTasksId = [];
 
-    const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.status, 'COMPLETED')),
-    });
+    const userTaskActivity = completedDate
+      ? await this.provider.db.query.TaskActivity.findMany({
+          where: and(
+            eq(TaskActivity.userId, user.id),
+            eq(TaskActivity.status, 'COMPLETED'),
+            eq(TaskActivity.completedDate, completedDate),
+          ),
+        })
+      : await this.provider.db.query.TaskActivity.findMany({
+          where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.status, 'COMPLETED')),
+        });
 
     userTaskActivity.forEach((task) => {
       completedTasksId.push(task.taskId);
     });
 
-    const res = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
-    return { data: res };
+    const data = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
+
+    return { data };
   }
 
   async HttpHandleGetUserProcessingTasks(user: TUser) {
@@ -180,7 +190,11 @@ export class TaskService {
     const completedTasksId = [];
 
     const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.status, 'COMPLETED')),
+      where: and(
+        eq(TaskActivity.userId, user.id),
+        eq(TaskActivity.status, 'COMPLETED'),
+        eq(TaskActivity.status, 'PROCESSING'),
+      ),
     });
 
     userTaskActivity.forEach((task) => {
