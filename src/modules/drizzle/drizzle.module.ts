@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import * as schema from './schema';
 import { DATABASE } from '@/core/constants';
-// import { isProduction } from '@/core/utils';
+import { isProduction } from '@/core/utils';
 import { ConfigService } from '@nestjs/config';
 import { Global, Module } from '@nestjs/common';
 import { NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres';
@@ -16,8 +16,7 @@ const DrizzleDatabaseProvider = {
     const connectionString = configService.getOrThrow('DATABASE_URL');
     const pool = new Pool({
       connectionString,
-      // ssl: isProduction ? { rejectUnauthorized: false } : undefined,
-      ssl: { rejectUnauthorized: false },
+      ssl: isProduction ? { rejectUnauthorized: false } : undefined,
     });
 
     const db = drizzle(pool, { schema });
