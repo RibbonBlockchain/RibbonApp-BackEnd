@@ -62,7 +62,7 @@ export class TaskController {
   @AuthGuard()
   @Get('user/completed')
   @Version(VERSION_ONE)
-  async userCompletedTasks(@ReqUser() user: TUser, @Query() query: { completedDate: Date }) {
+  async userCompletedTasks(@ReqUser() user: TUser, @Query() query: { completedDate: string }) {
     return await this.taskService.HttpHandleGetUserCompletedTasks(user, query);
   }
 

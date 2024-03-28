@@ -15,6 +15,13 @@
       "when": 1711621107321,
       "tag": "0001_dry_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1711649710886,
+      "tag": "0002_striped_talon",
+      "breakpoints": true
     }
   ]
 }

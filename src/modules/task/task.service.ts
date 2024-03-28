@@ -133,7 +133,7 @@ export class TaskService {
     if (question.isLast) {
       await this.provider.db
         .update(TaskActivity)
-        .set({ status: 'COMPLETED', completedDate: new Date() })
+        .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
         .where(and(eq(TaskActivity.id, userTaskActivity.id), eq(TaskActivity.userId, user.id)));
       await this.provider.db
         .update(Wallet)
@@ -144,7 +144,7 @@ export class TaskService {
     return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
   }
 
-  async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: Date }) {
+  async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: string }) {
     const { completedDate } = query;
     const completedTasksId = [];
 
@@ -164,7 +164,9 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
-    return await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
+    const data = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
+
+    return { data };
   }
 
   async HttpHandleGetUserProcessingTasks(user: TUser) {
