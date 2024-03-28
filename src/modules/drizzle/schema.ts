@@ -90,6 +90,7 @@ export const Wallet = ribbonSchema.table('wallet', {
 
 export const Task = ribbonSchema.table('task', {
   id: serial('id').primaryKey(),
+  image: varchar('image'),
   name: varchar('name'),
   slug: varchar('slug'),
   description: varchar('description'),
@@ -144,6 +145,7 @@ export const TaskActivity = ribbonSchema.table('task_activity', {
     .notNull()
     .references(() => User.id),
   status: UserTaskStatusEnum('status').default('PROCESSING'),
+  completedDate: timestamp('completed_date', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
