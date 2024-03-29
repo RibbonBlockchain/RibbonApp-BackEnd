@@ -7,7 +7,7 @@ import { quickOTP } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { TUser, User, VerificationCode, Wallet } from '../drizzle/schema';
+import { TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
 
 @Injectable()
 export class UserService {
@@ -17,11 +17,32 @@ export class UserService {
   ) {}
 
   async HttpHandleUpdateProfile(body: Dto.HandleUpdateProfile, user: TUser) {
-    console.log(user, body);
-
     await this.provider.db
       .update(User)
-      .set({ firstName: body.firstName, lastName: body.lastName, otherNames: body.otherNames });
+      .set({
+        dob: body.dob,
+        email: body.email,
+        gender: body.gender,
+        socials: body.socials,
+        lastName: body.lastName,
+        firstName: body.firstName,
+        otherNames: body.otherNames,
+      })
+      .where(eq(User.id, user.id));
+
+    if (body.email) {
+      const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+      const task = await this.provider.db.query.Task.findFirst({ where: eq(Task.name, 'Complete your profile') });
+
+      if (task) {
+        await this.provider.db.insert(TaskActivity).values({ taskId: task.id, userId: user.id, status: 'COMPLETED' });
+      }
+
+      const balance = wallet.balance + 5;
+
+      await this.provider.db.update(Wallet).set({ balance }).where(eq(Wallet.id, wallet.id));
+    }
 
     return {};
   }

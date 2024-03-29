@@ -3,7 +3,7 @@ import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, notInArray } from 'drizzle-orm';
 import { TwilioService } from '../twiio/twilio.service';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -164,7 +164,10 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
-    const data = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) });
+    const data =
+      completedTasksId.length > 0
+        ? await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) })
+        : [];
 
     return { data };
   }
@@ -180,6 +183,8 @@ export class TaskService {
       processingTasksId.push(task.taskId);
     });
 
+    if (!processingTasksId?.length) return { data: [] };
+
     const tasks = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, processingTasksId) });
     return { data: tasks };
   }
@@ -188,24 +193,21 @@ export class TaskService {
     const completedTasksId = [];
 
     const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: and(
-        eq(TaskActivity.userId, user.id),
-        eq(TaskActivity.status, 'COMPLETED'),
-        eq(TaskActivity.status, 'PROCESSING'),
-      ),
+      where: eq(TaskActivity.userId, user.id),
     });
 
     userTaskActivity.forEach((task) => {
       completedTasksId.push(task.taskId);
     });
 
-    const tasks = await this.provider.db.query.Task.findMany();
-
-    const data = tasks.filter((task) => {
-      return !completedTasksId.includes(task.id);
+    const data = await this.provider.db.query.Task.findMany({
+      where: notInArray(Task.id, completedTasksId),
+      with: { questions: { with: { options: true } } },
     });
 
-    return { data };
+    const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
+
+    return { data: res };
   }
 
   async HttpHandleGetUserTaskActivity(user: TUser, taskId: number) {
