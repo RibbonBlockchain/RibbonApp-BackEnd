@@ -7,7 +7,17 @@ import { and, eq, inArray, notInArray } from 'drizzle-orm';
 import { TwilioService } from '../twiio/twilio.service';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { Answer, Question, TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
+import {
+  Answer,
+  Options,
+  Question,
+  TUser,
+  Task,
+  TaskActivity,
+  User,
+  VerificationCode,
+  Wallet,
+} from '../drizzle/schema';
 
 @Injectable()
 export class TaskService {
@@ -126,6 +136,8 @@ export class TaskService {
       where: eq(Question.id, questionId),
     });
 
+    const option = await this.provider.db.query.Options.findFirst({ where: eq(Options.id, optionId) });
+
     if (!userTaskActivity) {
       await this.provider.db.insert(TaskActivity).values({ taskId, userId: user.id }).execute();
     }
@@ -140,6 +152,8 @@ export class TaskService {
         .set({ balance: wallet.balance + task.reward })
         .where(eq(Wallet.userId, user.id));
     }
+
+    await this.provider.db.update(Wallet).set({ point: option.point });
 
     return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
   }
