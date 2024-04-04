@@ -38,6 +38,16 @@ export class AuthService {
     return { exists: !!user?.id };
   }
 
+  async HttpHandleChangePin(body: Dto.HandleChangePin, user: TUser) {
+    if (body.newPin === body.currentPin) throw new BadRequestException();
+
+    const isValidPin = await this.argon.verify(body.currentPin, user.auth.pin || '');
+    if (!isValidPin) throw new ForbiddenException(RESPONSE.INVALID_PIN);
+
+    await this.provider.db.update(Auth).set({ pin: await this.argon.hash(body.newPin), updatedAt: new Date() });
+    return {};
+  }
+
   async HttpHandlePhoneLogin(body: Dto.HandlePhoneLogin) {
     const user = await this.provider.db.query.User.findFirst({
       with: { auth: true },
@@ -47,9 +57,8 @@ export class AuthService {
     const isExistingUser = user?.id;
     if (!isExistingUser) throw new ForbiddenException(RESPONSE.INVALID_PIN);
 
-    const isTest = body.pin === '0000';
     const hasPinValid = await this.argon.verify(body.pin, user.auth.pin);
-    if (!isTest && !hasPinValid) throw new ForbiddenException(RESPONSE.INVALID_PIN);
+    if (!hasPinValid) throw new ForbiddenException(RESPONSE.INVALID_PIN);
 
     const { accessToken } = await this.GenerateLoginTokens(user.id);
     return { id: String(user.id), accessToken };

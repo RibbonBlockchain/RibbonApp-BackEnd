@@ -6,6 +6,18 @@ export class HandleCheckPhone {
   phone: string;
 }
 
+export class HandleChangePin {
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  currentPin: string;
+
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  newPin: string;
+}
+
 export class HandlePhoneSignUp {
   @IsNotEmpty()
   @IsPhoneNumber()
