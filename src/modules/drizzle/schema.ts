@@ -49,6 +49,7 @@ export const User = ribbonSchema.table('user', {
   socials: jsonb('socals'),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
+  lastClaimTime: timestamp('last_claim_time', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

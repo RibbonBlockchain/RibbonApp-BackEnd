@@ -91,4 +91,43 @@ export class UserService {
 
     return {};
   }
+
+  async HttpHandleClaimDailyReward(user: TUser) {
+    const userData = await this.provider.db.query.User.findFirst({
+      where: eq(User.id, user.id),
+    });
+
+    const wallet = await this.provider.db.query.Wallet.findFirst({
+      where: eq(Wallet.userId, user.id),
+    });
+
+    const lastClaimTime = userData.lastClaimTime;
+
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+    if (!lastClaimTime) {
+      // Claiming for first time
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: wallet.balance + 5 })
+        .where(eq(Wallet.userId, user.id));
+
+      await this.provider.db.update(User).set({ lastClaimTime: new Date() }).where(eq(User.id, user.id));
+
+      return {};
+    }
+
+    if (lastClaimTime && lastClaimTime < twelveHoursAgo) {
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: wallet.balance + 5 })
+        .where(eq(Wallet.userId, user.id));
+
+      await this.provider.db.update(User).set({ lastClaimTime: new Date() }).where(eq(User.id, user.id));
+
+      return {};
+    }
+
+    return {};
+  }
 }
