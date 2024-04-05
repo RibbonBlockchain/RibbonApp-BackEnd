@@ -33,4 +33,12 @@ export class UserController {
     const data = await this.userService.HttpHandleUpdateProfile(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Post('/claim')
+  async HttpClaimDailyReward(@ReqUser() user: TUser) {
+    const data = await this.userService.HttpHandleClaimDailyReward(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 }
