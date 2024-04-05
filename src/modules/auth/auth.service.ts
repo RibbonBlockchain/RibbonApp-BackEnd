@@ -136,7 +136,10 @@ export class AuthService {
   }
 
   async HttpHandleWorldIdLogin(body: Dto.HandleWorldIdLogin) {
+    console.log(body);
     const user = await this.provider.db.query.User.findFirst({ where: eq(User.worldId, body.id) });
+
+    console.log(user);
 
     const isExistingUser = user?.worldId;
 
@@ -151,9 +154,13 @@ export class AuthService {
         .values({ role: 'PATIENT', status: 'ACTIVE', worldId: body.id })
         .returning({ id: User.id });
 
+      console.log(user);
+
       await tx.insert(Auth).values({ userId: user.id });
       await tx.insert(Wallet).values({ userId: user.id, balance: 0, point: 0 });
     });
+
+    console.log('here adn there');
 
     const { accessToken } = await this.GenerateLoginTokens(user.id);
     return { accessToken };
