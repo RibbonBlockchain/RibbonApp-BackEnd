@@ -22,13 +22,6 @@
       "when": 1711649710886,
       "tag": "0002_striped_talon",
       "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1712234534263,
-      "tag": "0003_icy_redwing",
-      "breakpoints": true
     }
   ]
 }

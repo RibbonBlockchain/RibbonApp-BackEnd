@@ -1,1 +1,0 @@
-ALTER TABLE "ribbon"."user" ADD COLUMN "last_claim_time" timestamp with time zone;
