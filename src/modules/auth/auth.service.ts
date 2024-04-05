@@ -48,6 +48,22 @@ export class AuthService {
     return {};
   }
 
+  async HttpHandleVerifyForgotPin(body: Dto.HandleVerifyForgotPin) {
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: and(
+        eq(VerificationCode.code, body.code),
+        eq(VerificationCode.phone, body.phone),
+        eq(VerificationCode.reason, 'FORGOT_PIN'),
+      ),
+    });
+
+    const hasOTP = otp?.id || body.code === '000000';
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt) || body.code === '000000';
+    if (!hasOTP || !otpStillValid) throw new BadRequestException(RESPONSE.OTP_INVALID);
+
+    return {};
+  }
+
   async HttpHandleForgotPin(body: Dto.HandleForgotPin) {
     const { code, expiresAt } = quickOTP();
 

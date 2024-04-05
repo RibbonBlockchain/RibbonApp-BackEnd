@@ -12,6 +12,17 @@ export class HandleForgotPin {
   phone: string;
 }
 
+export class HandleVerifyForgotPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+
+  @Length(6, 6)
+  @IsNotEmpty()
+  @IsNumberString()
+  code: string;
+}
+
 export class HandleChangePin {
   @Length(4, 4)
   @IsNotEmpty()
