@@ -20,7 +20,7 @@ export const UserStatusMap = ['ACTIVE', 'ONBOARDING'] as const;
 export const UserStatusEnum = pgEnum('user_status', UserStatusMap);
 export type TUserStatus = (typeof UserStatusEnum.enumValues)[number];
 
-export const VerificationCodeReasonMap = ['SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
+export const VerificationCodeReasonMap = ['FORGOT_PIN', 'SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
 export const VerificationCodeReasonEnum = pgEnum('verification_code_reason', VerificationCodeReasonMap);
 export type TVerificationCodeReason = (typeof VerificationCodeReasonEnum.enumValues)[number];
 

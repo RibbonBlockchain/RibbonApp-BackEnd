@@ -48,6 +48,31 @@ export class AuthService {
     return {};
   }
 
+  async HttpHandleForgotPin(body: Dto.HandleForgotPin) {
+    const { code, expiresAt } = quickOTP();
+
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: eq(VerificationCode.phone, body.phone),
+    });
+
+    const alreadyHasOTP = otp?.id;
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt);
+
+    if (alreadyHasOTP && otpStillValid) return {};
+
+    await this.provider.db
+      .insert(VerificationCode)
+      .values({ code, expiresAt: expiresAt.date, reason: 'FORGOT_PIN', updatedAt: new Date(), phone: body.phone })
+      .onConflictDoUpdate({
+        target: VerificationCode.phone,
+        where: eq(VerificationCode.phone, body.phone),
+        set: { code, expiresAt: expiresAt.date, reason: 'FORGOT_PIN', updatedAt: new Date() },
+      });
+
+    await this.twilio.sendVerificationCode(code, body.phone);
+    return {};
+  }
+
   async HttpHandlePhoneLogin(body: Dto.HandlePhoneLogin) {
     const user = await this.provider.db.query.User.findFirst({
       with: { auth: true },

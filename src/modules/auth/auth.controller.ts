@@ -34,6 +34,13 @@ export class AuthController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
+  @Post('/pin/forgot')
+  @Version(VERSION_ONE)
+  async HttpHandleForgotPin(@Body() body: Dto.HandleForgotPin) {
+    const data = await this.auth.HttpHandleForgotPin(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
   @Post('/login/phone')
   @Version(VERSION_ONE)
   async HttpHandlePhoneLogin(@Body() body: Dto.HandlePhoneLogin) {

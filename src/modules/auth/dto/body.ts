@@ -6,6 +6,12 @@ export class HandleCheckPhone {
   phone: string;
 }
 
+export class HandleForgotPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+}
+
 export class HandleChangePin {
   @Length(4, 4)
   @IsNotEmpty()
