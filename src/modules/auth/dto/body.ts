@@ -6,6 +6,51 @@ export class HandleCheckPhone {
   phone: string;
 }
 
+export class HandleForgotPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+}
+
+export class HandleVerifyForgotPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+
+  @Length(6, 6)
+  @IsNotEmpty()
+  @IsNumberString()
+  code: string;
+}
+
+export class HandleResetPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+
+  @Length(6, 6)
+  @IsNotEmpty()
+  @IsNumberString()
+  code: string;
+
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  pin: string;
+}
+
+export class HandleChangePin {
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  currentPin: string;
+
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  newPin: string;
+}
+
 export class HandlePhoneSignUp {
   @IsNotEmpty()
   @IsPhoneNumber()

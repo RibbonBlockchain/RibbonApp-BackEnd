@@ -1,0 +1,1 @@
+ALTER TYPE "verification_code_reason" ADD VALUE 'FORGOT_PIN';
