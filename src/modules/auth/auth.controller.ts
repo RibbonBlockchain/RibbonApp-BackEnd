@@ -48,6 +48,13 @@ export class AuthController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
+  @Post('/pin/reset')
+  @Version(VERSION_ONE)
+  async HttpHandleResetPin(@Body() body: Dto.HandleResetPin) {
+    const data = await this.auth.HttpHandleResetPin(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
   @Post('/login/phone')
   @Version(VERSION_ONE)
   async HttpHandlePhoneLogin(@Body() body: Dto.HandlePhoneLogin) {

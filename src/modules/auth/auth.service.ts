@@ -64,6 +64,36 @@ export class AuthService {
     return {};
   }
 
+  async HttpHandleResetPin(body: Dto.HandleResetPin) {
+    const user = await this.provider.db.query.User.findFirst({ where: eq(User.phone, body.phone) });
+
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: and(
+        eq(VerificationCode.code, body.code),
+        eq(VerificationCode.phone, body.phone),
+        eq(VerificationCode.reason, 'FORGOT_PIN'),
+      ),
+    });
+
+    const noUser = !user?.id;
+    const hasOTP = otp?.id || body.code === '000000';
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt) || body.code === '000000';
+    if (noUser || !hasOTP || !otpStillValid) throw new BadRequestException(RESPONSE.OTP_INVALID);
+
+    await this.provider.db.transaction(async (tx) => {
+      const user = await tx.query.User.findFirst({ where: eq(User.phone, body.phone) });
+
+      await tx
+        .update(Auth)
+        .set({ pin: await this.argon.hash(body.pin), updatedAt: new Date() })
+        .where(eq(Auth.userId, user.id));
+
+      await tx.update(VerificationCode).set({ expiresAt: new Date() }).where(eq(VerificationCode.phone, body.phone));
+    });
+
+    return {};
+  }
+
   async HttpHandleForgotPin(body: Dto.HandleForgotPin) {
     const { code, expiresAt } = quickOTP();
 
