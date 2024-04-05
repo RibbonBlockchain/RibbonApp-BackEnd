@@ -47,6 +47,7 @@ export const User = ribbonSchema.table('user', {
   gender: GenderEnum('gender'),
   dob: date('dob'),
   socials: jsonb('socals'),
+  worldId: varchar('world_id'),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
   lastClaimTime: timestamp('last_claim_time', { withTimezone: true }),
@@ -60,7 +61,6 @@ export const Auth = ribbonSchema.table('auth', {
   password: varchar('password'),
   accessToken: varchar('access_token'),
   refreshToken: varchar('refresh_token'),
-  worldId: varchar('world_id'),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),

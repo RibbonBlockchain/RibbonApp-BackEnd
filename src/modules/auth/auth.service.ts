@@ -136,33 +136,23 @@ export class AuthService {
   }
 
   async HttpHandleWorldIdLogin(body: Dto.HandleWorldIdLogin) {
-    const auth = await this.provider.db.query.Auth.findFirst({
-      with: { user: true },
-      where: eq(Auth.worldId, body.sub),
-    });
+    const user = await this.provider.db.query.User.findFirst({ where: eq(User.worldId, body.id) });
 
-    const isExistingUser = auth?.user?.id;
+    const isExistingUser = user?.worldId;
 
     if (isExistingUser) {
-      const { accessToken } = await this.GenerateLoginTokens(auth.user.id);
+      const { accessToken } = await this.GenerateLoginTokens(user.id);
       return { accessToken };
     }
 
-    const user = await this.provider.db.transaction(async (tx) => {
+    await this.provider.db.transaction(async (tx) => {
       const [user] = await this.provider.db
         .insert(User)
-        .values({
-          role: 'PATIENT',
-          status: 'ACTIVE',
-          email: body.email,
-          lastName: body.name,
-          avatar: body.picture,
-          firstName: body.name,
-        })
+        .values({ role: 'PATIENT', status: 'ACTIVE', worldId: body.id })
         .returning({ id: User.id });
 
-      await tx.insert(Auth).values({ userId: user.id, worldId: body.sub });
-      return user;
+      await tx.insert(Auth).values({ userId: user.id });
+      await tx.insert(Wallet).values({ userId: user.id, balance: 0, point: 0 });
     });
 
     const { accessToken } = await this.GenerateLoginTokens(user.id);
