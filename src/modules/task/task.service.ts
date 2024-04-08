@@ -237,4 +237,20 @@ export class TaskService {
     });
     return { data };
   }
+
+  async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaire[]) {
+    await this.provider.db.transaction(async (tx) => {
+      await Promise.all(
+        body.map((data) => {
+          tx.insert(Question).values({ type: data.type, taskId: data.categoryId, text: data.question });
+        }),
+      );
+    });
+
+    return {};
+  }
+
+  async HttpHandleGetTaskCategories() {
+    return await this.provider.db.query.Task.findMany({});
+  }
 }
