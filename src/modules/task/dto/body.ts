@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsNumber, IsNumberString, IsPhoneNumber, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsNumberString, IsPhoneNumber, Length } from 'class-validator';
 
 export class TaskQuestionResponseDto {
   @IsNotEmpty()
@@ -29,17 +29,4 @@ export class CompletePhoneVerificationTask {
   @IsNotEmpty()
   @IsNumberString()
   code: string;
-}
-
-export class AddQuestionnaire {
-  @IsString()
-  type: any;
-
-  @IsInt()
-  @IsNotEmpty()
-  categoryId: number;
-
-  @IsString()
-  @IsNotEmpty()
-  question: string;
 }

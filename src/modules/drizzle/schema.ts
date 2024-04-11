@@ -114,6 +114,15 @@ export const Question = ribbonSchema.table('question', {
     .references(() => Task.id),
 });
 
+export const QuestionnaireCategory = ribbonSchema.table('questionnaire_category', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').unique().notNull(),
+  slug: varchar('slug').unique().notNull(),
+  description: varchar('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 export const Options = ribbonSchema.table('options', {
   id: serial('id').primaryKey(),
   point: integer('point').default(0),

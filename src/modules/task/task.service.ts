@@ -1,23 +1,23 @@
+import {
+  Task,
+  User,
+  TUser,
+  Answer,
+  Wallet,
+  Options,
+  Question,
+  TaskActivity,
+  VerificationCode,
+} from '../drizzle/schema';
 import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
-import { and, eq, inArray, notInArray } from 'drizzle-orm';
 import { TwilioService } from '../twiio/twilio.service';
 import { TDbProvider } from '../drizzle/drizzle.module';
+import { and, eq, inArray, notInArray } from 'drizzle-orm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import {
-  Answer,
-  Options,
-  Question,
-  TUser,
-  Task,
-  TaskActivity,
-  User,
-  VerificationCode,
-  Wallet,
-} from '../drizzle/schema';
 
 @Injectable()
 export class TaskService {
@@ -236,21 +236,5 @@ export class TaskService {
       where: eq(TaskActivity.userId, user.id),
     });
     return { data };
-  }
-
-  async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaire[]) {
-    await this.provider.db.transaction(async (tx) => {
-      await Promise.all(
-        body.map((data) => {
-          tx.insert(Question).values({ type: data.type, taskId: data.categoryId, text: data.question });
-        }),
-      );
-    });
-
-    return {};
-  }
-
-  async HttpHandleGetTaskCategories() {
-    return await this.provider.db.query.Task.findMany({});
   }
 }

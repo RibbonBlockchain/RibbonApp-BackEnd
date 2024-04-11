@@ -17,20 +17,6 @@ export class TaskController {
     return await this.taskService.HttpHandleGetTasks();
   }
 
-  @Get('/category')
-  @Version(VERSION_ONE)
-  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getTaskCategory() {
-    return await this.taskService.HttpHandleGetTaskCategories();
-  }
-
-  @Version(VERSION_ONE)
-  @Post('/questionnaire/add')
-  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async addQuestionnaire(@Body() body: Dto.AddQuestionnaire[]) {
-    return await this.taskService.HttpHandleAddQuestionnaire(body);
-  }
-
   @Get(':id')
   @AuthGuard()
   @Version(VERSION_ONE)
