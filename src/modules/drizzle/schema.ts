@@ -36,6 +36,10 @@ export const UserTaskStatusMap = ['COMPLETED', 'PROCESSING'] as const;
 export const UserTaskStatusEnum = pgEnum('user_task_status', UserTaskStatusMap);
 export type TUserTaskStatusType = (typeof UserTaskStatusEnum.enumValues)[number];
 
+export const ActivityTypeMap = ['DAILY_REWARD', 'APP_TASK'] as const;
+export const ActivityTypeEnum = pgEnum('activity_type', ActivityTypeMap);
+export type TActivityType = (typeof ActivityTypeEnum.enumValues)[number];
+
 export const User = ribbonSchema.table('user', {
   id: serial('id').primaryKey(),
   avatar: varchar('avatar'),
@@ -50,6 +54,7 @@ export const User = ribbonSchema.table('user', {
   worldId: varchar('world_id'),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
+  numberOfClaims: integer('numberOfClaims').default(0),
   lastClaimTime: timestamp('last_claim_time', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -149,12 +154,11 @@ export const Answer = ribbonSchema.table('answer', {
 
 export const TaskActivity = ribbonSchema.table('task_activity', {
   id: serial('id').primaryKey(),
-  taskId: integer('task_id')
-    .notNull()
-    .references(() => Task.id),
+  taskId: integer('task_id').references(() => Task.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
+  type: ActivityTypeEnum('type').default('APP_TASK'),
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

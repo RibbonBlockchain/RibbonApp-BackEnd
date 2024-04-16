@@ -112,7 +112,15 @@ export class UserService {
         .set({ balance: wallet.balance + 5 })
         .where(eq(Wallet.userId, user.id));
 
-      await this.provider.db.update(User).set({ lastClaimTime: new Date() }).where(eq(User.id, user.id));
+      await this.provider.db
+        .update(User)
+        .set({ lastClaimTime: new Date(), numberOfClaims: userData.numberOfClaims + 1 })
+        .where(eq(User.id, user.id));
+
+      await this.provider.db
+        .insert(TaskActivity)
+        .values({ userId: user.id, completedDate: new Date().toISOString(), type: 'DAILY_REWARD', status: 'COMPLETED' })
+        .execute();
 
       return {};
     }
@@ -123,7 +131,15 @@ export class UserService {
         .set({ balance: wallet.balance + 5 })
         .where(eq(Wallet.userId, user.id));
 
-      await this.provider.db.update(User).set({ lastClaimTime: new Date() }).where(eq(User.id, user.id));
+      await this.provider.db
+        .update(User)
+        .set({ lastClaimTime: new Date(), numberOfClaims: userData.numberOfClaims + 1 })
+        .where(eq(User.id, user.id));
+
+      await this.provider.db
+        .insert(TaskActivity)
+        .values({ userId: user.id, completedDate: new Date().toISOString(), type: 'DAILY_REWARD', status: 'COMPLETED' })
+        .execute();
 
       return {};
     }
