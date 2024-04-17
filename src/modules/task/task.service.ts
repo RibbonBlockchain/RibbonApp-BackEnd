@@ -153,7 +153,7 @@ export class TaskService {
         .where(eq(Wallet.userId, user.id));
     }
 
-    await this.provider.db.update(Wallet).set({ point: option.point });
+    await this.provider.db.update(Wallet).set({ point: option.point + wallet.point });
 
     return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
   }
