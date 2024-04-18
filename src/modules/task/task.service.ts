@@ -188,7 +188,7 @@ export class TaskService {
               Task.id,
               completedTasksId.map(({ taskId }) => taskId),
             ),
-            with: { ratings: true },
+            // with: { ratings: true },
           }).then((tasks) =>
             tasks.map((task) => ({
               ...task,
