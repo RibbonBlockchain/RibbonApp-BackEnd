@@ -16,7 +16,7 @@ import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
 import { TwilioService } from '../twiio/twilio.service';
 import { TDbProvider } from '../drizzle/drizzle.module';
-import { and, eq, inArray, notInArray } from 'drizzle-orm';
+import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -207,7 +207,7 @@ export class TaskService {
     const completedTasksId = [];
 
     const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: eq(TaskActivity.userId, user.id),
+      where: and(eq(TaskActivity.userId, user.id), ne(TaskActivity.type, 'DAILY_REWARD')),
     });
 
     userTaskActivity.forEach((task) => {
