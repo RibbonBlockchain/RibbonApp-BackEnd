@@ -160,7 +160,7 @@ export class TaskService {
 
   async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: string }) {
     const { completedDate } = query;
-    const completedTasksId = [];
+    const completedTasksId: { taskId: number; completedDate: string }[] = [];
 
     const userTaskActivity = completedDate
       ? await this.provider.db.query.TaskActivity.findMany({
@@ -175,20 +175,30 @@ export class TaskService {
         });
 
     userTaskActivity.forEach((task) => {
-      completedTasksId.push(task.taskId);
+      completedTasksId.push({ taskId: task.taskId, completedDate: task.completedDate });
     });
 
     let data = [];
 
     const taskActivity =
       completedTasksId.length > 0
-        ? await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) })
+        ? await this.provider.db.query.Task.findMany({
+            where: inArray(
+              Task.id,
+              completedTasksId.map(({ taskId }) => taskId),
+            ),
+          }).then((tasks) =>
+            tasks.map((task) => ({
+              ...task,
+              completedDate: completedTasksId.find(({ taskId }) => taskId === task.id)?.completedDate,
+            })),
+          )
         : [];
 
     data = [...taskActivity];
 
     userTaskActivity.map((t) => {
-      data.push(t);
+      if (t.type === 'DAILY_REWARD') data.push(t);
     });
 
     return { data };
