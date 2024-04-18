@@ -219,8 +219,8 @@ export class TaskService {
     });
 
     const data = await this.provider.db.query.Task.findMany({
-      where: notInArray(Task.id, completedTasksId),
       with: { questions: { with: { options: true } } },
+      where: completedTasksId?.length ? notInArray(Task.id, completedTasksId) : null,
     });
 
     const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
