@@ -1,23 +1,23 @@
-import {
-  Task,
-  User,
-  TUser,
-  Answer,
-  Wallet,
-  Options,
-  Question,
-  TaskActivity,
-  VerificationCode,
-} from '../drizzle/schema';
-import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
-import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
-import { TwilioService } from '../twiio/twilio.service';
-import { TDbProvider } from '../drizzle/drizzle.module';
-import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { quickOTP } from '@/core/utils/code';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { TDbProvider } from '../drizzle/drizzle.module';
+import {
+  Answer,
+  Options,
+  Question,
+  TUser,
+  Task,
+  TaskActivity,
+  User,
+  VerificationCode,
+  Wallet,
+} from '../drizzle/schema';
+import { TwilioService } from '../twiio/twilio.service';
+import * as Dto from './dto';
 
 @Injectable()
 export class TaskService {
@@ -178,10 +178,18 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
-    const data =
+    let data = [];
+
+    const taskActivity =
       completedTasksId.length > 0
         ? await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) })
         : [];
+
+    data = [...taskActivity];
+
+    userTaskActivity.map((t) => {
+      data.push(t);
+    });
 
     return { data };
   }
