@@ -13,4 +13,5 @@ export const RESPONSE = {
   SERVER_ERROR: 'A error occurred while processing your request',
 
   INVALID_TASK: 'Invalid task',
+  COMPLETE_QUESTIONNAIRE_TO_CONTINUE: 'You need to complete the questionnaire to continue',
 };

@@ -147,6 +147,7 @@ export class TaskService {
         .update(TaskActivity)
         .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
         .where(and(eq(TaskActivity.id, userTaskActivity.id), eq(TaskActivity.userId, user.id)));
+
       await this.provider.db
         .update(Wallet)
         .set({ balance: wallet.balance + task.reward })
@@ -187,6 +188,7 @@ export class TaskService {
               Task.id,
               completedTasksId.map(({ taskId }) => taskId),
             ),
+            with: { ratings: true },
           }).then((tasks) =>
             tasks.map((task) => ({
               ...task,
@@ -233,8 +235,8 @@ export class TaskService {
     });
 
     const data = await this.provider.db.query.Task.findMany({
-      where: notInArray(Task.id, completedTasksId),
       with: { questions: { with: { options: true } } },
+      where: completedTasksId?.length ? notInArray(Task.id, completedTasksId) : null,
     });
 
     const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
