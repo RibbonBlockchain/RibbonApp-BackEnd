@@ -1,7 +1,10 @@
+import fs from 'fs';
 import * as Dto from './dto';
+import csvtojson from 'csvtojson';
 import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
+//import excelToJson from 'convert-excel-to-json';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Question, QuestionnaireRating, TUser, TaskActivity } from '../drizzle/schema';
@@ -10,11 +13,29 @@ import { Question, QuestionnaireRating, TUser, TaskActivity } from '../drizzle/s
 export class QuestionnaireService {
   constructor(@Inject(DATABASE) private readonly provider: TDbProvider) {}
 
-  async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaire[]) {
+  async HttpHandleAddQuestions(body: Dto.AddQuestionsBody) {
     await this.provider.db.transaction(async (tx) => {
       await Promise.all(
-        body.map((data) => {
-          tx.insert(Question).values({ type: data.type, taskId: data.categoryId, text: data.question });
+        body.data.map(async (data, index) => {
+          await tx
+            .insert(Question)
+            .values({
+              type: data.type,
+              text: data.question,
+              isFirst: index === 0,
+              taskId: data.categoryId,
+              isLast: index === body.data.length - 1,
+            })
+            .onConflictDoUpdate({
+              target: [Question.text, Question.taskId],
+              set: {
+                type: data.type,
+                text: data.question,
+                isFirst: index === 0,
+                taskId: data.categoryId,
+                isLast: index === body.data.length - 1,
+              },
+            });
         }),
       );
     });
@@ -45,5 +66,20 @@ export class QuestionnaireService {
       .onConflictDoNothing();
 
     return {};
+  }
+
+  async HttpHandleUploadQuestionnaires(file: Express.Multer.File) {
+    console.log(await csvtojson({ alwaysSplitAtEOL: true, trim: true }).fromFile(file.path));
+
+    // console.log(
+    //   excelToJson({
+    //     includeEmptyLines: true,
+    //     header: { rows: 1 },
+    //     sourceFile: file.path,
+    //     columnToKey: { '*': '{{columnHeader}}' },
+    //   }),
+    // );
+
+    fs.rm(file.path, () => {});
   }
 }

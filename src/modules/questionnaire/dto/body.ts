@@ -1,4 +1,6 @@
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { QuestionTypeMap, TQuestionType } from '@/modules/drizzle/schema';
+import { IsArray, IsIn, IsInt, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 
 export class RateQuestionnaireBody {
   @IsInt()
@@ -10,9 +12,10 @@ export class RateQuestionnaireBody {
   activityId: number;
 }
 
-export class AddQuestionnaire {
-  @IsString()
-  type: any;
+class AddQuestionsPayload {
+  @IsNotEmpty()
+  @IsIn(QuestionTypeMap)
+  type: TQuestionType;
 
   @IsInt()
   @IsNotEmpty()
@@ -21,4 +24,11 @@ export class AddQuestionnaire {
   @IsString()
   @IsNotEmpty()
   question: string;
+}
+
+export class AddQuestionsBody {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddQuestionsPayload)
+  data: AddQuestionsPayload[];
 }

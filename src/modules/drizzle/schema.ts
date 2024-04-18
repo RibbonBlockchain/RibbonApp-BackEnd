@@ -138,16 +138,22 @@ export const QuestionnaireRating = ribbonSchema.table(
   }),
 );
 
-export const Question = ribbonSchema.table('question', {
-  id: serial('id').primaryKey(),
-  text: varchar('text'),
-  type: QuestionTypeEnum('type').notNull(),
-  isFirst: boolean('is_first').default(false),
-  isLast: boolean('is_last').default(false),
-  taskId: integer('task_id')
-    .notNull()
-    .references(() => Task.id),
-});
+export const Question = ribbonSchema.table(
+  'question',
+  {
+    id: serial('id').primaryKey(),
+    text: varchar('text'),
+    type: QuestionTypeEnum('type').notNull(),
+    isFirst: boolean('is_first').default(false),
+    isLast: boolean('is_last').default(false),
+    taskId: integer('task_id')
+      .notNull()
+      .references(() => Task.id),
+  },
+  (t) => ({
+    key: unique('key').on(t.text, t.taskId),
+  }),
+);
 
 export const QuestionnaireCategory = ribbonSchema.table('questionnaire_category', {
   id: serial('id').primaryKey(),
