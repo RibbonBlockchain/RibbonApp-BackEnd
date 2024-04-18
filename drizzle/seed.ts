@@ -42,7 +42,7 @@ const questionnaireCategories = [
 const main = async () => {
   const client = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    ssl: !isProduction ? { rejectUnauthorized: false } : undefined,
   });
 
   const db = drizzle(client);

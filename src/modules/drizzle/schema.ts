@@ -1,5 +1,16 @@
+import {
+  date,
+  jsonb,
+  serial,
+  pgEnum,
+  unique,
+  integer,
+  varchar,
+  boolean,
+  pgSchema,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { date, serial, pgEnum, integer, varchar, pgSchema, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
 
 export const ribbonSchema = pgSchema('ribbon');
 
@@ -108,6 +119,25 @@ export const Task = ribbonSchema.table('task', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+export const QuestionnaireRating = ribbonSchema.table(
+  'questionnaire_rating',
+  {
+    id: serial('id').primaryKey(),
+    rating: integer('rating').default(0),
+    questionId: integer('questionnaire_id')
+      .notNull()
+      .references(() => Task.id),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => User.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => ({
+    userIdQuestionId: unique('user_id_question_id').on(t.userId, t.questionId),
+  }),
+);
+
 export const Question = ribbonSchema.table('question', {
   id: serial('id').primaryKey(),
   text: varchar('text'),
@@ -174,6 +204,7 @@ export const UserRelations = relations(User, ({ one, many }) => ({
 export const TaskRelations = relations(Task, ({ many }) => ({
   questions: many(Question),
   activities: many(TaskActivity),
+  ratings: many(QuestionnaireCategory),
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({

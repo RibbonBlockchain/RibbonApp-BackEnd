@@ -147,6 +147,7 @@ export class TaskService {
         .update(TaskActivity)
         .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
         .where(and(eq(TaskActivity.id, userTaskActivity.id), eq(TaskActivity.userId, user.id)));
+
       await this.provider.db
         .update(Wallet)
         .set({ balance: wallet.balance + task.reward })
@@ -180,7 +181,10 @@ export class TaskService {
 
     const data =
       completedTasksId.length > 0
-        ? await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) })
+        ? await this.provider.db.query.Task.findMany({
+            where: inArray(Task.id, completedTasksId),
+            with: { ratings: true },
+          })
         : [];
 
     return { data };

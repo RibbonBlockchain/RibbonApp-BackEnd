@@ -1,8 +1,10 @@
 import * as Dto from './dto';
+import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
-import { Question } from '../drizzle/schema';
+import { RESPONSE } from '@/core/responses';
 import { TDbProvider } from '../drizzle/drizzle.module';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Question, QuestionnaireRating, TUser, TaskActivity } from '../drizzle/schema';
 
 @Injectable()
 export class QuestionnaireService {
@@ -22,5 +24,26 @@ export class QuestionnaireService {
 
   async HttpHandleGetTaskCategories() {
     return await this.provider.db.query.QuestionnaireCategory.findMany({});
+  }
+
+  async HttpHandleRateQuestionnaire(body: Dto.RateQuestionnaireBody, user: TUser) {
+    const activity = await this.provider.db.query.TaskActivity.findFirst({
+      with: { task: { columns: { id: true } } },
+      where: and(
+        eq(TaskActivity.userId, user.id),
+        eq(TaskActivity.id, body.activityId),
+        eq(TaskActivity.status, 'COMPLETED'),
+      ),
+    });
+
+    if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_QUESTIONNAIRE_TO_CONTINUE);
+
+    const rating = Math.max(0, Math.min(body.rating, 5));
+    await this.provider.db
+      .insert(QuestionnaireRating)
+      .values({ questionId: activity.taskId, userId: user.id, rating })
+      .onConflictDoNothing();
+
+    return {};
   }
 }

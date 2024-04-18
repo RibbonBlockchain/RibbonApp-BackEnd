@@ -1,4 +1,14 @@
-import { IsInt,IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+
+export class RateQuestionnaireBody {
+  @IsInt()
+  @IsNotEmpty()
+  rating: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  activityId: number;
+}
 
 export class AddQuestionnaire {
   @IsString()
