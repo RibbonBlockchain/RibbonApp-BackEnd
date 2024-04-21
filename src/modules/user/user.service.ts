@@ -7,7 +7,7 @@ import { quickOTP } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
+import { Notification, TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
 
 @Injectable()
 export class UserService {
@@ -145,5 +145,13 @@ export class UserService {
     }
 
     return {};
+  }
+
+  async HttpHandleGetUserNotifications(user: TUser) {
+    const notification = await this.provider.db.query.Notification.findMany({
+      where: eq(Notification.userId, user.id),
+    });
+
+    return { data: notification };
   }
 }

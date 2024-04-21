@@ -11,6 +11,7 @@ import { AdminModule } from '../admin/admin.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { DrizzleModule } from '../drizzle/drizzle.module';
 import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   providers: [AppService],
@@ -21,6 +22,7 @@ import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
     TaskModule,
     AdminModule,
     DrizzleModule,
+    NotificationModule,
     QuestionnaireModule,
     ConfigModule.forRoot({ load: [config], isGlobal: true }),
     MulterModule.register({ dest: '/uploads', storage: diskStorage({ destination: 'uploads' }) }),
