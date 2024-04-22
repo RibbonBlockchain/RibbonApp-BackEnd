@@ -200,11 +200,23 @@ export const TaskActivity = ribbonSchema.table('task_activity', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+export const Notification = ribbonSchema.table('notification', {
+  id: serial('id').primaryKey(),
+  title: varchar('title'),
+  message: varchar('message'),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  isRead: boolean('isRead').default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
 // Relations
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
   activities: many(TaskActivity),
+  notifications: many(Notification),
 }));
 
 export const TaskRelations = relations(Task, ({ many }) => ({
@@ -235,4 +247,8 @@ export const TaskActivityRelations = relations(TaskActivity, ({ one }) => ({
 
 export const AuthRelations = relations(Auth, ({ one }) => ({
   user: one(User, { fields: [Auth.userId], references: [User.id] }),
+}));
+
+export const NotificationRelations = relations(Notification, ({ one }) => ({
+  user: one(User, { fields: [Notification.userId], references: [User.id] }),
 }));
