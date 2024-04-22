@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."notification" ADD COLUMN "title" varchar;

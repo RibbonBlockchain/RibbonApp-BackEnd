@@ -202,6 +202,7 @@ export const TaskActivity = ribbonSchema.table('task_activity', {
 
 export const Notification = ribbonSchema.table('notification', {
   id: serial('id').primaryKey(),
+  title: varchar('title'),
   message: varchar('message'),
   userId: integer('user_id')
     .notNull()

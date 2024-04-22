@@ -16,7 +16,7 @@ const DrizzleDatabaseProvider = {
     const connectionString = configService.getOrThrow('DATABASE_URL');
     const pool = new Pool({
       connectionString,
-      ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+      ssl: isProduction ? { rejectUnauthorized: false } : { rejectUnauthorized: false },
     });
 
     const db = drizzle(pool, { schema });
