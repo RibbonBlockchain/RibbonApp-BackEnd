@@ -39,7 +39,18 @@ export const TaskTypeMap = ['QUESTIONNAIRE', 'APP'] as const;
 export const TaskTypeEnum = pgEnum('task_type', TaskTypeMap);
 export type TTaskType = (typeof TaskTypeEnum.enumValues)[number];
 
-export const QuestionTypeMap = ['BOOLEAN', 'MULTICHOICE', 'MULTISELECT', 'SHORT_ANSWER'] as const;
+export const QuestionTypeMap = [
+  'BOOLEAN',
+  'MULTICHOICE',
+  'MULTISELECT',
+  'SHORT_ANSWER',
+  'LONG_ANSWER',
+  'CHECKBOX',
+  'ROUND_BOX',
+  'BUBBLE',
+  'DATE',
+  'TIME',
+] as const;
 export const QuestionTypeEnum = pgEnum('question_type', QuestionTypeMap);
 export type TQuestionType = (typeof QuestionTypeEnum.enumValues)[number];
 
