@@ -21,10 +21,10 @@ export class QuestionnaireController {
   }
 
   @Version(VERSION_ONE)
-  @Post('/admin/questionnaire/questions')
+  @Post('/admin/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async addQuestions(@Body() body: Dto.AddQuestionsBody) {
-    const data = await this.questionnaireService.HttpHandleAddQuestions(body);
+  async addQuestions(@Body() body: Dto.AddQuestionnaireBody) {
+    const data = await this.questionnaireService.HttpHandleAddQuestionnaire(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 

@@ -7,24 +7,33 @@ import { RESPONSE } from '@/core/responses';
 //import excelToJson from 'convert-excel-to-json';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { Question, QuestionnaireRating, TUser, TaskActivity } from '../drizzle/schema';
+import { Question, QuestionnaireCategory, QuestionnaireRating, TUser, Task, TaskActivity } from '../drizzle/schema';
 
 @Injectable()
 export class QuestionnaireService {
   constructor(@Inject(DATABASE) private readonly provider: TDbProvider) {}
 
-  async HttpHandleAddQuestions(body: Dto.AddQuestionsBody) {
+  async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaireBody) {
     await this.provider.db.transaction(async (tx) => {
+      const category = await tx.query.QuestionnaireCategory.findFirst({
+        where: eq(QuestionnaireCategory.id, body.categoryId),
+      });
+
+      const [questionnaire] = await tx
+        .insert(Task)
+        .values({ type: 'QUESTIONNAIRE', description: '', name: category.name, reward: body.reward })
+        .returning({ id: Task.id });
+
       await Promise.all(
-        body.data.map(async (data, index) => {
+        body.questions.map(async (data, index) => {
           await tx
             .insert(Question)
             .values({
               type: data.type,
               text: data.question,
               isFirst: index === 0,
-              taskId: data.categoryId,
-              isLast: index === body.data.length - 1,
+              taskId: questionnaire.id,
+              isLast: index === body.questions.length - 1,
             })
             .onConflictDoUpdate({
               target: [Question.text, Question.taskId],
@@ -32,8 +41,8 @@ export class QuestionnaireService {
                 type: data.type,
                 text: data.question,
                 isFirst: index === 0,
-                taskId: data.categoryId,
-                isLast: index === body.data.length - 1,
+                taskId: questionnaire.id,
+                isLast: index === body.questions.length - 1,
               },
             });
         }),
