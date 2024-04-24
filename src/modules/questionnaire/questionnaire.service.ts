@@ -61,14 +61,15 @@ export class QuestionnaireService {
       with: { task: { columns: { id: true } } },
       where: and(
         eq(TaskActivity.userId, user.id),
-        eq(TaskActivity.id, body.activityId),
         eq(TaskActivity.status, 'COMPLETED'),
+        eq(TaskActivity.taskId, body.questionnaireId),
       ),
     });
 
     if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_QUESTIONNAIRE_TO_CONTINUE);
 
     const rating = Math.max(0, Math.min(body.rating, 5));
+
     await this.provider.db
       .insert(QuestionnaireRating)
       .values({ questionId: activity.taskId, userId: user.id, rating })

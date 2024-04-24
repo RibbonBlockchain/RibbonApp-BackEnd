@@ -9,7 +9,7 @@ export class RateQuestionnaireBody {
 
   @IsInt()
   @IsNotEmpty()
-  activityId: number;
+  questionnaireId: number;
 }
 
 class OptionPayload {
