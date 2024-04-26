@@ -1,13 +1,23 @@
+import {
+  TUser,
+  Task,
+  Options,
+  Question,
+  TaskActivity,
+  QuestionnaireRating,
+  QuestionnaireCategory,
+} from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import csvtojson from 'csvtojson';
 import { and, eq } from 'drizzle-orm';
+import { createSlug } from '@/core/utils';
+import { getPage } from '@/core/utils/page';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
-//import excelToJson from 'convert-excel-to-json';
+import excelToJson from 'convert-excel-to-json';
+import { generateCode } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { Question, QuestionnaireCategory, QuestionnaireRating, TUser, Task, TaskActivity } from '../drizzle/schema';
 
 @Injectable()
 export class QuestionnaireService {
@@ -56,6 +66,16 @@ export class QuestionnaireService {
     return await this.provider.db.query.QuestionnaireCategory.findMany({});
   }
 
+  async HttphandleGetQuestionnaires(query: Dto.GetAllQuestionnaireQuery) {
+    const { limit, offset } = getPage({ page: query.page, pageSize: query.pageSize });
+    const data = await this.provider.db.query.Task.findMany({ limit, offset });
+    return { data };
+  }
+
+  async HttphandleGetQuestionnaireById(id: number) {
+    return await this.provider.db.query.Task.findFirst({ where: eq(Task.id, id), with: { questions: true } });
+  }
+
   async HttpHandleRateQuestionnaire(body: Dto.RateQuestionnaireBody, user: TUser) {
     const activity = await this.provider.db.query.TaskActivity.findFirst({
       with: { task: { columns: { id: true } } },
@@ -79,16 +99,60 @@ export class QuestionnaireService {
   }
 
   async HttpHandleUploadQuestionnaires(file: Express.Multer.File) {
-    console.log(await csvtojson({ alwaysSplitAtEOL: true, trim: true }).fromFile(file.path));
+    const sheets = excelToJson({
+      sourceFile: file.path,
+      columnToKey: { '*': '{{columnHeader}}' },
+    });
 
-    // console.log(
-    //   excelToJson({
-    //     includeEmptyLines: true,
-    //     header: { rows: 1 },
-    //     sourceFile: file.path,
-    //     columnToKey: { '*': '{{columnHeader}}' },
-    //   }),
-    // );
+    // await this.provider.db.transaction(async (tx) => {
+    //   Object.values(sheets).map(async (sheet) => {
+    //     sheet.map((question) => {
+    //       let taskId;
+
+    //       if (question.id === 'id') taskId = await tx.insert
+
+    //     });
+
+    //     if (Math.random() > 2) console.log(createSlug('s'), generateCode(), Options, tx);
+    //   });
+    // });
+
+    // if (Math.random() < 2) return {};
+
+    await this.provider.db.transaction(async (tx) => {
+      Object.values(sheets).map(async (sheet) => {
+        const name = `${sheet?.[0]?.category}-${generateCode()}`;
+
+        const [questionnaire] = await tx
+          .insert(Task)
+          .values({ type: 'QUESTIONNAIRE', name, slug: createSlug(name) })
+          .returning();
+
+        await Promise.all(
+          sheet.map(async (q, i) => {
+            if (!q || !q.question || !q.type) return;
+
+            const [question] = await tx
+              .insert(Question)
+              .values({
+                text: q.question,
+                isFirst: i === 0,
+                type: q.type !== 'type' ? q.type : 'LONG_ANSWER',
+                taskId: questionnaire.id,
+                isLast: i === sheet.length - 1,
+              })
+              .onConflictDoNothing()
+              .returning();
+
+            await Promise.all(
+              (q?.options?.split(',') || [])?.map(async (o) => {
+                await tx.insert(Options).values({ questionId: question.id, text: o }).onConflictDoNothing();
+              }),
+            );
+          }),
+        );
+      });
+    });
 
     fs.rm(file.path, () => {});
   }

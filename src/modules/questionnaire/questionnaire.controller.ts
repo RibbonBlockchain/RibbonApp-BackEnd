@@ -6,7 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { QuestionnaireService } from './questionnaire.service';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Post, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
 
 @Controller()
 export class QuestionnaireController {
@@ -17,6 +17,22 @@ export class QuestionnaireController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getTaskCategory() {
     const data = await this.questionnaireService.HttpHandleGetTaskCategories();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/admin/questionnaire')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getQuestionnaires(@Query() query: Dto.GetAllQuestionnaireQuery) {
+    const data = await this.questionnaireService.HttphandleGetQuestionnaires(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/admin/questionnaire/:id')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getQuestionnaireById(@Param('id') id: number) {
+    const data = await this.questionnaireService.HttphandleGetQuestionnaireById(id);
     return { data, message: RESPONSE.SUCCESS };
   }
 
