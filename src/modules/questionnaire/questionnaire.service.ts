@@ -104,55 +104,41 @@ export class QuestionnaireService {
       columnToKey: { '*': '{{columnHeader}}' },
     });
 
-    // await this.provider.db.transaction(async (tx) => {
-    //   Object.values(sheets).map(async (sheet) => {
-    //     sheet.map((question) => {
-    //       let taskId;
+    await Promise.all(
+      Object.keys(sheets).map(async (category) => {
+        let questionnaireId = 0;
+        const code = generateCode();
+        const name = `${category}-${code}`;
+        const questions = sheets[category];
 
-    //       if (question.id === 'id') taskId = await tx.insert
+        console.log(questions);
 
-    //     });
+        if (category === 'UHCF') {
+          for (const question of questions) {
+            if (question.id === 'id') {
+              const [res] = await this.provider.db
+                .insert(Task)
+                .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name) })
+                .returning({ id: Task.id });
 
-    //     if (Math.random() > 2) console.log(createSlug('s'), generateCode(), Options, tx);
-    //   });
-    // });
+              questionnaireId = res?.id;
+            } else {
+              const isLast = false;
+              const isFirst = question.id === 1;
 
-    // if (Math.random() < 2) return {};
+              const [res] = await this.provider.db
+                .insert(Question)
+                .values({ taskId: questionnaireId, type: question.type, isFirst, isLast, text: question.question })
+                .returning({ id: Question.id });
 
-    await this.provider.db.transaction(async (tx) => {
-      Object.values(sheets).map(async (sheet) => {
-        const name = `${sheet?.[0]?.category}-${generateCode()}`;
-
-        const [questionnaire] = await tx
-          .insert(Task)
-          .values({ type: 'QUESTIONNAIRE', name, slug: createSlug(name) })
-          .returning();
-
-        await Promise.all(
-          sheet.map(async (q, i) => {
-            if (!q || !q.question || !q.type) return;
-
-            const [question] = await tx
-              .insert(Question)
-              .values({
-                text: q.question,
-                isFirst: i === 0,
-                type: q.type !== 'type' ? q.type : 'LONG_ANSWER',
-                taskId: questionnaire.id,
-                isLast: i === sheet.length - 1,
-              })
-              .onConflictDoNothing()
-              .returning();
-
-            await Promise.all(
-              (q?.options?.split(',') || [])?.map(async (o) => {
-                await tx.insert(Options).values({ questionId: question.id, text: o }).onConflictDoNothing();
-              }),
-            );
-          }),
-        );
-      });
-    });
+              question?.options?.split(',')?.map(async (option) => {
+                await this.provider.db.insert(Options).values({ questionId: res.id, text: option });
+              });
+            }
+          }
+        }
+      }),
+    );
 
     fs.rm(file.path, () => {});
   }
