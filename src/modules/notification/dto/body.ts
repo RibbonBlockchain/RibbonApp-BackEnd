@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 export class SendGeneralNotificationDto {
   @IsString()
@@ -6,4 +6,9 @@ export class SendGeneralNotificationDto {
 
   @IsString()
   message: string;
+}
+
+export class ReadNotificationDto {
+  @IsNumber()
+  notificationId: number;
 }
