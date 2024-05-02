@@ -10,7 +10,7 @@ import {
 import fs from 'fs';
 import * as Dto from './dto';
 import { and, eq } from 'drizzle-orm';
-import { createSlug } from '@/core/utils';
+import { createSlug, getRewardValue } from '@/core/utils';
 import { getPage } from '@/core/utils/page';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
@@ -111,30 +111,28 @@ export class QuestionnaireService {
         const name = `${category}-${code}`;
         const questions = sheets[category];
 
-        console.log(questions);
+        for (const question of questions) {
+          if (question.id === 'id') {
+            const reward = getRewardValue(Object.keys(question)) || 0;
 
-        if (category === 'UHCF') {
-          for (const question of questions) {
-            if (question.id === 'id') {
-              const [res] = await this.provider.db
-                .insert(Task)
-                .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name) })
-                .returning({ id: Task.id });
+            const [res] = await this.provider.db
+              .insert(Task)
+              .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name), reward })
+              .returning({ id: Task.id });
 
-              questionnaireId = res?.id;
-            } else {
-              const isLast = false;
-              const isFirst = question.id === 1;
+            questionnaireId = res?.id;
+          } else {
+            const isLast = false;
+            const isFirst = question.id === 1;
 
-              const [res] = await this.provider.db
-                .insert(Question)
-                .values({ taskId: questionnaireId, type: question.type, isFirst, isLast, text: question.question })
-                .returning({ id: Question.id });
+            const [res] = await this.provider.db
+              .insert(Question)
+              .values({ taskId: questionnaireId, type: question.type, isFirst, isLast, text: question.question })
+              .returning({ id: Question.id });
 
-              question?.options?.split(',')?.map(async (option) => {
-                await this.provider.db.insert(Options).values({ questionId: res.id, text: option });
-              });
-            }
+            question?.options?.split(',')?.map(async (option) => {
+              await this.provider.db.insert(Options).values({ questionId: res.id, text: option });
+            });
           }
         }
       }),
