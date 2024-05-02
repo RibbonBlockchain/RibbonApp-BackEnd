@@ -45,6 +45,14 @@ export class QuestionnaireController {
   }
 
   @Version(VERSION_ONE)
+  @Post('/admin/questionnaire/category')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async createQuestionnaireCategory(@Body() body: Dto.CreateQuestionnaireCategoryBody) {
+    const data = await this.questionnaireService.HttpHandleCreateQuestionnaireCategory(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Post('/admin/questionnaire/upload')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))

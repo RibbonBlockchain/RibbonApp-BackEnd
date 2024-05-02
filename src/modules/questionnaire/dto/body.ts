@@ -51,3 +51,14 @@ export class AddQuestionnaireBody {
   @ValidateNested({ each: true })
   questions: QuestionPayload[];
 }
+
+export class CreateQuestionnaireCategoryBody {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  description: string;
+}

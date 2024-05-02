@@ -23,6 +23,15 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 export class QuestionnaireService {
   constructor(@Inject(DATABASE) private readonly provider: TDbProvider) {}
 
+  async HttpHandleCreateQuestionnaireCategory(body: Dto.CreateQuestionnaireCategoryBody) {
+    await this.provider.db
+      .insert(QuestionnaireCategory)
+      .values({ name: body.name, slug: createSlug(body.name), description: body.description })
+      .onConflictDoNothing();
+
+    return {};
+  }
+
   async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaireBody) {
     await this.provider.db.transaction(async (tx) => {
       const category = await tx.query.QuestionnaireCategory.findFirst({
