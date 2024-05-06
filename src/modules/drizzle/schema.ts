@@ -130,15 +130,6 @@ export const Task = ribbonSchema.table('task', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const TasskCategory = ribbonSchema.table('tassk_category', {
-  id: serial('id').primaryKey(),
-  name: varchar('name').unique().notNull(),
-  slug: varchar('slug').unique().notNull(),
-  description: varchar('description'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
-
 export const Survey = ribbonSchema.table('survey', {
   id: serial('id').primaryKey(),
   image: varchar('image'),
@@ -228,6 +219,99 @@ export const SurveyQuestionAnswer = ribbonSchema.table('survey_question_answer',
   optionId: integer('option_id')
     .notNull()
     .references(() => SurveyQuestionOptions.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const Tassk = ribbonSchema.table('tassk', {
+  id: serial('id').primaryKey(),
+  image: varchar('image'),
+  name: varchar('name'),
+  slug: varchar('slug'),
+  description: varchar('description'),
+  reward: integer('reward').default(0),
+  categoryId: integer('category_id')
+    .notNull()
+    .references(() => TasskCategory.id),
+  duration: integer('duration').default(60),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const TasskActivity = ribbonSchema.table('tassk_activity', {
+  id: serial('id').primaryKey(),
+  taskId: integer('tassk_id').references(() => Tassk.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  status: UserTaskStatusEnum('status').default('PROCESSING'),
+  completedDate: date('completed_date'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const TasskRating = ribbonSchema.table(
+  'task_rating',
+  {
+    id: serial('id').primaryKey(),
+    rating: integer('rating').default(0),
+    taskId: integer('task_id')
+      .notNull()
+      .references(() => Tassk.id),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => User.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => ({
+    userIdTaskId: unique('user_id_task_id').on(t.userId, t.taskId),
+  }),
+);
+
+export const TasskCategory = ribbonSchema.table('task_category', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').unique().notNull(),
+  slug: varchar('slug').unique().notNull(),
+  description: varchar('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const TasskQuestion = ribbonSchema.table(
+  'task_question',
+  {
+    id: serial('id').primaryKey(),
+    text: varchar('text'),
+    type: QuestionTypeEnum('type').notNull(),
+    isFirst: boolean('is_first').default(false),
+    isLast: boolean('is_last').default(false),
+    taskId: integer('task_id')
+      .notNull()
+      .references(() => Tassk.id),
+  },
+  (t) => ({
+    key: unique('task_question_key').on(t.text, t.taskId),
+  }),
+);
+
+export const TasskQuestionOptions = ribbonSchema.table('task_question_options', {
+  id: serial('id').primaryKey(),
+  point: integer('point').default(0),
+  text: varchar('text'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  questionId: integer('question_id')
+    .notNull()
+    .references(() => TasskQuestion.id),
+});
+
+export const TasskQuestionAnswer = ribbonSchema.table('task_question_answer', {
+  id: serial('id').primaryKey(),
+  questionId: integer('question_id')
+    .notNull()
+    .references(() => TasskQuestion.id),
+  response: varchar('response'),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
@@ -350,6 +434,28 @@ export const SurveyRelations = relations(Survey, ({ one, many }) => ({
 export const SurveyQuestionRelations = relations(SurveyQuestion, ({ one, many }) => ({
   options: many(SurveyQuestionOptions),
   survey: one(Survey, { fields: [SurveyQuestion.surveyId], references: [Survey.id] }),
+}));
+
+export const TasskRelations = relations(Tassk, ({ one, many }) => ({
+  ratings: many(TasskRating),
+  questions: many(TasskQuestion),
+  activities: many(TasskActivity),
+  category: one(TasskCategory, { fields: [Tassk.categoryId], references: [TasskCategory.id] }),
+}));
+
+export const TasskQuestionRelations = relations(TasskQuestion, ({ one, many }) => ({
+  options: many(TasskQuestionOptions),
+  survey: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
+}));
+
+export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => ({
+  question: one(TasskQuestion, { fields: [TasskQuestionAnswer.questionId], references: [TasskQuestion.id] }),
+  user: one(User, { fields: [TasskQuestionAnswer.userId], references: [User.id] }),
+}));
+
+export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
+  survey: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
+  user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
 }));
 
 export const SurveyAnswerRelations = relations(SurveyQuestionAnswer, ({ one }) => ({

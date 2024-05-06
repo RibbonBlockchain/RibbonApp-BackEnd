@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { TaskModule } from '../task/task.module';
+import { TasskModule } from '../tassk/tassk.module';
 import { AdminModule } from '../admin/admin.module';
 import { SurveyModule } from '../survey/survey.module';
 import { MulterModule } from '@nestjs/platform-express';
@@ -21,6 +22,7 @@ import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
     AuthModule,
     UserModule,
     TaskModule,
+    TasskModule,
     AdminModule,
     SurveyModule,
     DrizzleModule,
