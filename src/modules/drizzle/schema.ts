@@ -130,6 +130,110 @@ export const Task = ribbonSchema.table('task', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+export const TasskCategory = ribbonSchema.table('tassk_category', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').unique().notNull(),
+  slug: varchar('slug').unique().notNull(),
+  description: varchar('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const Survey = ribbonSchema.table('survey', {
+  id: serial('id').primaryKey(),
+  image: varchar('image'),
+  name: varchar('name'),
+  slug: varchar('slug'),
+  description: varchar('description'),
+  reward: integer('reward').default(0),
+  categoryId: integer('category_id')
+    .notNull()
+    .references(() => SurveyCategory.id),
+  duration: integer('duration').default(60),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const SurveyActivity = ribbonSchema.table('survey_activity', {
+  id: serial('id').primaryKey(),
+  surveyId: integer('survey_id').references(() => Survey.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  status: UserTaskStatusEnum('status').default('PROCESSING'),
+  completedDate: date('completed_date'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const SurveyRating = ribbonSchema.table(
+  'survey_rating',
+  {
+    id: serial('id').primaryKey(),
+    rating: integer('rating').default(0),
+    surveyId: integer('survey_id')
+      .notNull()
+      .references(() => Task.id),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => User.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => ({
+    userIdSurveyId: unique('user_id_survey_id').on(t.userId, t.surveyId),
+  }),
+);
+
+export const SurveyCategory = ribbonSchema.table('survey_category', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').unique().notNull(),
+  slug: varchar('slug').unique().notNull(),
+  description: varchar('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const SurveyQuestion = ribbonSchema.table(
+  'survey__question',
+  {
+    id: serial('id').primaryKey(),
+    text: varchar('text'),
+    type: QuestionTypeEnum('type').notNull(),
+    isFirst: boolean('is_first').default(false),
+    isLast: boolean('is_last').default(false),
+    surveyId: integer('survey_id')
+      .notNull()
+      .references(() => Survey.id),
+  },
+  (t) => ({
+    key: unique('survey_question_key').on(t.text, t.surveyId),
+  }),
+);
+
+export const SurveyQuestionOptions = ribbonSchema.table('survey_question_options', {
+  id: serial('id').primaryKey(),
+  point: integer('point').default(0),
+  text: varchar('text'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  questionId: integer('question_id')
+    .notNull()
+    .references(() => SurveyQuestion.id),
+});
+
+export const SurveyQuestionAnswer = ribbonSchema.table('survey_question_answer', {
+  id: serial('id').primaryKey(),
+  questionId: integer('question_id')
+    .notNull()
+    .references(() => SurveyQuestion.id),
+  optionId: integer('option_id')
+    .notNull()
+    .references(() => SurveyQuestionOptions.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
 export const QuestionnaireRating = ribbonSchema.table(
   'questionnaire_rating',
   {
@@ -234,6 +338,32 @@ export const TaskRelations = relations(Task, ({ many }) => ({
   questions: many(Question),
   activities: many(TaskActivity),
   ratings: many(QuestionnaireCategory),
+}));
+
+export const SurveyRelations = relations(Survey, ({ one, many }) => ({
+  ratings: many(SurveyRating),
+  questions: many(SurveyQuestion),
+  activities: many(SurveyActivity),
+  category: one(SurveyCategory, { fields: [Survey.categoryId], references: [SurveyCategory.id] }),
+}));
+
+export const SurveyQuestionRelations = relations(SurveyQuestion, ({ one, many }) => ({
+  options: many(SurveyQuestionOptions),
+  survey: one(Survey, { fields: [SurveyQuestion.surveyId], references: [Survey.id] }),
+}));
+
+export const SurveyAnswerRelations = relations(SurveyQuestionAnswer, ({ one }) => ({
+  question: one(SurveyQuestion, { fields: [SurveyQuestionAnswer.questionId], references: [SurveyQuestion.id] }),
+  option: one(SurveyQuestionOptions, {
+    references: [SurveyQuestionOptions.id],
+    fields: [SurveyQuestionAnswer.optionId],
+  }),
+  user: one(User, { fields: [SurveyQuestionAnswer.userId], references: [User.id] }),
+}));
+
+export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
+  survey: one(Survey, { fields: [SurveyActivity.surveyId], references: [Survey.id] }),
+  user: one(User, { fields: [SurveyActivity.userId], references: [User.id] }),
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({

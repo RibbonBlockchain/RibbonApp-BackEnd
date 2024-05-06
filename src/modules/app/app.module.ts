@@ -8,10 +8,11 @@ import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { TaskModule } from '../task/task.module';
 import { AdminModule } from '../admin/admin.module';
+import { SurveyModule } from '../survey/survey.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { DrizzleModule } from '../drizzle/drizzle.module';
-import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
 import { NotificationModule } from '../notification/notification.module';
+import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
 
 @Module({
   providers: [AppService],
@@ -21,6 +22,7 @@ import { NotificationModule } from '../notification/notification.module';
     UserModule,
     TaskModule,
     AdminModule,
+    SurveyModule,
     DrizzleModule,
     NotificationModule,
     QuestionnaireModule,
