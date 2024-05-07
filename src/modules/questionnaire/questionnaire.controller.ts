@@ -15,8 +15,8 @@ export class QuestionnaireController {
   @Version(VERSION_ONE)
   @Get('/admin/questionnaire/category')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getTaskCategory() {
-    const data = await this.questionnaireService.HttpHandleGetTaskCategories();
+  async getTaskCategory(@Query() query: Dto.GetAllQuestionnaireCategoryQuery) {
+    const data = await this.questionnaireService.HttpHandleGetTaskCategories(query);
     return { data, message: RESPONSE.SUCCESS };
   }
 

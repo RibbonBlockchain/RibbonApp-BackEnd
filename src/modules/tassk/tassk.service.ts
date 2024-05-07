@@ -9,10 +9,10 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ilike, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import { getPage } from '@/core/utils/page';
+import { generatePagination, getPage } from '@/core/utils/page';
 import excelToJson from 'convert-excel-to-json';
 import { generateCode } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
@@ -23,8 +23,28 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 export class TasskService {
   constructor(@Inject(DATABASE) private readonly provider: TDbProvider) {}
 
-  async HttpHandleGetTasskCategories() {
-    return await this.provider.db.query.TasskCategory.findMany({});
+  async HttpHandleGetTasskCategories({ q, page, pageSize }: Dto.GetTasskCategoriesQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(
+          ilike(TasskCategory.name, searchQuery),
+          ilike(TasskCategory.slug, searchQuery),
+          ilike(TasskCategory.description, searchQuery),
+        )
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await tx.query.TasskCategory.findMany({ where: queryFilter, limit, offset });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${TasskCategory.id}) as int)` })
+        .from(TasskCategory)
+        .where(queryFilter);
+
+      return { data, pagination: generatePagination(page, pageSize, total) };
+    });
   }
 
   async HttpHandleCreateTasskCategory(body: Dto.CreateTasskCategoryBody) {
@@ -36,10 +56,24 @@ export class TasskService {
     return {};
   }
 
-  async HttphandleGetTassks(query: Dto.GetAllTasskQuery) {
-    const { limit, offset } = getPage({ page: query.page, pageSize: query.pageSize });
-    const data = await this.provider.db.query.Tassk.findMany({ limit, offset });
-    return { data };
+  async HttphandleGetTassks({ q, page, pageSize }: Dto.GetAllTasskQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(ilike(Tassk.name, searchQuery), ilike(Tassk.slug, searchQuery), ilike(Tassk.description, searchQuery))
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await tx.query.Tassk.findMany({ where: queryFilter, limit, offset });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${Tassk.id}) as int)` })
+        .from(Tassk)
+        .where(queryFilter);
+
+      return { data, pagination: generatePagination(page, pageSize, total) };
+    });
   }
 
   async HttphandleGetTasskById(id: number) {

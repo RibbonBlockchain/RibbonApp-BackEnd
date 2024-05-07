@@ -9,10 +9,10 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ilike, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import { getPage } from '@/core/utils/page';
+import { generatePagination, getPage } from '@/core/utils/page';
 import excelToJson from 'convert-excel-to-json';
 import { generateCode } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
@@ -23,8 +23,28 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 export class SurveyService {
   constructor(@Inject(DATABASE) private readonly provider: TDbProvider) {}
 
-  async HttpHandleGetSurveyCategories() {
-    return await this.provider.db.query.SurveyCategory.findMany({});
+  async HttpHandleGetSurveyCategories({ q, page, pageSize }: Dto.GetSurveyCategoriesQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(
+          ilike(SurveyCategory.name, searchQuery),
+          ilike(SurveyCategory.slug, searchQuery),
+          ilike(SurveyCategory.description, searchQuery),
+        )
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await tx.query.SurveyCategory.findMany({ where: queryFilter, limit, offset });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${SurveyCategory.id}) as int)` })
+        .from(SurveyCategory)
+        .where(queryFilter);
+
+      return { data, pagination: generatePagination(page, pageSize, total) };
+    });
   }
 
   async HttpHandleCreateSurveyCategory(body: Dto.CreateSurveyCategoryBody) {
@@ -36,10 +56,24 @@ export class SurveyService {
     return {};
   }
 
-  async HttphandleGetSurveys(query: Dto.GetAllSurveyQuery) {
-    const { limit, offset } = getPage({ page: query.page, pageSize: query.pageSize });
-    const data = await this.provider.db.query.Survey.findMany({ limit, offset });
-    return { data };
+  async HttphandleGetSurveys({ q, page, pageSize }: Dto.GetAllSurveyQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(ilike(Survey.name, searchQuery), ilike(Survey.slug, searchQuery), ilike(Survey.description, searchQuery))
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await tx.query.Survey.findMany({ where: queryFilter, limit, offset });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${Survey.id}) as int)` })
+        .from(Survey)
+        .where(queryFilter);
+
+      return { data, pagination: generatePagination(page, pageSize, total) };
+    });
   }
 
   async HttphandleGetSurveyById(id: number) {

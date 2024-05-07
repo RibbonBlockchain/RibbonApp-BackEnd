@@ -15,8 +15,8 @@ export class TasskController {
   @Version(VERSION_ONE)
   @Get('/admin/task/category')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getTasskCategory() {
-    const data = await this.tassk.HttpHandleGetTasskCategories();
+  async getTasskCategory(@Query() query: Dto.GetTasskCategoriesQuery) {
+    const data = await this.tassk.HttpHandleGetTasskCategories(query);
     return { data, message: RESPONSE.SUCCESS };
   }
 

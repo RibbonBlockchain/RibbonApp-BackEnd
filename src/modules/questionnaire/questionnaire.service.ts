@@ -9,9 +9,9 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ilike, or, sql } from 'drizzle-orm';
 import { createSlug, getRewardValue } from '@/core/utils';
-import { getPage } from '@/core/utils/page';
+import { generatePagination, getPage } from '@/core/utils/page';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import excelToJson from 'convert-excel-to-json';
@@ -71,14 +71,48 @@ export class QuestionnaireService {
     return {};
   }
 
-  async HttpHandleGetTaskCategories() {
-    return await this.provider.db.query.QuestionnaireCategory.findMany({});
+  async HttpHandleGetTaskCategories({ q, page, pageSize }: Dto.GetAllQuestionnaireCategoryQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(
+          ilike(QuestionnaireCategory.name, searchQuery),
+          ilike(QuestionnaireCategory.slug, searchQuery),
+          ilike(QuestionnaireCategory.description, searchQuery),
+        )
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await tx.query.QuestionnaireCategory.findMany({ where: queryFilter, limit, offset });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${QuestionnaireCategory.id}) as int)` })
+        .from(QuestionnaireCategory)
+        .where(queryFilter);
+
+      return { data, pagination: generatePagination(page, pageSize, total) };
+    });
   }
 
-  async HttphandleGetQuestionnaires(query: Dto.GetAllQuestionnaireQuery) {
-    const { limit, offset } = getPage({ page: query.page, pageSize: query.pageSize });
-    const data = await this.provider.db.query.Task.findMany({ limit, offset });
-    return { data };
+  async HttphandleGetQuestionnaires({ q, page, pageSize }: Dto.GetAllQuestionnaireQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(ilike(Task.name, searchQuery), ilike(Task.slug, searchQuery), ilike(Task.description, searchQuery))
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await this.provider.db.query.Task.findMany({ limit, offset });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${Task.id}) as int)` })
+        .from(Task)
+        .where(queryFilter);
+
+      return { data, pagination: generatePagination(page, page, total) };
+    });
   }
 
   async HttphandleGetQuestionnaireById(id: number) {

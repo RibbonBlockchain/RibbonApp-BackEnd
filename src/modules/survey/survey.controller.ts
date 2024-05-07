@@ -15,8 +15,8 @@ export class SurveyController {
   @Version(VERSION_ONE)
   @Get('/admin/survey/category')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getSurveyCategory() {
-    const data = await this.survey.HttpHandleGetSurveyCategories();
+  async getSurveyCategory(@Query() query: Dto.GetSurveyCategoriesQuery) {
+    const data = await this.survey.HttpHandleGetSurveyCategories(query);
     return { data, message: RESPONSE.SUCCESS };
   }
 
