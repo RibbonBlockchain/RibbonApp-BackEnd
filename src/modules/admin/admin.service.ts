@@ -23,6 +23,10 @@ export class AdminService {
     return {};
   }
 
+  async HttpHandleGetDashboardSummary() {
+    return {};
+  }
+
   async HttpHandleChangePassword(body: Dto.AdminChangePasswordBody, reqUser: TUser) {
     const hasValidPassword = await this.argon.verify(body.oldPassword, reqUser.auth.password);
     if (!hasValidPassword) throw new BadRequestException(RESPONSE.INVALID_CREDENTIALS);
