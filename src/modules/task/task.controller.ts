@@ -4,7 +4,7 @@ import { TaskService } from './task.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Version } from '@nestjs/common';
 
 @Controller('task')
 export class TaskController {
@@ -29,6 +29,13 @@ export class TaskController {
   @Post('/request/verify-your-phone-number')
   async requestPhoneVerificationTask(@Body() body: Dto.RequestPhoneVerificationTask, @ReqUser() user: TUser) {
     return await this.taskService.HttpHandleRequestPhoneVerificationTask(body, user);
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Patch('/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSes) {
+    return await this.taskService.HttpHandleUpdateSes(body);
   }
 
   @AuthGuard()

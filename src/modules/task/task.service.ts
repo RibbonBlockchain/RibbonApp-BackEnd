@@ -257,4 +257,8 @@ export class TaskService {
     });
     return { data };
   }
+
+  async HttpHandleUpdateSes(input: Dto.UpdateSes) {
+    return await this.provider.db.update(Options).set({ point: input.point }).where(eq(Options.id, input.optionId));
+  }
 }
