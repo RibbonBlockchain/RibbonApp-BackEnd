@@ -168,6 +168,8 @@ export class QuestionnaireService {
             const isLast = false;
             const isFirst = question.id === 1;
 
+            console.log(question);
+
             const [res] = await this.provider.db
               .insert(Question)
               .values({ taskId: questionnaireId, type: question.type, isFirst, isLast, text: question.question })

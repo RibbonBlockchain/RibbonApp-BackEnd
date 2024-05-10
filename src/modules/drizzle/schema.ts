@@ -137,7 +137,7 @@ export const Survey = ribbonSchema.table('survey', {
   name: varchar('name'),
   slug: varchar('slug'),
   description: varchar('description'),
-  reward: integer('reward').default(0),
+  reward: doublePrecision('reward').default(0.1),
   categoryId: integer('category_id')
     .notNull()
     .references(() => SurveyCategory.id),
@@ -232,7 +232,7 @@ export const Tassk = ribbonSchema.table('tassk', {
   name: varchar('name'),
   slug: varchar('slug'),
   description: varchar('description'),
-  reward: integer('reward').default(0),
+  reward: doublePrecision('reward').default(0.1),
   categoryId: integer('category_id')
     .notNull()
     .references(() => TasskCategory.id),

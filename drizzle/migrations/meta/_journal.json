@@ -120,6 +120,13 @@
       "when": 1715333873526,
       "tag": "0016_easy_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1715334616369,
+      "tag": "0017_thick_chronomancer",
+      "breakpoints": true
     }
   ]
 }
