@@ -9,6 +9,7 @@ import {
   boolean,
   pgSchema,
   timestamp,
+  doublePrecision,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -124,9 +125,9 @@ export const Task = ribbonSchema.table('task', {
   slug: varchar('slug'),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
-  reward: integer('reward').default(0),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
+  reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
