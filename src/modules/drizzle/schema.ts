@@ -118,11 +118,11 @@ export const Wallet = ribbonSchema.table('wallet', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const Task = ribbonSchema.table('task', {
+export const Questionnaire = ribbonSchema.table('questionniare', {
   id: serial('id').primaryKey(),
   image: varchar('image'),
   name: varchar('name'),
-  slug: varchar('slug'),
+  slug: varchar('slug').unique(),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
   point: integer('point').default(0),
@@ -165,7 +165,7 @@ export const SurveyRating = ribbonSchema.table(
     rating: integer('rating').default(0),
     surveyId: integer('survey_id')
       .notNull()
-      .references(() => Task.id),
+      .references(() => Survey.id),
     userId: integer('user_id')
       .notNull()
       .references(() => User.id),
@@ -187,7 +187,7 @@ export const SurveyCategory = ribbonSchema.table('survey_category', {
 });
 
 export const SurveyQuestion = ribbonSchema.table(
-  'survey__question',
+  'survey_question',
   {
     id: serial('id').primaryKey(),
     text: varchar('text'),
@@ -327,7 +327,7 @@ export const QuestionnaireRating = ribbonSchema.table(
     rating: integer('rating').default(0),
     questionId: integer('questionnaire_id')
       .notNull()
-      .references(() => Task.id),
+      .references(() => Questionnaire.id),
     userId: integer('user_id')
       .notNull()
       .references(() => User.id),
@@ -349,7 +349,7 @@ export const Question = ribbonSchema.table(
     isLast: boolean('is_last').default(false),
     taskId: integer('task_id')
       .notNull()
-      .references(() => Task.id),
+      .references(() => Questionnaire.id),
   },
   (t) => ({
     key: unique('key').on(t.text, t.taskId),
@@ -389,9 +389,9 @@ export const Answer = ribbonSchema.table('answer', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const TaskActivity = ribbonSchema.table('task_activity', {
+export const QuestionnaireActivity = ribbonSchema.table('questionnaire_activity', {
   id: serial('id').primaryKey(),
-  taskId: integer('task_id').references(() => Task.id),
+  taskId: integer('task_id').references(() => Questionnaire.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
@@ -416,13 +416,13 @@ export const Notification = ribbonSchema.table('notification', {
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
-  activities: many(TaskActivity),
+  activities: many(QuestionnaireActivity),
   notifications: many(Notification),
 }));
 
-export const TaskRelations = relations(Task, ({ many }) => ({
+export const TaskRelations = relations(Questionnaire, ({ many }) => ({
   questions: many(Question),
-  activities: many(TaskActivity),
+  activities: many(QuestionnaireActivity),
   ratings: many(QuestionnaireCategory),
 }));
 
@@ -475,7 +475,7 @@ export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
-  task: one(Task, { fields: [Question.taskId], references: [Task.id] }),
+  task: one(Questionnaire, { fields: [Question.taskId], references: [Questionnaire.id] }),
   options: many(Options),
 }));
 
@@ -489,9 +489,9 @@ export const AnswerRelations = relations(Answer, ({ one }) => ({
   user: one(User, { fields: [Answer.userId], references: [User.id] }),
 }));
 
-export const TaskActivityRelations = relations(TaskActivity, ({ one }) => ({
-  task: one(Task, { fields: [TaskActivity.taskId], references: [Task.id] }),
-  user: one(User, { fields: [TaskActivity.userId], references: [User.id] }),
+export const TaskActivityRelations = relations(QuestionnaireActivity, ({ one }) => ({
+  task: one(Questionnaire, { fields: [QuestionnaireActivity.taskId], references: [Questionnaire.id] }),
+  user: one(User, { fields: [QuestionnaireActivity.userId], references: [User.id] }),
 }));
 
 export const AuthRelations = relations(Auth, ({ one }) => ({

@@ -3,7 +3,7 @@ import * as env from 'dotenv';
 import * as Argon2 from 'argon2';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { createSlug, isProduction } from '../src/core/utils';
-import { Auth, QuestionnaireCategory, Task, User } from '../src/modules/drizzle/schema';
+import { Auth, QuestionnaireCategory, Questionnaire, User } from '../src/modules/drizzle/schema';
 
 env.config();
 
@@ -50,7 +50,7 @@ const main = async () => {
   await db.transaction(async (tx) => {
     tasks.forEach(async (task) => {
       await tx
-        .insert(Task)
+        .insert(Questionnaire)
         .values({
           type: 'APP',
           name: task.title,

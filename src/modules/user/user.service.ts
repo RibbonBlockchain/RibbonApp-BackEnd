@@ -1,3 +1,12 @@
+import {
+  User,
+  TUser,
+  Wallet,
+  Notification,
+  Questionnaire,
+  VerificationCode,
+  QuestionnaireActivity,
+} from '../drizzle/schema';
 import * as Dto from './dto';
 import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
@@ -7,7 +16,6 @@ import { quickOTP } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { Notification, TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
 
 @Injectable()
 export class UserService {
@@ -33,10 +41,14 @@ export class UserService {
     if (body.email) {
       const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
 
-      const task = await this.provider.db.query.Task.findFirst({ where: eq(Task.name, 'Complete your profile') });
+      const task = await this.provider.db.query.Questionnaire.findFirst({
+        where: eq(Questionnaire.name, 'Complete your profile'),
+      });
 
       if (task) {
-        await this.provider.db.insert(TaskActivity).values({ taskId: task.id, userId: user.id, status: 'COMPLETED' });
+        await this.provider.db
+          .insert(QuestionnaireActivity)
+          .values({ taskId: task.id, userId: user.id, status: 'COMPLETED' });
       }
 
       const balance = wallet.balance + 5;
@@ -118,7 +130,7 @@ export class UserService {
         .where(eq(User.id, user.id));
 
       await this.provider.db
-        .insert(TaskActivity)
+        .insert(QuestionnaireActivity)
         .values({ userId: user.id, completedDate: new Date().toISOString(), type: 'DAILY_REWARD', status: 'COMPLETED' })
         .execute();
 
@@ -137,7 +149,7 @@ export class UserService {
         .where(eq(User.id, user.id));
 
       await this.provider.db
-        .insert(TaskActivity)
+        .insert(QuestionnaireActivity)
         .values({ userId: user.id, completedDate: new Date().toISOString(), type: 'DAILY_REWARD', status: 'COMPLETED' })
         .execute();
 

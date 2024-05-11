@@ -1,10 +1,10 @@
 import {
   TUser,
-  Task,
   Options,
   Question,
-  TaskActivity,
+  Questionnaire,
   QuestionnaireRating,
+  QuestionnaireActivity,
   QuestionnaireCategory,
 } from '../drizzle/schema';
 import fs from 'fs';
@@ -39,9 +39,9 @@ export class QuestionnaireService {
       });
 
       const [questionnaire] = await tx
-        .insert(Task)
+        .insert(Questionnaire)
         .values({ type: 'QUESTIONNAIRE', description: '', name: category.name, reward: body.reward })
-        .returning({ id: Task.id });
+        .returning({ id: Questionnaire.id });
 
       await Promise.all(
         body.questions.map(async (data, index) => {
@@ -105,20 +105,24 @@ export class QuestionnaireService {
     const { limit, offset } = getPage({ page, pageSize });
 
     const queryFilter = q
-      ? or(ilike(Task.name, searchQuery), ilike(Task.slug, searchQuery), ilike(Task.description, searchQuery))
+      ? or(
+          ilike(Questionnaire.name, searchQuery),
+          ilike(Questionnaire.slug, searchQuery),
+          ilike(Questionnaire.description, searchQuery),
+        )
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await this.provider.db.query.Task.findMany({
+      const data = await this.provider.db.query.Questionnaire.findMany({
         limit,
         offset,
         where: queryFilter,
-        orderBy: desc(Task.updatedAt),
+        orderBy: desc(Questionnaire.updatedAt),
       });
 
       const [{ total }] = await tx
-        .select({ total: sql<number>`cast(count(${Task.id}) as int)` })
-        .from(Task)
+        .select({ total: sql<number>`cast(count(${Questionnaire.id}) as int)` })
+        .from(Questionnaire)
         .where(queryFilter);
 
       return { data, pagination: generatePagination(page, pageSize, total) };
@@ -126,16 +130,19 @@ export class QuestionnaireService {
   }
 
   async HttphandleGetQuestionnaireById(id: number) {
-    return await this.provider.db.query.Task.findFirst({ where: eq(Task.id, id), with: { questions: true } });
+    return await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.id, id),
+      with: { questions: true },
+    });
   }
 
   async HttpHandleRateQuestionnaire(body: Dto.RateQuestionnaireBody, user: TUser) {
-    const activity = await this.provider.db.query.TaskActivity.findFirst({
+    const activity = await this.provider.db.query.QuestionnaireActivity.findFirst({
       with: { task: { columns: { id: true } } },
       where: and(
-        eq(TaskActivity.userId, user.id),
-        eq(TaskActivity.status, 'COMPLETED'),
-        eq(TaskActivity.taskId, body.questionnaireId),
+        eq(QuestionnaireActivity.userId, user.id),
+        eq(QuestionnaireActivity.status, 'COMPLETED'),
+        eq(QuestionnaireActivity.taskId, body.questionnaireId),
       ),
     });
 
@@ -169,9 +176,9 @@ export class QuestionnaireService {
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
-              .insert(Task)
+              .insert(Questionnaire)
               .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name), reward })
-              .returning({ id: Task.id });
+              .returning({ id: Questionnaire.id });
 
             questionnaireId = res?.id;
           } else {
