@@ -226,7 +226,7 @@ export class QuestionnaireService {
             index += 1;
             const id = index === 1 ? '' : index;
 
-            const name = `${category} ${id}`.trim();
+            const name = `${category} ${generateCode()}`.trim();
             console.log(id, name);
 
             const reward = getRewardValue(Object.keys(question)) || 0;
