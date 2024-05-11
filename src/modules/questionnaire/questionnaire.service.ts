@@ -234,8 +234,8 @@ export class QuestionnaireService {
 
             questionnaireId = res?.id;
           } else {
-            const isLast = false;
             const isFirst = question.id === 1;
+            const isLast = question.id === questions?.length - 1;
 
             const [res] = await this.provider.db
               .insert(Question)
