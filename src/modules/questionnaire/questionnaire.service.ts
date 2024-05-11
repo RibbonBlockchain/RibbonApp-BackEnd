@@ -217,17 +217,14 @@ export class QuestionnaireService {
 
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
-        let index = 1;
+        let index = 0;
         let questionnaireId = 0;
         const questions = sheets[category];
 
         for (const question of questions) {
-          index += 1;
-          const name = `${category} ${index}`.trim();
-
-          console.log(index, name);
-
           if (question.id === 'id') {
+            index += 1;
+            const name = `${category} ${index}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
