@@ -12,7 +12,7 @@ import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import excelToJson from 'convert-excel-to-json';
-import { generateCode } from '@/core/utils/code';
+import { generateCode, getNumberAtEnd } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { createSlug, getRewardValue } from '@/core/utils';
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
@@ -220,16 +220,20 @@ export class QuestionnaireService {
         let questionnaireId = 0;
         const questions = sheets[category];
 
+        const cat = await this.provider.db.query.QuestionnaireCategory.findFirst({
+          orderBy: desc(QuestionnaireCategory.createdAt),
+        });
+
         for (const question of questions) {
-          const code = generateCode();
-          const name = `${category}-${code}`;
+          const code = !cat ? '' : getNumberAtEnd(category) || '';
+          const name = `${category} ${code}`.trim();
 
           if (question.id === 'id') {
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
               .insert(Questionnaire)
-              .values({ type: 'QUESTIONNAIRE', name: category, description: '', slug: createSlug(name), reward })
+              .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name), reward })
               .returning({ id: Questionnaire.id });
 
             questionnaireId = res?.id;

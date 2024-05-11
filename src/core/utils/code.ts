@@ -21,3 +21,8 @@ export const generateCode = (length = 6) => {
     upperCaseAlphabets: false,
   });
 };
+
+export const getNumberAtEnd = (str: string) => {
+  const match = str.match(/\d+$/);
+  return match ? parseInt(match[0]) : null;
+};
