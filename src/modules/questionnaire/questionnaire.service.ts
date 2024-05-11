@@ -137,9 +137,15 @@ export class QuestionnaireService {
         where: queryFilter,
         orderBy: desc(Questionnaire.updatedAt),
         extras: {
-          questions: sql<number>`(SELECT COUNT(*) FROM ${Question} WHERE ${Question.taskId} = ${Questionnaire.id})`.as(
-            'questions',
-          ),
+          responses:
+            sql<number>`(select cast(count(*) as int) from ${QuestionnaireActivity} WHERE ${QuestionnaireActivity.taskId} = ${Questionnaire.id})`.as(
+              'responses',
+            ),
+
+          questions:
+            sql<number>`(select cast(count(*) as int) from ${Question} WHERE ${Question.taskId} = ${Questionnaire.id})`.as(
+              'questions',
+            ),
         },
       });
 
