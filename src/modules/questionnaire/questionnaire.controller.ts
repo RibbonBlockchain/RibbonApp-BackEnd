@@ -1,3 +1,15 @@
+import {
+  Get,
+  Body,
+  Post,
+  Param,
+  Patch,
+  Query,
+  Version,
+  Controller,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import * as Dto from './dto';
 import { TUser } from '../drizzle/schema';
 import { RESPONSE } from '@/core/responses';
@@ -6,7 +18,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { QuestionnaireService } from './questionnaire.service';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
 
 @Controller()
 export class QuestionnaireController {
@@ -25,6 +36,14 @@ export class QuestionnaireController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getQuestionnaires(@Query() query: Dto.GetAllQuestionnaireQuery) {
     const data = await this.questionnaireService.HttphandleGetQuestionnaires(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Patch('/admin/questionnaire/status')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateQuestionnaireStatus(@Body() body: Dto.UpdateQuestionnaireStatusBody) {
+    const data = await this.questionnaireService.HttpHandleUpdateQuestionnaireStatus(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 

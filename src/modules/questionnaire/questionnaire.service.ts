@@ -9,14 +9,14 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { createSlug, getRewardValue } from '@/core/utils';
-import { generatePagination, getPage } from '@/core/utils/page';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import excelToJson from 'convert-excel-to-json';
 import { generateCode } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
+import { createSlug, getRewardValue } from '@/core/utils';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class QuestionnaireService {
       });
 
       const code = generateCode();
-      const slug = createSlug(category.name + code);
+      const slug = createSlug(category.name + ' ' + code);
 
       const [questionnaire] = await tx
         .insert(Questionnaire)
@@ -118,9 +118,16 @@ export class QuestionnaireService {
     });
   }
 
-  async HttphandleGetQuestionnaires({ q, page, pageSize }: Dto.GetAllQuestionnaireQuery) {
+  async HttpHandleUpdateQuestionnaireStatus(body: Dto.UpdateQuestionnaireStatusBody) {
+    await this.provider.db.update(Questionnaire).set({ status: body.status }).where(eq(Questionnaire.id, body.id));
+    return {};
+  }
+
+  async HttphandleGetQuestionnaires({ q, page, status, pageSize }: Dto.GetAllQuestionnaireQuery) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });
+
+    const statusFilter = status ? eq(Questionnaire.status, status) : undefined;
 
     const queryFilter = q
       ? or(
@@ -131,20 +138,20 @@ export class QuestionnaireService {
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await this.provider.db.query.Questionnaire.findMany({
+      const data = await tx.query.Questionnaire.findMany({
         limit,
         offset,
-        where: queryFilter,
+        where: and(queryFilter, statusFilter),
         orderBy: desc(Questionnaire.updatedAt),
+        with: { questions: { limit: 1 }, activities: { limit: 1 } },
         extras: {
-          responses:
-            sql<number>`(select cast(count(*) as int) from ${QuestionnaireActivity} WHERE ${QuestionnaireActivity.taskId} = ${Questionnaire.id})`.as(
+          totalResponses:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${QuestionnaireActivity} WHERE ${Questionnaire.id} = questionnaire_activity.task_id)`.as(
               'responses',
             ),
-
-          questions:
-            sql<number>`(select cast(count(*) as int) from ${Question} WHERE ${Question.taskId} = ${Questionnaire.id})`.as(
-              'questions',
+          totalQuestions:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${Question} WHERE ${Questionnaire.id} = question.task_id)`.as(
+              'totalQuestions',
             ),
         },
       });

@@ -32,6 +32,10 @@ export const UserStatusMap = ['ACTIVE', 'ONBOARDING'] as const;
 export const UserStatusEnum = pgEnum('user_status', UserStatusMap);
 export type TUserStatus = (typeof UserStatusEnum.enumValues)[number];
 
+export const QuestionnaireStatusMap = ['ACTIVE', 'CLOSED'] as const;
+export const QuestionnaireStatusEnum = pgEnum('questionnaire_status', QuestionnaireStatusMap);
+export type TQuestionnaireStatus = (typeof QuestionnaireStatusEnum.enumValues)[number];
+
 export const VerificationCodeReasonMap = ['FORGOT_PIN', 'SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
 export const VerificationCodeReasonEnum = pgEnum('verification_code_reason', VerificationCodeReasonMap);
 export type TVerificationCodeReason = (typeof VerificationCodeReasonEnum.enumValues)[number];
@@ -127,6 +131,7 @@ export const Questionnaire = ribbonSchema.table('questionniare', {
   type: TaskTypeEnum('type').notNull(),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
+  status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -420,10 +425,10 @@ export const UserRelations = relations(User, ({ one, many }) => ({
   notifications: many(Notification),
 }));
 
-export const TaskRelations = relations(Questionnaire, ({ many }) => ({
+export const QuestionnaireRelations = relations(Questionnaire, ({ many }) => ({
   questions: many(Question),
-  activities: many(QuestionnaireActivity),
   ratings: many(QuestionnaireCategory),
+  activities: many(QuestionnaireActivity),
 }));
 
 export const SurveyRelations = relations(Survey, ({ one, many }) => ({
@@ -475,8 +480,8 @@ export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
-  task: one(Questionnaire, { fields: [Question.taskId], references: [Questionnaire.id] }),
   options: many(QuestionOptions),
+  task: one(Questionnaire, { fields: [Question.taskId], references: [Questionnaire.id] }),
 }));
 
 export const OptionsRelations = relations(QuestionOptions, ({ one }) => ({
@@ -489,7 +494,7 @@ export const AnswerRelations = relations(Answer, ({ one }) => ({
   user: one(User, { fields: [Answer.userId], references: [User.id] }),
 }));
 
-export const TaskActivityRelations = relations(QuestionnaireActivity, ({ one }) => ({
+export const QuestionniareActivityRelations = relations(QuestionnaireActivity, ({ one }) => ({
   task: one(Questionnaire, { fields: [QuestionnaireActivity.taskId], references: [Questionnaire.id] }),
   user: one(User, { fields: [QuestionnaireActivity.userId], references: [User.id] }),
 }));
