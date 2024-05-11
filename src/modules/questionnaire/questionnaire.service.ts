@@ -217,23 +217,17 @@ export class QuestionnaireService {
 
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
-        let index: any = 0;
         let questionnaireId = 0;
         const questions = sheets[category];
 
         for (const question of questions) {
           if (question.id === 'id') {
-            index += 1;
-            const id = index === 1 ? '' : index;
-
             const name = `${category} ${generateCode()}`.trim();
-            console.log(id, name);
-
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
               .insert(Questionnaire)
-              .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name), reward })
+              .values({ type: 'QUESTIONNAIRE', name: category, description: '', slug: createSlug(name), reward })
               .returning({ id: Questionnaire.id });
 
             questionnaireId = res?.id;
