@@ -228,6 +228,8 @@ export class QuestionnaireService {
           const code = !cat ? '' : getNumberAtEnd(category) || '';
           const name = `${category} ${code}`.trim();
 
+          console.log(code, name);
+
           if (question.id === 'id') {
             const reward = getRewardValue(Object.keys(question)) || 0;
 
