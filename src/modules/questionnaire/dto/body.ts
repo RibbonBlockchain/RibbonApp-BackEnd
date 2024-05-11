@@ -46,6 +46,10 @@ export class AddQuestionnaireBody {
   @IsNumber()
   reward: number;
 
+  @IsString()
+  @IsOptional()
+  description: string;
+
   @IsArray()
   @Type(() => QuestionPayload)
   @ValidateNested({ each: true })

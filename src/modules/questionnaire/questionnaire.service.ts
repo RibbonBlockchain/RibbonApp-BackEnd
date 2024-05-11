@@ -1,8 +1,8 @@
 import {
   TUser,
-  Options,
   Question,
   Questionnaire,
+  QuestionOptions,
   QuestionnaireRating,
   QuestionnaireActivity,
   QuestionnaireCategory,
@@ -38,14 +38,23 @@ export class QuestionnaireService {
         where: eq(QuestionnaireCategory.id, body.categoryId),
       });
 
+      const code = generateCode();
+      const slug = createSlug(category.name + code);
+
       const [questionnaire] = await tx
         .insert(Questionnaire)
-        .values({ type: 'QUESTIONNAIRE', description: '', name: category.name, reward: body.reward })
+        .values({
+          slug,
+          name: category.name,
+          reward: body.reward,
+          type: 'QUESTIONNAIRE',
+          description: body.description,
+        })
         .returning({ id: Questionnaire.id });
 
       await Promise.all(
         body.questions.map(async (data, index) => {
-          await tx
+          const [question] = await tx
             .insert(Question)
             .values({
               type: data.type,
@@ -54,6 +63,7 @@ export class QuestionnaireService {
               taskId: questionnaire.id,
               isLast: index === body.questions.length - 1,
             })
+            .returning({ id: Question.id })
             .onConflictDoUpdate({
               target: [Question.text, Question.taskId],
               set: {
@@ -64,6 +74,14 @@ export class QuestionnaireService {
                 isLast: index === body.questions.length - 1,
               },
             });
+
+          await Promise.all(
+            data?.options?.map(async (option) => {
+              await tx
+                .insert(QuestionOptions)
+                .values({ questionId: question.id, point: option.point, text: option.value });
+            }),
+          );
         }),
       );
     });
@@ -193,7 +211,7 @@ export class QuestionnaireService {
               .returning({ id: Question.id });
 
             question?.options?.split(',')?.map(async (option) => {
-              await this.provider.db.insert(Options).values({ questionId: res.id, text: option });
+              await this.provider.db.insert(QuestionOptions).values({ questionId: res.id, text: option });
             });
           }
         }

@@ -365,7 +365,7 @@ export const QuestionnaireCategory = ribbonSchema.table('questionnaire_category'
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const Options = ribbonSchema.table('options', {
+export const QuestionOptions = ribbonSchema.table('question_options', {
   id: serial('id').primaryKey(),
   point: integer('point').default(0),
   text: varchar('text'),
@@ -382,7 +382,7 @@ export const Answer = ribbonSchema.table('answer', {
     .references(() => Question.id),
   optionId: integer('option_id')
     .notNull()
-    .references(() => Options.id),
+    .references(() => QuestionOptions.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
@@ -476,16 +476,16 @@ export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
   task: one(Questionnaire, { fields: [Question.taskId], references: [Questionnaire.id] }),
-  options: many(Options),
+  options: many(QuestionOptions),
 }));
 
-export const OptionsRelations = relations(Options, ({ one }) => ({
-  question: one(Question, { fields: [Options.questionId], references: [Question.id] }),
+export const OptionsRelations = relations(QuestionOptions, ({ one }) => ({
+  question: one(Question, { fields: [QuestionOptions.questionId], references: [Question.id] }),
 }));
 
 export const AnswerRelations = relations(Answer, ({ one }) => ({
   question: one(Question, { fields: [Answer.questionId], references: [Question.id] }),
-  option: one(Options, { fields: [Answer.optionId], references: [Options.id] }),
+  option: one(QuestionOptions, { fields: [Answer.optionId], references: [QuestionOptions.id] }),
   user: one(User, { fields: [Answer.userId], references: [User.id] }),
 }));
 

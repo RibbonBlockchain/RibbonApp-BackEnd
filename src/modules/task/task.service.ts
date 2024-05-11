@@ -3,9 +3,9 @@ import {
   TUser,
   Answer,
   Wallet,
-  Options,
   Question,
   Questionnaire,
+  QuestionOptions,
   VerificationCode,
   QuestionnaireActivity,
 } from '../drizzle/schema';
@@ -140,7 +140,7 @@ export class TaskService {
       where: eq(Question.id, questionId),
     });
 
-    const option = await this.provider.db.query.Options.findFirst({ where: eq(Options.id, optionId) });
+    const option = await this.provider.db.query.QuestionOptions.findFirst({ where: eq(QuestionOptions.id, optionId) });
 
     if (!userTaskActivity) {
       await this.provider.db.insert(QuestionnaireActivity).values({ taskId, userId: user.id }).execute();
@@ -265,6 +265,9 @@ export class TaskService {
   }
 
   async HttpHandleUpdateSes(input: Dto.UpdateSes) {
-    return await this.provider.db.update(Options).set({ point: input.point }).where(eq(Options.id, input.optionId));
+    return await this.provider.db
+      .update(QuestionOptions)
+      .set({ point: input.point })
+      .where(eq(QuestionOptions.id, input.optionId));
   }
 }
