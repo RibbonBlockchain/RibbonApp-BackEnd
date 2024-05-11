@@ -16,7 +16,7 @@ import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
 import { TwilioService } from '../twiio/twilio.service';
 import { TDbProvider } from '../drizzle/drizzle.module';
-import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -115,7 +115,7 @@ export class TaskService {
     const field = isNaN(taskId) ? Questionnaire.slug : Questionnaire.id;
     const data = await this.provider.db.query.Questionnaire.findFirst({
       where: eq(field, id),
-      with: { questions: { with: { options: true } } },
+      with: { questions: { with: { options: true }, orderBy: asc(Question.id) } },
     });
 
     return { data };
