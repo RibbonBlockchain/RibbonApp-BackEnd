@@ -136,6 +136,11 @@ export class QuestionnaireService {
         offset,
         where: queryFilter,
         orderBy: desc(Questionnaire.updatedAt),
+        extras: {
+          questions: sql<number>`(SELECT COUNT(*) FROM ${Question} WHERE ${Question.taskId} = ${Questionnaire.id})`.as(
+            'questions',
+          ),
+        },
       });
 
       const [{ total }] = await tx
