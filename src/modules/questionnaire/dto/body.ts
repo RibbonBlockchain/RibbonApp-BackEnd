@@ -50,8 +50,12 @@ class QuestionPayload {
 
 export class AddQuestionnaireBody {
   @IsInt()
-  @IsNotEmpty()
+  @IsOptional()
   categoryId: number;
+
+  @IsString()
+  @IsOptional()
+  category: string;
 
   @IsNumber()
   reward: number;

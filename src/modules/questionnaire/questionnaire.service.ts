@@ -34,18 +34,33 @@ export class QuestionnaireService {
 
   async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaireBody) {
     await this.provider.db.transaction(async (tx) => {
-      const category = await tx.query.QuestionnaireCategory.findFirst({
-        where: eq(QuestionnaireCategory.id, body.categoryId),
-      });
+      let categoryName = '';
+
+      if (body.categoryId) {
+        const category = await tx.query.QuestionnaireCategory.findFirst({
+          where: eq(QuestionnaireCategory.id, body.categoryId),
+        });
+        categoryName = category.name;
+      }
+
+      if (body.category) {
+        const [category] = await tx
+          .insert(QuestionnaireCategory)
+          .values({ name: body.category, slug: createSlug(body.category) })
+          .returning();
+        categoryName = category.name;
+      }
+
+      if (!categoryName) throw new BadRequestException('Invalid questionnaire category');
 
       const code = generateCode();
-      const slug = createSlug(category.name + ' ' + code);
+      const slug = createSlug(categoryName + ' ' + code);
 
       const [questionnaire] = await tx
         .insert(Questionnaire)
         .values({
           slug,
-          name: category.name,
+          name: categoryName,
           reward: body.reward,
           type: 'QUESTIONNAIRE',
           description: body.description,
@@ -203,25 +218,24 @@ export class QuestionnaireService {
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
         let questionnaireId = 0;
-        const code = generateCode();
-        const name = `${category}-${code}`;
         const questions = sheets[category];
 
         for (const question of questions) {
+          const code = generateCode();
+          const name = `${category}-${code}`;
+
           if (question.id === 'id') {
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
               .insert(Questionnaire)
-              .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name), reward })
+              .values({ type: 'QUESTIONNAIRE', name: category, description: '', slug: createSlug(name), reward })
               .returning({ id: Questionnaire.id });
 
             questionnaireId = res?.id;
           } else {
             const isLast = false;
             const isFirst = question.id === 1;
-
-            console.log(question);
 
             const [res] = await this.provider.db
               .insert(Question)
