@@ -127,6 +127,13 @@
       "when": 1715334616369,
       "tag": "0017_thick_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1715421199568,
+      "tag": "0018_flat_iron_lad",
+      "breakpoints": true
     }
   ]
 }

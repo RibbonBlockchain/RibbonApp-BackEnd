@@ -9,7 +9,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { createSlug, getRewardValue } from '@/core/utils';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { DATABASE } from '@/core/constants';
@@ -84,7 +84,12 @@ export class QuestionnaireService {
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await tx.query.QuestionnaireCategory.findMany({ where: queryFilter, limit, offset });
+      const data = await tx.query.QuestionnaireCategory.findMany({
+        limit,
+        offset,
+        where: queryFilter,
+        orderBy: desc(QuestionnaireCategory.updatedAt),
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${QuestionnaireCategory.id}) as int)` })
@@ -104,14 +109,19 @@ export class QuestionnaireService {
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await this.provider.db.query.Task.findMany({ limit, offset });
+      const data = await this.provider.db.query.Task.findMany({
+        limit,
+        offset,
+        where: queryFilter,
+        orderBy: desc(Task.updatedAt),
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${Task.id}) as int)` })
         .from(Task)
         .where(queryFilter);
 
-      return { data, pagination: generatePagination(page, page, total) };
+      return { data, pagination: generatePagination(page, pageSize, total) };
     });
   }
 

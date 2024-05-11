@@ -129,6 +129,7 @@ export const Task = ribbonSchema.table('task', {
   duration: integer('duration').default(60),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const Survey = ribbonSchema.table('survey', {
