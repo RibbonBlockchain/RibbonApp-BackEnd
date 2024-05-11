@@ -12,7 +12,7 @@ import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import excelToJson from 'convert-excel-to-json';
-import { generateCode, getNumberAtEnd } from '@/core/utils/code';
+import { generateCode } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { createSlug, getRewardValue } from '@/core/utils';
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
@@ -217,18 +217,13 @@ export class QuestionnaireService {
 
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
+        let index = 1;
         let questionnaireId = 0;
         const questions = sheets[category];
 
-        const cat = await this.provider.db.query.QuestionnaireCategory.findFirst({
-          orderBy: desc(QuestionnaireCategory.createdAt),
-        });
-
         for (const question of questions) {
-          const code = !cat ? '' : getNumberAtEnd(category) || '';
-          const name = `${category} ${code}`.trim();
-
-          console.log(code, name);
+          index += 1;
+          const name = `${category} ${index}`.trim();
 
           if (question.id === 'id') {
             const reward = getRewardValue(Object.keys(question)) || 0;
