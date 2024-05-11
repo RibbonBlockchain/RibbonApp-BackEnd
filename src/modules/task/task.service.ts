@@ -16,7 +16,7 @@ import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
 import { TwilioService } from '../twiio/twilio.service';
 import { TDbProvider } from '../drizzle/drizzle.module';
-import { and, asc, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -241,6 +241,7 @@ export class TaskService {
     });
 
     const data = await this.provider.db.query.Questionnaire.findMany({
+      orderBy: desc(Questionnaire.updatedAt),
       with: { questions: { with: { options: true } } },
       where: completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : null,
     });
