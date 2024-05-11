@@ -217,13 +217,14 @@ export class QuestionnaireService {
 
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
-        let index = 0;
+        let index: any = 0;
         let questionnaireId = 0;
         const questions = sheets[category];
 
         for (const question of questions) {
           if (question.id === 'id') {
             index += 1;
+            index = index === 1 ? '' : index;
             const name = `${category} ${index}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
