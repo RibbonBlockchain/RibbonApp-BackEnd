@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."question" ADD CONSTRAINT "key" UNIQUE("text","task_id");

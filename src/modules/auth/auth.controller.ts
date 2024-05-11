@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from './decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Post, Version } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Version } from '@nestjs/common';
 
 @Controller('/auth')
 export class AuthController {
@@ -23,6 +23,35 @@ export class AuthController {
   @Version(VERSION_ONE)
   async HttpHandleCheckPhone(@Body() body: Dto.HandleCheckPhone) {
     const data = await this.auth.HttpHandleCheckPhone(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Patch('/pin')
+  @Version(VERSION_ONE)
+  async HttpHandleChangePin(@ReqUser() user: TUser, @Body() body: Dto.HandleChangePin) {
+    const data = await this.auth.HttpHandleChangePin(body, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Post('/pin/forgot')
+  @Version(VERSION_ONE)
+  async HttpHandleForgotPin(@Body() body: Dto.HandleForgotPin) {
+    const data = await this.auth.HttpHandleForgotPin(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Post('/pin/forgot/verify')
+  async HttpHandleVerifyForgotPin(@Body() body: Dto.HandleVerifyForgotPin) {
+    const data = await this.auth.HttpHandleVerifyForgotPin(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Post('/pin/reset')
+  @Version(VERSION_ONE)
+  async HttpHandleResetPin(@Body() body: Dto.HandleResetPin) {
+    const data = await this.auth.HttpHandleResetPin(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 

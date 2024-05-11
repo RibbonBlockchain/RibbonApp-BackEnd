@@ -7,7 +7,7 @@ import { quickOTP } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
+import { Notification, TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
 
 @Injectable()
 export class UserService {
@@ -90,5 +90,68 @@ export class UserService {
     await this.provider.db.update(Wallet).set({ balance: 3 }).where(eq(Wallet.userId, user.auth.id));
 
     return {};
+  }
+
+  async HttpHandleClaimDailyReward(user: TUser) {
+    const userData = await this.provider.db.query.User.findFirst({
+      where: eq(User.id, user.id),
+    });
+
+    const wallet = await this.provider.db.query.Wallet.findFirst({
+      where: eq(Wallet.userId, user.id),
+    });
+
+    const lastClaimTime = userData.lastClaimTime;
+
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+    if (!lastClaimTime) {
+      // Claiming for first time
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: wallet.balance + 5 })
+        .where(eq(Wallet.userId, user.id));
+
+      await this.provider.db
+        .update(User)
+        .set({ lastClaimTime: new Date(), numberOfClaims: userData.numberOfClaims + 1 })
+        .where(eq(User.id, user.id));
+
+      await this.provider.db
+        .insert(TaskActivity)
+        .values({ userId: user.id, completedDate: new Date().toISOString(), type: 'DAILY_REWARD', status: 'COMPLETED' })
+        .execute();
+
+      return {};
+    }
+
+    if (lastClaimTime && lastClaimTime < twelveHoursAgo) {
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: wallet.balance + 5 })
+        .where(eq(Wallet.userId, user.id));
+
+      await this.provider.db
+        .update(User)
+        .set({ lastClaimTime: new Date(), numberOfClaims: userData.numberOfClaims + 1 })
+        .where(eq(User.id, user.id));
+
+      await this.provider.db
+        .insert(TaskActivity)
+        .values({ userId: user.id, completedDate: new Date().toISOString(), type: 'DAILY_REWARD', status: 'COMPLETED' })
+        .execute();
+
+      return {};
+    }
+
+    return {};
+  }
+
+  async HttpHandleGetUserNotifications(user: TUser) {
+    const notification = await this.provider.db.query.Notification.findMany({
+      where: eq(Notification.userId, user.id),
+    });
+
+    return { data: notification };
   }
 }

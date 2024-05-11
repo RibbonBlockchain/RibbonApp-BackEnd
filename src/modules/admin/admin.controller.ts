@@ -11,6 +11,22 @@ import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Post('/dashboard/summary')
+  async HttpHandleGetDashboardSummary() {
+    const data = await this.admin.HttpHandleGetDashboardSummary();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Post('/password/change')
+  async HttpHandleChangePassword(@ReqUser() user: TUser, @Body() body: Dto.AdminChangePasswordBody) {
+    const data = await this.admin.HttpHandleChangePassword(body, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
   @Post('/login')
   @Version(VERSION_ONE)
   async HttpHandleLogin(@Body() body: Dto.AdminLoginBody) {
@@ -22,14 +38,6 @@ export class AdminController {
   @Version(VERSION_ONE)
   async HttpHandleLogout(@ReqUser() user: TUser | undefined) {
     const data = await this.admin.HttpHandleLogout(user);
-    return { data, message: RESPONSE.SUCCESS };
-  }
-
-  @AuthGuard()
-  @Version(VERSION_ONE)
-  @Post('/password/change')
-  async HttpHandleChangePassword(@ReqUser() user: TUser, @Body() body: Dto.AdminChangePasswordBody) {
-    const data = await this.admin.HttpHandleChangePassword(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 }

@@ -1,13 +1,23 @@
-import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
-import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
-import { and, eq, inArray, notInArray } from 'drizzle-orm';
-import { TwilioService } from '../twiio/twilio.service';
-import { TDbProvider } from '../drizzle/drizzle.module';
+import { quickOTP } from '@/core/utils/code';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { Answer, Question, TUser, Task, TaskActivity, User, VerificationCode, Wallet } from '../drizzle/schema';
+import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { TDbProvider } from '../drizzle/drizzle.module';
+import {
+  Answer,
+  Options,
+  Question,
+  TUser,
+  Task,
+  TaskActivity,
+  User,
+  VerificationCode,
+  Wallet,
+} from '../drizzle/schema';
+import { TwilioService } from '../twiio/twilio.service';
+import * as Dto from './dto';
 
 @Injectable()
 export class TaskService {
@@ -126,6 +136,8 @@ export class TaskService {
       where: eq(Question.id, questionId),
     });
 
+    const option = await this.provider.db.query.Options.findFirst({ where: eq(Options.id, optionId) });
+
     if (!userTaskActivity) {
       await this.provider.db.insert(TaskActivity).values({ taskId, userId: user.id }).execute();
     }
@@ -135,18 +147,21 @@ export class TaskService {
         .update(TaskActivity)
         .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
         .where(and(eq(TaskActivity.id, userTaskActivity.id), eq(TaskActivity.userId, user.id)));
+
       await this.provider.db
         .update(Wallet)
         .set({ balance: wallet.balance + task.reward })
         .where(eq(Wallet.userId, user.id));
     }
 
+    await this.provider.db.update(Wallet).set({ point: option.point + wallet.point });
+
     return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
   }
 
   async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: string }) {
     const { completedDate } = query;
-    const completedTasksId = [];
+    const completedTasksId: { taskId: number; completedDate: string }[] = [];
 
     const userTaskActivity = completedDate
       ? await this.provider.db.query.TaskActivity.findMany({
@@ -161,13 +176,32 @@ export class TaskService {
         });
 
     userTaskActivity.forEach((task) => {
-      completedTasksId.push(task.taskId);
+      completedTasksId.push({ taskId: task.taskId, completedDate: task.completedDate });
     });
 
-    const data =
+    let data = [];
+
+    const taskActivity =
       completedTasksId.length > 0
-        ? await this.provider.db.query.Task.findMany({ where: inArray(Task.id, completedTasksId) })
+        ? await this.provider.db.query.Task.findMany({
+            where: inArray(
+              Task.id,
+              completedTasksId.map(({ taskId }) => taskId),
+            ),
+            // with: { ratings: true },
+          }).then((tasks) =>
+            tasks.map((task) => ({
+              ...task,
+              completedDate: completedTasksId.find(({ taskId }) => taskId === task.id)?.completedDate,
+            })),
+          )
         : [];
+
+    data = [...taskActivity];
+
+    userTaskActivity.map((t) => {
+      if (t.type === 'DAILY_REWARD') data.push(t);
+    });
 
     return { data };
   }
@@ -193,7 +227,7 @@ export class TaskService {
     const completedTasksId = [];
 
     const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: eq(TaskActivity.userId, user.id),
+      where: and(eq(TaskActivity.userId, user.id), ne(TaskActivity.type, 'DAILY_REWARD')),
     });
 
     userTaskActivity.forEach((task) => {
@@ -201,8 +235,8 @@ export class TaskService {
     });
 
     const data = await this.provider.db.query.Task.findMany({
-      where: notInArray(Task.id, completedTasksId),
       with: { questions: { with: { options: true } } },
+      where: completedTasksId?.length ? notInArray(Task.id, completedTasksId) : null,
     });
 
     const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
@@ -222,5 +256,9 @@ export class TaskService {
       where: eq(TaskActivity.userId, user.id),
     });
     return { data };
+  }
+
+  async HttpHandleUpdateSes(input: Dto.UpdateSes) {
+    return await this.provider.db.update(Options).set({ point: input.point }).where(eq(Options.id, input.optionId));
   }
 }

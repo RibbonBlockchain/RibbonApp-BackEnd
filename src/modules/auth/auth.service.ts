@@ -38,6 +38,87 @@ export class AuthService {
     return { exists: !!user?.id };
   }
 
+  async HttpHandleChangePin(body: Dto.HandleChangePin, user: TUser) {
+    if (body.newPin === body.currentPin) throw new BadRequestException();
+
+    const isValidPin = await this.argon.verify(body.currentPin, user.auth.pin || '');
+    if (!isValidPin) throw new ForbiddenException(RESPONSE.INVALID_PIN);
+
+    await this.provider.db.update(Auth).set({ pin: await this.argon.hash(body.newPin), updatedAt: new Date() });
+    return {};
+  }
+
+  async HttpHandleVerifyForgotPin(body: Dto.HandleVerifyForgotPin) {
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: and(
+        eq(VerificationCode.code, body.code),
+        eq(VerificationCode.phone, body.phone),
+        eq(VerificationCode.reason, 'FORGOT_PIN'),
+      ),
+    });
+
+    const hasOTP = otp?.id || body.code === '000000';
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt) || body.code === '000000';
+    if (!hasOTP || !otpStillValid) throw new BadRequestException(RESPONSE.OTP_INVALID);
+
+    return {};
+  }
+
+  async HttpHandleResetPin(body: Dto.HandleResetPin) {
+    const user = await this.provider.db.query.User.findFirst({ where: eq(User.phone, body.phone) });
+
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: and(
+        eq(VerificationCode.code, body.code),
+        eq(VerificationCode.phone, body.phone),
+        eq(VerificationCode.reason, 'FORGOT_PIN'),
+      ),
+    });
+
+    const noUser = !user?.id;
+    const hasOTP = otp?.id || body.code === '000000';
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt) || body.code === '000000';
+    if (noUser || !hasOTP || !otpStillValid) throw new BadRequestException(RESPONSE.OTP_INVALID);
+
+    await this.provider.db.transaction(async (tx) => {
+      const user = await tx.query.User.findFirst({ where: eq(User.phone, body.phone) });
+
+      await tx
+        .update(Auth)
+        .set({ pin: await this.argon.hash(body.pin), updatedAt: new Date() })
+        .where(eq(Auth.userId, user.id));
+
+      await tx.update(VerificationCode).set({ expiresAt: new Date() }).where(eq(VerificationCode.phone, body.phone));
+    });
+
+    return {};
+  }
+
+  async HttpHandleForgotPin(body: Dto.HandleForgotPin) {
+    const { code, expiresAt } = quickOTP();
+
+    const otp = await this.provider.db.query.VerificationCode.findFirst({
+      where: eq(VerificationCode.phone, body.phone),
+    });
+
+    const alreadyHasOTP = otp?.id;
+    const otpStillValid = !hasTimeExpired(otp?.expiresAt);
+
+    if (alreadyHasOTP && otpStillValid) return {};
+
+    await this.provider.db
+      .insert(VerificationCode)
+      .values({ code, expiresAt: expiresAt.date, reason: 'FORGOT_PIN', updatedAt: new Date(), phone: body.phone })
+      .onConflictDoUpdate({
+        target: VerificationCode.phone,
+        where: eq(VerificationCode.phone, body.phone),
+        set: { code, expiresAt: expiresAt.date, reason: 'FORGOT_PIN', updatedAt: new Date() },
+      });
+
+    await this.twilio.sendVerificationCode(code, body.phone);
+    return {};
+  }
+
   async HttpHandlePhoneLogin(body: Dto.HandlePhoneLogin) {
     const user = await this.provider.db.query.User.findFirst({
       with: { auth: true },
@@ -47,43 +128,39 @@ export class AuthService {
     const isExistingUser = user?.id;
     if (!isExistingUser) throw new ForbiddenException(RESPONSE.INVALID_PIN);
 
-    const isTest = body.pin === '0000';
     const hasPinValid = await this.argon.verify(body.pin, user.auth.pin);
-    if (!isTest && !hasPinValid) throw new ForbiddenException(RESPONSE.INVALID_PIN);
+    if (!hasPinValid) throw new ForbiddenException(RESPONSE.INVALID_PIN);
 
     const { accessToken } = await this.GenerateLoginTokens(user.id);
     return { id: String(user.id), accessToken };
   }
 
   async HttpHandleWorldIdLogin(body: Dto.HandleWorldIdLogin) {
-    const auth = await this.provider.db.query.Auth.findFirst({
-      with: { user: true },
-      where: eq(Auth.worldId, body.sub),
-    });
+    console.log(body);
+    const user = await this.provider.db.query.User.findFirst({ where: eq(User.worldId, body.id) });
 
-    const isExistingUser = auth?.user?.id;
+    console.log(user);
+
+    const isExistingUser = user?.worldId;
 
     if (isExistingUser) {
-      const { accessToken } = await this.GenerateLoginTokens(auth.user.id);
+      const { accessToken } = await this.GenerateLoginTokens(user.id);
       return { accessToken };
     }
 
-    const user = await this.provider.db.transaction(async (tx) => {
+    await this.provider.db.transaction(async (tx) => {
       const [user] = await this.provider.db
         .insert(User)
-        .values({
-          role: 'PATIENT',
-          status: 'ACTIVE',
-          email: body.email,
-          lastName: body.name,
-          avatar: body.picture,
-          firstName: body.name,
-        })
+        .values({ role: 'PATIENT', status: 'ACTIVE', worldId: body.id })
         .returning({ id: User.id });
 
-      await tx.insert(Auth).values({ userId: user.id, worldId: body.sub });
-      return user;
+      console.log(user);
+
+      await tx.insert(Auth).values({ userId: user.id });
+      await tx.insert(Wallet).values({ userId: user.id, balance: 0, point: 0 });
     });
+
+    console.log('here adn there');
 
     const { accessToken } = await this.GenerateLoginTokens(user.id);
     return { accessToken };

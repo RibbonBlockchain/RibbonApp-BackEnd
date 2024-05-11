@@ -12,3 +12,12 @@ export const quickOTP = (minutes = 2) => {
     expiresAt: { date: addMinutesToDate(minutes), string: `${minutes}m` },
   };
 };
+
+export const generateCode = (length = 6) => {
+  return otpGenerator.generate(length, {
+    digits: true,
+    specialChars: false,
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+  });
+};

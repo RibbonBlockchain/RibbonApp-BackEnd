@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Patch, Post, Version } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Version } from '@nestjs/common';
 
 @Controller('user')
 export class UserController {
@@ -31,6 +31,22 @@ export class UserController {
   @Version(VERSION_ONE)
   async HttpHandleUpdateProfile(@Body() body: Dto.HandleUpdateProfile, @ReqUser() user: TUser) {
     const data = await this.userService.HttpHandleUpdateProfile(body, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Post('/claim')
+  async HttpClaimDailyReward(@ReqUser() user: TUser) {
+    const data = await this.userService.HttpHandleClaimDailyReward(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('/notification')
+  async HttpHandleGetUserNotifications(@ReqUser() user: TUser) {
+    const data = await this.userService.HttpHandleGetUserNotifications(user);
     return { data, message: RESPONSE.SUCCESS };
   }
 }

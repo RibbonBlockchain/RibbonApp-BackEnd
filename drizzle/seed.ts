@@ -3,7 +3,7 @@ import * as env from 'dotenv';
 import * as Argon2 from 'argon2';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { createSlug, isProduction } from '../src/core/utils';
-import { Auth, Task, User } from '../src/modules/drizzle/schema';
+import { Auth, QuestionnaireCategory, Task, User } from '../src/modules/drizzle/schema';
 
 env.config();
 
@@ -29,6 +29,16 @@ const tasks = [
   { duration: 60, title: 'Complete your profile', description: 'Complete your profile', point: 15, reward: 5 },
 ];
 
+const questionnaireCategories = [
+  { name: 'Health' },
+  { name: 'Home' },
+  { name: 'Environment' },
+  { name: 'Migration' },
+  { name: 'Relationship' },
+  { name: 'Education' },
+  { name: 'Employment' },
+];
+
 const main = async () => {
   const client = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -50,6 +60,13 @@ const main = async () => {
           slug: createSlug(task.title),
           description: task.description,
         })
+        .onConflictDoNothing();
+    });
+
+    questionnaireCategories.forEach(async (cat) => {
+      await tx
+        .insert(QuestionnaireCategory)
+        .values({ name: cat.name, slug: createSlug(cat.name) })
         .onConflictDoNothing();
     });
 

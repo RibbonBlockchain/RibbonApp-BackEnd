@@ -30,3 +30,13 @@ export class CompletePhoneVerificationTask {
   @IsNumberString()
   code: string;
 }
+
+export class UpdateSes {
+  @IsNotEmpty()
+  @IsNumber()
+  optionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  point: number;
+}

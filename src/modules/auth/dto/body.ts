@@ -1,9 +1,54 @@
-import { IsEmail, IsNotEmpty, IsNumberString, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsNumberString, IsPhoneNumber, IsString, Length } from 'class-validator';
 
 export class HandleCheckPhone {
   @IsNotEmpty()
   @IsPhoneNumber()
   phone: string;
+}
+
+export class HandleForgotPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+}
+
+export class HandleVerifyForgotPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+
+  @Length(6, 6)
+  @IsNotEmpty()
+  @IsNumberString()
+  code: string;
+}
+
+export class HandleResetPin {
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phone: string;
+
+  @Length(6, 6)
+  @IsNotEmpty()
+  @IsNumberString()
+  code: string;
+
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  pin: string;
+}
+
+export class HandleChangePin {
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  currentPin: string;
+
+  @Length(4, 4)
+  @IsNotEmpty()
+  @IsNumberString()
+  newPin: string;
 }
 
 export class HandlePhoneSignUp {
@@ -26,20 +71,7 @@ export class HandlePhoneLogin {
 export class HandleWorldIdLogin {
   @IsString()
   @IsNotEmpty()
-  name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  sub: string;
-
-  @IsEmail()
-  @IsOptional()
-  @IsNotEmpty()
-  email: string;
-
-  @IsOptional()
-  @IsNotEmpty()
-  picture: string;
+  id: string;
 }
 
 export class VerifyPhoneSignUp {
