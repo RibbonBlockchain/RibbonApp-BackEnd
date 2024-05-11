@@ -225,6 +225,8 @@ export class QuestionnaireService {
           index += 1;
           const name = `${category} ${index}`.trim();
 
+          console.log(index, name);
+
           if (question.id === 'id') {
             const reward = getRewardValue(Object.keys(question)) || 0;
 
