@@ -355,6 +355,8 @@ export const Question = ribbonSchema.table(
     taskId: integer('task_id')
       .notNull()
       .references(() => Questionnaire.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
   (t) => ({
     key: unique('key').on(t.text, t.taskId),
