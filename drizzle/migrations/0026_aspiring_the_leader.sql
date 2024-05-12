@@ -6,7 +6,6 @@ ALTER TABLE "ribbon"."questionnaire_activity" DROP CONSTRAINT "questionnaire_act
 --> statement-breakpoint
 ALTER TABLE "ribbon"."questionnaire_rating" DROP CONSTRAINT "questionnaire_rating_questionnaire_id_questionniare_id_fk";
 --> statement-breakpoint
-ALTER TABLE "ribbon"."questionnaire" DROP CONSTRAINT "questionniare_category_id_questionnaire_category_id_fk";
 --> statement-breakpoint
 ALTER TABLE "ribbon"."questionnaire" ALTER COLUMN "category_id" SET DEFAULT 1;--> statement-breakpoint
 ALTER TABLE "ribbon"."questionnaire" ALTER COLUMN "category_id" DROP NOT NULL;--> statement-breakpoint
