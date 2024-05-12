@@ -1,1 +1,1 @@
-ALTER TABLE "ribbon"."questionnaire" RENAME COLUMN "category_id" TO "catgory_id";
+ALTER TABLE "ribbon"."questionnaire" ADD COLUMN "category_id" integer DEFAULT 1;
