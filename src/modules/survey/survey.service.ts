@@ -6,7 +6,6 @@ import {
   SurveyCategory,
   SurveyQuestion,
   SurveyQuestionOptions,
-  QuestionOptions,
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
