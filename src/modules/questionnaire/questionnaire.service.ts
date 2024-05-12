@@ -138,6 +138,22 @@ export class QuestionnaireService {
     return {};
   }
 
+  async HttpHandleGetQuestionnaireSummary() {
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ active }] = await tx
+        .select({ active: sql<number>`cast(count(${Questionnaire.id}) as int)` })
+        .from(Questionnaire)
+        .where(eq(Questionnaire.status, 'ACTIVE'));
+
+      const [{ closed }] = await tx
+        .select({ closed: sql<number>`cast(count(${Questionnaire.id}) as int)` })
+        .from(Questionnaire)
+        .where(eq(Questionnaire.status, 'CLOSED'));
+
+      return { count: { active, closed } };
+    });
+  }
+
   async HttphandleGetQuestionnaires({ q, page, status, pageSize }: Dto.GetAllQuestionnaireQuery) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });
@@ -183,7 +199,7 @@ export class QuestionnaireService {
   async HttphandleGetQuestionnaireById(id: number) {
     return await this.provider.db.query.Questionnaire.findFirst({
       where: eq(Questionnaire.id, id),
-      with: { questions: true },
+      with: { questions: { with: { options: true } } },
     });
   }
 

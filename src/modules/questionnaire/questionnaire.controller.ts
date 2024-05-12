@@ -40,6 +40,14 @@ export class QuestionnaireController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/admin/questionnaire/summary')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getQuestionnaireSummary() {
+    const data = await this.questionnaireService.HttpHandleGetQuestionnaireSummary();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Patch('/admin/questionnaire/status')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async updateQuestionnaireStatus(@Body() body: Dto.UpdateQuestionnaireStatusBody) {
@@ -59,6 +67,14 @@ export class QuestionnaireController {
   @Post('/admin/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async addQuestions(@Body() body: Dto.AddQuestionnaireBody) {
+    const data = await this.questionnaireService.HttpHandleAddQuestionnaire(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Patch('/admin/questionnaire')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateQuestions(@Body() body: Dto.AddQuestionnaireBody) {
     const data = await this.questionnaireService.HttpHandleAddQuestionnaire(body);
     return { data, message: RESPONSE.SUCCESS };
   }
