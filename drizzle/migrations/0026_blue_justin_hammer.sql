@@ -25,11 +25,5 @@ DO $$ BEGIN
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
--- --> statement-breakpoint
--- DO $$ BEGIN
---  ALTER TABLE "ribbon"."questionnaire" ADD CONSTRAINT "questionnaire_category_id_questionnaire_category_id_fk" FOREIGN KEY ("category_id") REFERENCES "ribbon"."questionnaire_category"("id") ON DELETE no action ON UPDATE no action;
--- EXCEPTION
---  WHEN duplicate_object THEN null;
--- END $$;
 --> statement-breakpoint
 ALTER TABLE "ribbon"."questionnaire" ADD CONSTRAINT "questionnaire_slug_unique" UNIQUE("slug");
