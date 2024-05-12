@@ -177,7 +177,7 @@ export class QuestionnaireService {
         offset,
         where: and(queryFilter, statusFilter),
         orderBy: desc(Questionnaire.updatedAt),
-        with: { questions: { limit: 1 }, activities: { limit: 1 } },
+        with: { questions: { limit: 1 }, activities: { limit: 1 }, category: true },
         extras: {
           totalResponses:
             sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${QuestionnaireActivity} WHERE ${Questionnaire.id} = questionnaire_activity.task_id)`.as(
@@ -202,7 +202,7 @@ export class QuestionnaireService {
   async HttphandleGetQuestionnaireById(id: number) {
     return await this.provider.db.query.Questionnaire.findFirst({
       where: eq(Questionnaire.id, id),
-      with: { questions: { with: { options: true } } },
+      with: { category: true, questions: { with: { options: true } } },
     });
   }
 
