@@ -204,6 +204,13 @@
       "when": 1715520638003,
       "tag": "0029_bright_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1715521008746,
+      "tag": "0030_aspiring_boomerang",
+      "breakpoints": true
     }
   ]
 }
