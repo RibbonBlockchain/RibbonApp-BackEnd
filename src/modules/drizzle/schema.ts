@@ -132,6 +132,7 @@ export const Questionnaire = ribbonSchema.table('questionnaire', {
   point: integer('point').default(0),
   duration: integer('duration').default(60),
   categoryId: integer('category_id').default(1),
+  catId: integer('cat_id').default(1),
   status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
