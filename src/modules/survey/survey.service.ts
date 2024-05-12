@@ -6,6 +6,7 @@ import {
   SurveyCategory,
   SurveyQuestion,
   SurveyQuestionOptions,
+  QuestionOptions,
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
@@ -194,5 +195,12 @@ export class SurveyService {
     );
 
     fs.rm(file.path, () => {});
+  }
+
+  async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
+    data.map(async ({ optionId, point }) => {
+      await this.provider.db.update(SurveyQuestionOptions).set({ point }).where(eq(SurveyQuestionOptions.id, optionId));
+    });
+    return {};
   }
 }

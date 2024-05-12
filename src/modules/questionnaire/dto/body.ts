@@ -110,3 +110,18 @@ export class UpdateQuestionnaireBody {
   @ValidateNested({ each: true })
   questions: QuestionPayload[];
 }
+
+export class SesData {
+  @IsNotEmpty()
+  @IsNumber()
+  optionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  point: number;
+}
+
+export class UpdateSes {
+  @IsArray()
+  data: SesData[];
+}

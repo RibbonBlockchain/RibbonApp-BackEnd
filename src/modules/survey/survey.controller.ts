@@ -6,7 +6,18 @@ import { SurveyService } from './survey.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  Version,
+} from '@nestjs/common';
 
 @Controller()
 export class SurveyController {
@@ -67,5 +78,12 @@ export class SurveyController {
   async rateSurvey(@Body() body: Dto.RateSurveyBody, @ReqUser() user: TUser) {
     const data = await this.survey.HttpHandleRateSurvey(body, user);
     return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Patch('/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSes) {
+    return await this.survey.HttpHandleUpdateSes(body);
   }
 }

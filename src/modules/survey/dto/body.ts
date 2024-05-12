@@ -62,3 +62,18 @@ export class RateSurveyBody {
   @IsNotEmpty()
   surveyId: number;
 }
+
+export class SesData {
+  @IsNotEmpty()
+  @IsNumber()
+  optionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  point: number;
+}
+
+export class UpdateSes {
+  @IsArray()
+  data: SesData[];
+}

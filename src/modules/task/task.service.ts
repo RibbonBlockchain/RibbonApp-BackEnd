@@ -8,6 +8,7 @@ import {
   QuestionOptions,
   VerificationCode,
   QuestionnaireActivity,
+  TasskQuestionOptions,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
@@ -267,7 +268,7 @@ export class TaskService {
 
   async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
     data.map(async ({ optionId, point }) => {
-      await this.provider.db.update(QuestionOptions).set({ point }).where(eq(QuestionOptions.id, optionId));
+      await this.provider.db.update(TasskQuestionOptions).set({ point }).where(eq(TasskQuestionOptions.id, optionId));
     });
     return {};
   }

@@ -103,4 +103,11 @@ export class QuestionnaireController {
     const data = await this.questionnaireService.HttpHandleRateQuestionnaire(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Patch('/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSes) {
+    return await this.questionnaireService.HttpHandleUpdateSes(body);
+  }
 }
