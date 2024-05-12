@@ -127,6 +127,62 @@
       "when": 1715334616369,
       "tag": "0017_thick_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1715421199568,
+      "tag": "0018_flat_iron_lad",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1715421738376,
+      "tag": "0019_hesitant_whizzer",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1715422196910,
+      "tag": "0020_cuddly_the_watchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1715423632270,
+      "tag": "0021_sad_daredevil",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1715430352868,
+      "tag": "0022_confused_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1715444451256,
+      "tag": "0023_ambitious_butterfly",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1715445540043,
+      "tag": "0024_large_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1715519175388,
+      "tag": "0026_aspiring_the_leader",
+      "breakpoints": true
     }
   ]
 }

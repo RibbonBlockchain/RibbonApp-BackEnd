@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsNumberString, IsPhoneNumber, Length } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsNumberString, IsPhoneNumber, Length } from 'class-validator';
 
 export class TaskQuestionResponseDto {
   @IsNotEmpty()
@@ -31,7 +31,7 @@ export class CompletePhoneVerificationTask {
   code: string;
 }
 
-export class UpdateSes {
+export class SesData {
   @IsNotEmpty()
   @IsNumber()
   optionId: number;
@@ -39,4 +39,9 @@ export class UpdateSes {
   @IsNotEmpty()
   @IsNumber()
   point: number;
+}
+
+export class UpdateSes {
+  @IsArray()
+  data: SesData[];
 }

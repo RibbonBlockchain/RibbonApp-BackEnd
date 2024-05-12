@@ -1,22 +1,22 @@
 import {
   TUser,
-  Task,
-  Options,
   Question,
-  TaskActivity,
+  Questionnaire,
+  QuestionOptions,
   QuestionnaireRating,
+  QuestionnaireActivity,
   QuestionnaireCategory,
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq, ilike, or, sql } from 'drizzle-orm';
-import { createSlug, getRewardValue } from '@/core/utils';
-import { generatePagination, getPage } from '@/core/utils/page';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import excelToJson from 'convert-excel-to-json';
 import { generateCode } from '@/core/utils/code';
 import { TDbProvider } from '../drizzle/drizzle.module';
+import { createSlug, getRewardValue } from '@/core/utils';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -34,18 +34,45 @@ export class QuestionnaireService {
 
   async HttpHandleAddQuestionnaire(body: Dto.AddQuestionnaireBody) {
     await this.provider.db.transaction(async (tx) => {
-      const category = await tx.query.QuestionnaireCategory.findFirst({
-        where: eq(QuestionnaireCategory.id, body.categoryId),
-      });
+      let categoryName = '';
+
+      if (body.categoryId) {
+        const category = await tx.query.QuestionnaireCategory.findFirst({
+          where: eq(QuestionnaireCategory.id, body.categoryId),
+        });
+        categoryName = category.name;
+      }
+
+      if (body.category) {
+        const [category] = await tx
+          .insert(QuestionnaireCategory)
+          .values({ name: body.category, slug: createSlug(body.category) })
+          .returning();
+
+        categoryName = category.name;
+        body.categoryId = category.id;
+      }
+
+      if (!categoryName) throw new BadRequestException('Invalid questionnaire category');
+
+      const code = generateCode();
+      const slug = createSlug(categoryName + ' ' + code);
 
       const [questionnaire] = await tx
-        .insert(Task)
-        .values({ type: 'QUESTIONNAIRE', description: '', name: category.name, reward: body.reward })
-        .returning({ id: Task.id });
+        .insert(Questionnaire)
+        .values({
+          slug,
+          name: categoryName,
+          reward: body.reward,
+          type: 'QUESTIONNAIRE',
+          categoryId: body.categoryId,
+          description: body.description,
+        })
+        .returning({ id: Questionnaire.id });
 
       await Promise.all(
         body.questions.map(async (data, index) => {
-          await tx
+          const [question] = await tx
             .insert(Question)
             .values({
               type: data.type,
@@ -54,6 +81,7 @@ export class QuestionnaireService {
               taskId: questionnaire.id,
               isLast: index === body.questions.length - 1,
             })
+            .returning({ id: Question.id })
             .onConflictDoUpdate({
               target: [Question.text, Question.taskId],
               set: {
@@ -64,6 +92,14 @@ export class QuestionnaireService {
                 isLast: index === body.questions.length - 1,
               },
             });
+
+          await Promise.all(
+            data?.options?.map(async (option) => {
+              await tx
+                .insert(QuestionOptions)
+                .values({ questionId: question.id, point: option.point, text: option.value });
+            }),
+          );
         }),
       );
     });
@@ -84,7 +120,12 @@ export class QuestionnaireService {
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await tx.query.QuestionnaireCategory.findMany({ where: queryFilter, limit, offset });
+      const data = await tx.query.QuestionnaireCategory.findMany({
+        limit,
+        offset,
+        where: queryFilter,
+        orderBy: desc(QuestionnaireCategory.updatedAt),
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${QuestionnaireCategory.id}) as int)` })
@@ -95,37 +136,83 @@ export class QuestionnaireService {
     });
   }
 
-  async HttphandleGetQuestionnaires({ q, page, pageSize }: Dto.GetAllQuestionnaireQuery) {
+  async HttpHandleUpdateQuestionnaireStatus(body: Dto.UpdateQuestionnaireStatusBody) {
+    await this.provider.db.update(Questionnaire).set({ status: body.status }).where(eq(Questionnaire.id, body.id));
+    return {};
+  }
+
+  async HttpHandleGetQuestionnaireSummary() {
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ active }] = await tx
+        .select({ active: sql<number>`cast(count(${Questionnaire.id}) as int)` })
+        .from(Questionnaire)
+        .where(eq(Questionnaire.status, 'ACTIVE'));
+
+      const [{ closed }] = await tx
+        .select({ closed: sql<number>`cast(count(${Questionnaire.id}) as int)` })
+        .from(Questionnaire)
+        .where(eq(Questionnaire.status, 'CLOSED'));
+
+      return { count: { active, closed } };
+    });
+  }
+
+  async HttphandleGetQuestionnaires({ q, page, status, pageSize }: Dto.GetAllQuestionnaireQuery) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });
 
+    const statusFilter = status ? eq(Questionnaire.status, status) : undefined;
+
     const queryFilter = q
-      ? or(ilike(Task.name, searchQuery), ilike(Task.slug, searchQuery), ilike(Task.description, searchQuery))
+      ? or(
+          ilike(Questionnaire.name, searchQuery),
+          ilike(Questionnaire.slug, searchQuery),
+          ilike(Questionnaire.description, searchQuery),
+        )
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await this.provider.db.query.Task.findMany({ limit, offset });
+      const data = await tx.query.Questionnaire.findMany({
+        limit,
+        offset,
+        where: and(queryFilter, statusFilter),
+        orderBy: desc(Questionnaire.updatedAt),
+        with: { questions: { limit: 1 }, activities: { limit: 1 } },
+        extras: {
+          totalResponses:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${QuestionnaireActivity} WHERE ${Questionnaire.id} = questionnaire_activity.task_id)`.as(
+              'responses',
+            ),
+          totalQuestions:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${Question} WHERE ${Questionnaire.id} = question.task_id)`.as(
+              'totalQuestions',
+            ),
+        },
+      });
 
       const [{ total }] = await tx
-        .select({ total: sql<number>`cast(count(${Task.id}) as int)` })
-        .from(Task)
+        .select({ total: sql<number>`cast(count(${Questionnaire.id}) as int)` })
+        .from(Questionnaire)
         .where(queryFilter);
 
-      return { data, pagination: generatePagination(page, page, total) };
+      return { data, pagination: generatePagination(page, pageSize, total) };
     });
   }
 
   async HttphandleGetQuestionnaireById(id: number) {
-    return await this.provider.db.query.Task.findFirst({ where: eq(Task.id, id), with: { questions: true } });
+    return await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.id, id),
+      with: { questions: { with: { options: true } } },
+    });
   }
 
   async HttpHandleRateQuestionnaire(body: Dto.RateQuestionnaireBody, user: TUser) {
-    const activity = await this.provider.db.query.TaskActivity.findFirst({
+    const activity = await this.provider.db.query.QuestionnaireActivity.findFirst({
       with: { task: { columns: { id: true } } },
       where: and(
-        eq(TaskActivity.userId, user.id),
-        eq(TaskActivity.status, 'COMPLETED'),
-        eq(TaskActivity.taskId, body.questionnaireId),
+        eq(QuestionnaireActivity.userId, user.id),
+        eq(QuestionnaireActivity.status, 'COMPLETED'),
+        eq(QuestionnaireActivity.taskId, body.questionnaireId),
       ),
     });
 
@@ -150,25 +237,35 @@ export class QuestionnaireService {
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
         let questionnaireId = 0;
-        const code = generateCode();
-        const name = `${category}-${code}`;
         const questions = sheets[category];
+
+        const [cat] = await this.provider.db
+          .insert(QuestionnaireCategory)
+          .values({ name: category, slug: createSlug(category), description: '' })
+          .onConflictDoNothing()
+          .returning();
 
         for (const question of questions) {
           if (question.id === 'id') {
+            const name = `${category} ${generateCode()}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
-              .insert(Task)
-              .values({ type: 'QUESTIONNAIRE', name, description: '', slug: createSlug(name), reward })
-              .returning({ id: Task.id });
+              .insert(Questionnaire)
+              .values({
+                reward,
+                name: category,
+                description: '',
+                categoryId: cat.id,
+                type: 'QUESTIONNAIRE',
+                slug: createSlug(name),
+              })
+              .returning({ id: Questionnaire.id });
 
             questionnaireId = res?.id;
           } else {
-            const isLast = false;
             const isFirst = question.id === 1;
-
-            console.log(question);
+            const isLast = question.id === questions?.length - 1;
 
             const [res] = await this.provider.db
               .insert(Question)
@@ -176,7 +273,7 @@ export class QuestionnaireService {
               .returning({ id: Question.id });
 
             question?.options?.split(',')?.map(async (option) => {
-              await this.provider.db.insert(Options).values({ questionId: res.id, text: option });
+              await this.provider.db.insert(QuestionOptions).values({ questionId: res.id, text: option });
             });
           }
         }

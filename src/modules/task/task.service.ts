@@ -1,23 +1,23 @@
+import {
+  User,
+  TUser,
+  Answer,
+  Wallet,
+  Question,
+  Questionnaire,
+  QuestionOptions,
+  VerificationCode,
+  QuestionnaireActivity,
+} from '../drizzle/schema';
+import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
-import { hasTimeExpired } from '@/core/utils';
 import { quickOTP } from '@/core/utils/code';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
-import { TDbProvider } from '../drizzle/drizzle.module';
-import {
-  Answer,
-  Options,
-  Question,
-  TUser,
-  Task,
-  TaskActivity,
-  User,
-  VerificationCode,
-  Wallet,
-} from '../drizzle/schema';
+import { hasTimeExpired } from '@/core/utils';
 import { TwilioService } from '../twiio/twilio.service';
-import * as Dto from './dto';
+import { TDbProvider } from '../drizzle/drizzle.module';
+import { and, asc, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TaskService {
@@ -28,20 +28,22 @@ export class TaskService {
 
   // TODO create task later
   async HttpHandleGetTasks() {
-    const data = await this.provider.db.query.Task.findMany({ with: { questions: { with: { options: true } } } });
+    const data = await this.provider.db.query.Questionnaire.findMany({
+      with: { questions: { with: { options: true } } },
+    });
     return { data };
   }
 
   async HttpHandleCompletePhoneVerificationTask(body: Dto.CompletePhoneVerificationTask, user: TUser) {
-    const phoneVerificationTask = await this.provider.db.query.Task.findFirst({
-      where: eq(Task.slug, 'verify-your-phone-number'),
+    const phoneVerificationTask = await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.slug, 'verify-your-phone-number'),
     });
 
-    const completed = await this.provider.db.query.TaskActivity.findFirst({
+    const completed = await this.provider.db.query.QuestionnaireActivity.findFirst({
       where: and(
-        eq(TaskActivity.userId, user.id),
-        eq(TaskActivity.status, 'COMPLETED'),
-        eq(TaskActivity.taskId, phoneVerificationTask.id),
+        eq(QuestionnaireActivity.userId, user.id),
+        eq(QuestionnaireActivity.status, 'COMPLETED'),
+        eq(QuestionnaireActivity.taskId, phoneVerificationTask.id),
       ),
     });
 
@@ -58,7 +60,9 @@ export class TaskService {
     await this.provider.db.transaction(async (tx) => {
       await tx.update(VerificationCode).set({ expiresAt: new Date() });
       await tx.update(User).set({ phone: body.phone }).where(eq(User.id, user.auth.id));
-      await tx.insert(TaskActivity).values({ taskId: phoneVerificationTask.id, userId: user.id, status: 'COMPLETED' });
+      await tx
+        .insert(QuestionnaireActivity)
+        .values({ taskId: phoneVerificationTask.id, userId: user.id, status: 'COMPLETED' });
       await this.provider.db
         .update(Wallet)
         .set({ balance: phoneVerificationTask.reward })
@@ -69,15 +73,15 @@ export class TaskService {
   }
 
   async HttpHandleRequestPhoneVerificationTask(body: Dto.RequestPhoneVerificationTask, user: TUser) {
-    const phoneVerificationTask = await this.provider.db.query.Task.findFirst({
-      where: eq(Task.slug, 'verify-your-phone-number'),
+    const phoneVerificationTask = await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.slug, 'verify-your-phone-number'),
     });
 
-    const completed = await this.provider.db.query.TaskActivity.findFirst({
+    const completed = await this.provider.db.query.QuestionnaireActivity.findFirst({
       where: and(
-        eq(TaskActivity.userId, user.id),
-        eq(TaskActivity.status, 'COMPLETED'),
-        eq(TaskActivity.taskId, phoneVerificationTask.id),
+        eq(QuestionnaireActivity.userId, user.id),
+        eq(QuestionnaireActivity.status, 'COMPLETED'),
+        eq(QuestionnaireActivity.taskId, phoneVerificationTask.id),
       ),
     });
 
@@ -108,10 +112,10 @@ export class TaskService {
 
   async HttpHandleGetTaskById(id: string) {
     const taskId = parseInt(id);
-    const field = isNaN(taskId) ? Task.slug : Task.id;
-    const data = await this.provider.db.query.Task.findFirst({
+    const field = isNaN(taskId) ? Questionnaire.slug : Questionnaire.id;
+    const data = await this.provider.db.query.Questionnaire.findFirst({
       where: eq(field, id),
-      with: { questions: { with: { options: true } } },
+      with: { questions: { with: { options: true }, orderBy: asc(Question.id) } },
     });
 
     return { data };
@@ -120,33 +124,33 @@ export class TaskService {
   async HttpHandleAnswerTaskQuestion(input: Dto.TaskQuestionResponseDto, user: TUser) {
     const { optionId, questionId, taskId } = input;
 
-    const task = await this.provider.db.query.Task.findFirst({
-      where: eq(Task.id, taskId),
+    const task = await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.id, taskId),
     });
 
     const wallet = await this.provider.db.query.Wallet.findFirst({
       where: eq(Wallet.userId, user.id),
     });
 
-    const userTaskActivity = await this.provider.db.query.TaskActivity.findFirst({
-      where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.taskId, input.taskId)),
+    const userTaskActivity = await this.provider.db.query.QuestionnaireActivity.findFirst({
+      where: and(eq(QuestionnaireActivity.userId, user.id), eq(QuestionnaireActivity.taskId, input.taskId)),
     });
 
     const question = await this.provider.db.query.Question.findFirst({
       where: eq(Question.id, questionId),
     });
 
-    const option = await this.provider.db.query.Options.findFirst({ where: eq(Options.id, optionId) });
+    const option = await this.provider.db.query.QuestionOptions.findFirst({ where: eq(QuestionOptions.id, optionId) });
 
     if (!userTaskActivity) {
-      await this.provider.db.insert(TaskActivity).values({ taskId, userId: user.id }).execute();
+      await this.provider.db.insert(QuestionnaireActivity).values({ taskId, userId: user.id }).execute();
     }
 
     if (question.isLast) {
       await this.provider.db
-        .update(TaskActivity)
+        .update(QuestionnaireActivity)
         .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
-        .where(and(eq(TaskActivity.id, userTaskActivity.id), eq(TaskActivity.userId, user.id)));
+        .where(and(eq(QuestionnaireActivity.id, userTaskActivity.id), eq(QuestionnaireActivity.userId, user.id)));
 
       await this.provider.db
         .update(Wallet)
@@ -164,15 +168,15 @@ export class TaskService {
     const completedTasksId: { taskId: number; completedDate: string }[] = [];
 
     const userTaskActivity = completedDate
-      ? await this.provider.db.query.TaskActivity.findMany({
+      ? await this.provider.db.query.QuestionnaireActivity.findMany({
           where: and(
-            eq(TaskActivity.userId, user.id),
-            eq(TaskActivity.status, 'COMPLETED'),
-            eq(TaskActivity.completedDate, completedDate),
+            eq(QuestionnaireActivity.userId, user.id),
+            eq(QuestionnaireActivity.status, 'COMPLETED'),
+            eq(QuestionnaireActivity.completedDate, completedDate),
           ),
         })
-      : await this.provider.db.query.TaskActivity.findMany({
-          where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.status, 'COMPLETED')),
+      : await this.provider.db.query.QuestionnaireActivity.findMany({
+          where: and(eq(QuestionnaireActivity.userId, user.id), eq(QuestionnaireActivity.status, 'COMPLETED')),
         });
 
     userTaskActivity.forEach((task) => {
@@ -183,9 +187,9 @@ export class TaskService {
 
     const taskActivity =
       completedTasksId.length > 0
-        ? await this.provider.db.query.Task.findMany({
+        ? await this.provider.db.query.Questionnaire.findMany({
             where: inArray(
-              Task.id,
+              Questionnaire.id,
               completedTasksId.map(({ taskId }) => taskId),
             ),
             // with: { ratings: true },
@@ -209,8 +213,8 @@ export class TaskService {
   async HttpHandleGetUserProcessingTasks(user: TUser) {
     const processingTasksId = [];
 
-    const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.status, 'PROCESSING')),
+    const userTaskActivity = await this.provider.db.query.QuestionnaireActivity.findMany({
+      where: and(eq(QuestionnaireActivity.userId, user.id), eq(QuestionnaireActivity.status, 'PROCESSING')),
     });
 
     userTaskActivity.forEach((task) => {
@@ -219,24 +223,27 @@ export class TaskService {
 
     if (!processingTasksId?.length) return { data: [] };
 
-    const tasks = await this.provider.db.query.Task.findMany({ where: inArray(Task.id, processingTasksId) });
+    const tasks = await this.provider.db.query.Questionnaire.findMany({
+      where: inArray(Questionnaire.id, processingTasksId),
+    });
     return { data: tasks };
   }
 
   async HttpHandleGetUserUnCompletedTasks(user: TUser) {
     const completedTasksId = [];
 
-    const userTaskActivity = await this.provider.db.query.TaskActivity.findMany({
-      where: and(eq(TaskActivity.userId, user.id), ne(TaskActivity.type, 'DAILY_REWARD')),
+    const userTaskActivity = await this.provider.db.query.QuestionnaireActivity.findMany({
+      where: and(eq(QuestionnaireActivity.userId, user.id), ne(QuestionnaireActivity.type, 'DAILY_REWARD')),
     });
 
     userTaskActivity.forEach((task) => {
       completedTasksId.push(task.taskId);
     });
 
-    const data = await this.provider.db.query.Task.findMany({
+    const data = await this.provider.db.query.Questionnaire.findMany({
+      orderBy: desc(Questionnaire.updatedAt),
       with: { questions: { with: { options: true } } },
-      where: completedTasksId?.length ? notInArray(Task.id, completedTasksId) : null,
+      where: completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : null,
     });
 
     const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
@@ -245,20 +252,23 @@ export class TaskService {
   }
 
   async HttpHandleGetUserTaskActivity(user: TUser, taskId: number) {
-    const data = await this.provider.db.query.TaskActivity.findFirst({
-      where: and(eq(TaskActivity.userId, user.id), eq(TaskActivity.taskId, taskId)),
+    const data = await this.provider.db.query.QuestionnaireActivity.findFirst({
+      where: and(eq(QuestionnaireActivity.userId, user.id), eq(QuestionnaireActivity.taskId, taskId)),
     });
     return { data };
   }
 
   async HttpHandleGetUserTaskActivities(user: TUser) {
-    const data = await this.provider.db.query.TaskActivity.findMany({
-      where: eq(TaskActivity.userId, user.id),
+    const data = await this.provider.db.query.QuestionnaireActivity.findMany({
+      where: eq(QuestionnaireActivity.userId, user.id),
     });
     return { data };
   }
 
-  async HttpHandleUpdateSes(input: Dto.UpdateSes) {
-    return await this.provider.db.update(Options).set({ point: input.point }).where(eq(Options.id, input.optionId));
+  async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
+    data.map(async ({ optionId, point }) => {
+      await this.provider.db.update(QuestionOptions).set({ point }).where(eq(QuestionOptions.id, optionId));
+    });
+    return {};
   }
 }

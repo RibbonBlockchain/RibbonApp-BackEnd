@@ -32,6 +32,10 @@ export const UserStatusMap = ['ACTIVE', 'ONBOARDING'] as const;
 export const UserStatusEnum = pgEnum('user_status', UserStatusMap);
 export type TUserStatus = (typeof UserStatusEnum.enumValues)[number];
 
+export const QuestionnaireStatusMap = ['ACTIVE', 'CLOSED'] as const;
+export const QuestionnaireStatusEnum = pgEnum('questionnaire_status', QuestionnaireStatusMap);
+export type TQuestionnaireStatus = (typeof QuestionnaireStatusEnum.enumValues)[number];
+
 export const VerificationCodeReasonMap = ['FORGOT_PIN', 'SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
 export const VerificationCodeReasonEnum = pgEnum('verification_code_reason', VerificationCodeReasonMap);
 export type TVerificationCodeReason = (typeof VerificationCodeReasonEnum.enumValues)[number];
@@ -109,8 +113,8 @@ export const VerificationCode = ribbonSchema.table('verification_code', {
 
 export const Wallet = ribbonSchema.table('wallet', {
   id: serial('id').primaryKey(),
-  balance: integer('balance').default(0),
-  point: integer('point').default(0),
+  balance: doublePrecision('balance').default(0),
+  point: doublePrecision('point').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   userId: integer('user_id')
     .notNull()
@@ -118,17 +122,20 @@ export const Wallet = ribbonSchema.table('wallet', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const Task = ribbonSchema.table('task', {
+export const Questionnaire = ribbonSchema.table('questionnaire', {
   id: serial('id').primaryKey(),
   image: varchar('image'),
   name: varchar('name'),
-  slug: varchar('slug'),
+  slug: varchar('slug').unique(),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
+  categoryId: integer('category_id').default(1),
+  status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const Survey = ribbonSchema.table('survey', {
@@ -164,7 +171,7 @@ export const SurveyRating = ribbonSchema.table(
     rating: integer('rating').default(0),
     surveyId: integer('survey_id')
       .notNull()
-      .references(() => Task.id),
+      .references(() => Survey.id),
     userId: integer('user_id')
       .notNull()
       .references(() => User.id),
@@ -186,7 +193,7 @@ export const SurveyCategory = ribbonSchema.table('survey_category', {
 });
 
 export const SurveyQuestion = ribbonSchema.table(
-  'survey__question',
+  'survey_question',
   {
     id: serial('id').primaryKey(),
     text: varchar('text'),
@@ -326,7 +333,7 @@ export const QuestionnaireRating = ribbonSchema.table(
     rating: integer('rating').default(0),
     questionId: integer('questionnaire_id')
       .notNull()
-      .references(() => Task.id),
+      .references(() => Questionnaire.id),
     userId: integer('user_id')
       .notNull()
       .references(() => User.id),
@@ -348,7 +355,9 @@ export const Question = ribbonSchema.table(
     isLast: boolean('is_last').default(false),
     taskId: integer('task_id')
       .notNull()
-      .references(() => Task.id),
+      .references(() => Questionnaire.id),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   },
   (t) => ({
     key: unique('key').on(t.text, t.taskId),
@@ -364,7 +373,7 @@ export const QuestionnaireCategory = ribbonSchema.table('questionnaire_category'
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const Options = ribbonSchema.table('options', {
+export const QuestionOptions = ribbonSchema.table('question_options', {
   id: serial('id').primaryKey(),
   point: integer('point').default(0),
   text: varchar('text'),
@@ -381,16 +390,16 @@ export const Answer = ribbonSchema.table('answer', {
     .references(() => Question.id),
   optionId: integer('option_id')
     .notNull()
-    .references(() => Options.id),
+    .references(() => QuestionOptions.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const TaskActivity = ribbonSchema.table('task_activity', {
+export const QuestionnaireActivity = ribbonSchema.table('questionnaire_activity', {
   id: serial('id').primaryKey(),
-  taskId: integer('task_id').references(() => Task.id),
+  taskId: integer('task_id').references(() => Questionnaire.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
@@ -415,14 +424,15 @@ export const Notification = ribbonSchema.table('notification', {
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
-  activities: many(TaskActivity),
+  activities: many(QuestionnaireActivity),
   notifications: many(Notification),
 }));
 
-export const TaskRelations = relations(Task, ({ many }) => ({
+export const QuestionnaireRelations = relations(Questionnaire, ({ one, many }) => ({
   questions: many(Question),
-  activities: many(TaskActivity),
-  ratings: many(QuestionnaireCategory),
+  ratings: many(QuestionnaireRating),
+  activities: many(QuestionnaireActivity),
+  category: one(QuestionnaireCategory, { fields: [Questionnaire.categoryId], references: [QuestionnaireCategory.id] }),
 }));
 
 export const SurveyRelations = relations(Survey, ({ one, many }) => ({
@@ -474,23 +484,23 @@ export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
-  task: one(Task, { fields: [Question.taskId], references: [Task.id] }),
-  options: many(Options),
+  options: many(QuestionOptions),
+  task: one(Questionnaire, { fields: [Question.taskId], references: [Questionnaire.id] }),
 }));
 
-export const OptionsRelations = relations(Options, ({ one }) => ({
-  question: one(Question, { fields: [Options.questionId], references: [Question.id] }),
+export const OptionsRelations = relations(QuestionOptions, ({ one }) => ({
+  question: one(Question, { fields: [QuestionOptions.questionId], references: [Question.id] }),
 }));
 
 export const AnswerRelations = relations(Answer, ({ one }) => ({
   question: one(Question, { fields: [Answer.questionId], references: [Question.id] }),
-  option: one(Options, { fields: [Answer.optionId], references: [Options.id] }),
+  option: one(QuestionOptions, { fields: [Answer.optionId], references: [QuestionOptions.id] }),
   user: one(User, { fields: [Answer.userId], references: [User.id] }),
 }));
 
-export const TaskActivityRelations = relations(TaskActivity, ({ one }) => ({
-  task: one(Task, { fields: [TaskActivity.taskId], references: [Task.id] }),
-  user: one(User, { fields: [TaskActivity.userId], references: [User.id] }),
+export const QuestionnaireActivityRelations = relations(QuestionnaireActivity, ({ one }) => ({
+  task: one(Questionnaire, { fields: [QuestionnaireActivity.taskId], references: [Questionnaire.id] }),
+  user: one(User, { fields: [QuestionnaireActivity.userId], references: [User.id] }),
 }));
 
 export const AuthRelations = relations(Auth, ({ one }) => ({

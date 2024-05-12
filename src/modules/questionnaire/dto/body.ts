@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { QuestionTypeMap, TQuestionType } from '@/modules/drizzle/schema';
+import { QuestionTypeMap, QuestionnaireStatusMap, TQuestionType, TQuestionnaireStatus } from '@/modules/drizzle/schema';
 import { IsArray, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class RateQuestionnaireBody {
@@ -10,6 +10,16 @@ export class RateQuestionnaireBody {
   @IsInt()
   @IsNotEmpty()
   questionnaireId: number;
+}
+
+export class UpdateQuestionnaireStatusBody {
+  @IsNotEmpty()
+  @IsIn(QuestionnaireStatusMap)
+  status: TQuestionnaireStatus;
+
+  @IsInt()
+  @IsNotEmpty()
+  id: number;
 }
 
 class OptionPayload {
@@ -40,11 +50,19 @@ class QuestionPayload {
 
 export class AddQuestionnaireBody {
   @IsInt()
-  @IsNotEmpty()
+  @IsOptional()
   categoryId: number;
+
+  @IsString()
+  @IsOptional()
+  category: string;
 
   @IsNumber()
   reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
 
   @IsArray()
   @Type(() => QuestionPayload)

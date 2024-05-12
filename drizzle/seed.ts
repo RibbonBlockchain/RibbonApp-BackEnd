@@ -3,7 +3,7 @@ import * as env from 'dotenv';
 import * as Argon2 from 'argon2';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { createSlug, isProduction } from '../src/core/utils';
-import { Auth, QuestionnaireCategory, Task, User } from '../src/modules/drizzle/schema';
+import { Auth, QuestionnaireCategory, Questionnaire, User } from '../src/modules/drizzle/schema';
 
 env.config();
 
@@ -11,7 +11,7 @@ if (!('DATABASE_URL' in process.env)) {
   throw new Error('DATABASE_URL not found on .env');
 }
 
-const admins = [
+const admins = [] || [
   {
     pin: '0000',
     lastName: 'Admin',
@@ -24,12 +24,27 @@ const admins = [
   },
 ];
 
-const tasks = [
-  { duration: 60, title: 'Verify your phone number', description: 'Verify your phone number', point: 15, reward: 3 },
-  { duration: 60, title: 'Complete your profile', description: 'Complete your profile', point: 15, reward: 5 },
+const tasks = [] || [
+  {
+    point: 15,
+    reward: 3,
+    duration: 60,
+    categoryId: 1,
+    title: 'Verify your phone number',
+    description: 'Verify your phone number',
+  },
+  {
+    reward: 5,
+    point: 15,
+    duration: 60,
+    categoryId: 1,
+    title: 'Complete your profile',
+    description: 'Complete your profile',
+  },
 ];
 
-const questionnaireCategories = [
+const questionnaireCategories = [] || [
+  { name: 'APP' },
   { name: 'Health' },
   { name: 'Home' },
   { name: 'Environment' },
@@ -50,13 +65,14 @@ const main = async () => {
   await db.transaction(async (tx) => {
     tasks.forEach(async (task) => {
       await tx
-        .insert(Task)
+        .insert(Questionnaire)
         .values({
           type: 'APP',
           name: task.title,
           point: task.point,
           reward: task.reward,
           duration: task.duration,
+          categoryId: task.categoryId,
           slug: createSlug(task.title),
           description: task.description,
         })

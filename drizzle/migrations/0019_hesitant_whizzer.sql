@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."task" ADD CONSTRAINT "task_slug_unique" UNIQUE("slug");

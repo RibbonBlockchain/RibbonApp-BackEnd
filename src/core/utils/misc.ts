@@ -8,7 +8,7 @@ export const createSlug = (title: string, extra?: string) => {
 };
 
 export const getRewardValue = (keys: string[]) => {
-  for (const key in keys) {
+  for (const key of keys) {
     if (key.startsWith('reward')) {
       return parseFloat(key.match(/\[(.*?)\]/)[1]);
     }
