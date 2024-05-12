@@ -6,9 +6,6 @@ ALTER TABLE "ribbon"."questionnaire_activity" DROP CONSTRAINT "questionnaire_act
 --> statement-breakpoint
 ALTER TABLE "ribbon"."questionnaire_rating" DROP CONSTRAINT "questionnaire_rating_questionnaire_id_questionniare_id_fk";
 --> statement-breakpoint
---> statement-breakpoint
-ALTER TABLE "ribbon"."questionnaire" ALTER COLUMN "category_id" SET DEFAULT 1;--> statement-breakpoint
-ALTER TABLE "ribbon"."questionnaire" ALTER COLUMN "category_id" DROP NOT NULL;--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "ribbon"."question" ADD CONSTRAINT "question_task_id_questionnaire_id_fk" FOREIGN KEY ("task_id") REFERENCES "ribbon"."questionnaire"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
