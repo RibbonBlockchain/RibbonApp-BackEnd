@@ -183,6 +183,20 @@
       "when": 1715519175388,
       "tag": "0026_aspiring_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1715520595947,
+      "tag": "0027_conscious_major_mapleleaf",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1715520605626,
+      "tag": "0028_lowly_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

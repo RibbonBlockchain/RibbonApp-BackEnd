@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."questionnaire" RENAME COLUMN "catgory_id" TO "category_id";
