@@ -265,10 +265,10 @@ export class TaskService {
     return { data };
   }
 
-  async HttpHandleUpdateSes(input: Dto.UpdateSes) {
-    return await this.provider.db
-      .update(QuestionOptions)
-      .set({ point: input.point })
-      .where(eq(QuestionOptions.id, input.optionId));
+  async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
+    data.map(async ({ optionId, point }) => {
+      await this.provider.db.update(QuestionOptions).set({ point }).where(eq(QuestionOptions.id, optionId));
+    });
+    return {};
   }
 }
