@@ -11,7 +11,7 @@ if (!('DATABASE_URL' in process.env)) {
   throw new Error('DATABASE_URL not found on .env');
 }
 
-const admins = [
+const admins = [] || [
   {
     pin: '0000',
     lastName: 'Admin',
@@ -24,7 +24,7 @@ const admins = [
   },
 ];
 
-const tasks = [
+const tasks = [] || [
   {
     point: 15,
     reward: 3,
@@ -43,7 +43,7 @@ const tasks = [
   },
 ];
 
-const questionnaireCategories = [
+const questionnaireCategories = [] || [
   { name: 'APP' },
   { name: 'Health' },
   { name: 'Home' },
