@@ -121,7 +121,7 @@ export class UserService {
       // Claiming for first time
       await this.provider.db
         .update(Wallet)
-        .set({ balance: wallet.balance + 5 })
+        .set({ balance: wallet.balance + 0.02 })
         .where(eq(Wallet.userId, user.id));
 
       await this.provider.db
@@ -140,7 +140,7 @@ export class UserService {
     if (lastClaimTime && lastClaimTime < twelveHoursAgo) {
       await this.provider.db
         .update(Wallet)
-        .set({ balance: wallet.balance + 5 })
+        .set({ balance: wallet.balance + 0.02 })
         .where(eq(Wallet.userId, user.id));
 
       await this.provider.db
