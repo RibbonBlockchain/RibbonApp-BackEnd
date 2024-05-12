@@ -122,7 +122,7 @@ export const Wallet = ribbonSchema.table('wallet', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const Questionnaire = ribbonSchema.table('questionniare', {
+export const Questionnaire = ribbonSchema.table('questionnaire', {
   id: serial('id').primaryKey(),
   image: varchar('image'),
   name: varchar('name'),
@@ -131,6 +131,10 @@ export const Questionnaire = ribbonSchema.table('questionniare', {
   type: TaskTypeEnum('type').notNull(),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
+  categoryId: integer('category_id')
+    .notNull()
+    .references(() => QuestionnaireCategory.id)
+    .default(1),
   status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -427,10 +431,11 @@ export const UserRelations = relations(User, ({ one, many }) => ({
   notifications: many(Notification),
 }));
 
-export const QuestionnaireRelations = relations(Questionnaire, ({ many }) => ({
+export const QuestionnaireRelations = relations(Questionnaire, ({ one, many }) => ({
   questions: many(Question),
-  ratings: many(QuestionnaireCategory),
+  ratings: many(QuestionnaireRating),
   activities: many(QuestionnaireActivity),
+  category: one(QuestionnaireCategory, { fields: [Questionnaire.categoryId], references: [QuestionnaireCategory.id] }),
 }));
 
 export const SurveyRelations = relations(Survey, ({ one, many }) => ({
@@ -496,7 +501,7 @@ export const AnswerRelations = relations(Answer, ({ one }) => ({
   user: one(User, { fields: [Answer.userId], references: [User.id] }),
 }));
 
-export const QuestionniareActivityRelations = relations(QuestionnaireActivity, ({ one }) => ({
+export const QuestionnaireActivityRelations = relations(QuestionnaireActivity, ({ one }) => ({
   task: one(Questionnaire, { fields: [QuestionnaireActivity.taskId], references: [Questionnaire.id] }),
   user: one(User, { fields: [QuestionnaireActivity.userId], references: [User.id] }),
 }));

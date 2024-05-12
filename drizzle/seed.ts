@@ -25,11 +25,26 @@ const admins = [
 ];
 
 const tasks = [
-  { duration: 60, title: 'Verify your phone number', description: 'Verify your phone number', point: 15, reward: 3 },
-  { duration: 60, title: 'Complete your profile', description: 'Complete your profile', point: 15, reward: 5 },
+  {
+    point: 15,
+    reward: 3,
+    duration: 60,
+    categoryId: 1,
+    title: 'Verify your phone number',
+    description: 'Verify your phone number',
+  },
+  {
+    reward: 5,
+    point: 15,
+    duration: 60,
+    categoryId: 1,
+    title: 'Complete your profile',
+    description: 'Complete your profile',
+  },
 ];
 
 const questionnaireCategories = [
+  { name: 'APP' },
   { name: 'Health' },
   { name: 'Home' },
   { name: 'Environment' },
@@ -57,6 +72,7 @@ const main = async () => {
           point: task.point,
           reward: task.reward,
           duration: task.duration,
+          categoryId: task.categoryId,
           slug: createSlug(task.title),
           description: task.description,
         })

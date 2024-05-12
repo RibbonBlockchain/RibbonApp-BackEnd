@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."questionnaire" ALTER COLUMN "category_id" SET DEFAULT 1;

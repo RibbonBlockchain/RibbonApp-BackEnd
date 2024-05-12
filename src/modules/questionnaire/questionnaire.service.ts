@@ -48,7 +48,9 @@ export class QuestionnaireService {
           .insert(QuestionnaireCategory)
           .values({ name: body.category, slug: createSlug(body.category) })
           .returning();
+
         categoryName = category.name;
+        body.categoryId = category.id;
       }
 
       if (!categoryName) throw new BadRequestException('Invalid questionnaire category');
@@ -63,6 +65,7 @@ export class QuestionnaireService {
           name: categoryName,
           reward: body.reward,
           type: 'QUESTIONNAIRE',
+          categoryId: body.categoryId,
           description: body.description,
         })
         .returning({ id: Questionnaire.id });
@@ -236,6 +239,12 @@ export class QuestionnaireService {
         let questionnaireId = 0;
         const questions = sheets[category];
 
+        const [cat] = await this.provider.db
+          .insert(QuestionnaireCategory)
+          .values({ name: category, slug: createSlug(category), description: '' })
+          .onConflictDoNothing()
+          .returning();
+
         for (const question of questions) {
           if (question.id === 'id') {
             const name = `${category} ${generateCode()}`.trim();
@@ -243,7 +252,14 @@ export class QuestionnaireService {
 
             const [res] = await this.provider.db
               .insert(Questionnaire)
-              .values({ type: 'QUESTIONNAIRE', name: category, description: '', slug: createSlug(name), reward })
+              .values({
+                reward,
+                name: category,
+                description: '',
+                categoryId: cat.id,
+                type: 'QUESTIONNAIRE',
+                slug: createSlug(name),
+              })
               .returning({ id: Questionnaire.id });
 
             questionnaireId = res?.id;
