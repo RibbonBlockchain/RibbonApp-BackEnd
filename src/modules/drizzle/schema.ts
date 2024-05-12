@@ -131,10 +131,7 @@ export const Questionnaire = ribbonSchema.table('questionnaire', {
   type: TaskTypeEnum('type').notNull(),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
-  categoryId: integer('category_id')
-    .notNull()
-    .references(() => QuestionnaireCategory.id)
-    .default(1),
+  categoryId: integer('category_id').default(1),
   status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
