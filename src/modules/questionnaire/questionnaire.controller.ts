@@ -74,8 +74,8 @@ export class QuestionnaireController {
   @Version(VERSION_ONE)
   @Patch('/admin/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async updateQuestions(@Body() body: Dto.AddQuestionnaireBody) {
-    const data = await this.questionnaireService.HttpHandleAddQuestionnaire(body);
+  async updateQuestions(@Body() body: Dto.UpdateQuestionnaireBody) {
+    const data = await this.questionnaireService.HttpHandleUpdateQuestionnaire(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 

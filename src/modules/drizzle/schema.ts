@@ -375,15 +375,19 @@ export const QuestionnaireCategory = ribbonSchema.table('questionnaire_category'
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const QuestionOptions = ribbonSchema.table('question_options', {
-  id: serial('id').primaryKey(),
-  point: integer('point').default(0),
-  text: varchar('text'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  questionId: integer('question_id')
-    .notNull()
-    .references(() => Question.id),
-});
+export const QuestionOptions = ribbonSchema.table(
+  'question_options',
+  {
+    id: serial('id').primaryKey(),
+    point: integer('point').default(0),
+    text: varchar('text'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    questionId: integer('question_id')
+      .notNull()
+      .references(() => Question.id),
+  },
+  (t) => ({ key: unique('uniq_question_option').on(t.text, t.questionId) }),
+);
 
 export const Answer = ribbonSchema.table('answer', {
   id: serial('id').primaryKey(),

@@ -24,6 +24,10 @@ export class UpdateQuestionnaireStatusBody {
 
 class OptionPayload {
   @IsInt()
+  @IsOptional()
+  id: number;
+
+  @IsInt()
   @IsNotEmpty()
   point: number;
 
@@ -33,6 +37,10 @@ class OptionPayload {
 }
 
 class QuestionPayload {
+  @IsInt()
+  @IsOptional()
+  id: number;
+
   @IsNotEmpty()
   @IsIn(QuestionTypeMap)
   type: TQuestionType;
@@ -79,4 +87,26 @@ export class CreateQuestionnaireCategoryBody {
   @IsNotEmpty()
   @IsOptional()
   description: string;
+}
+
+export class UpdateQuestionnaireBody {
+  @IsInt()
+  @IsNotEmpty()
+  id: number;
+
+  @IsInt()
+  @IsOptional()
+  categoryId: number;
+
+  @IsNumber()
+  reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @IsArray()
+  @Type(() => QuestionPayload)
+  @ValidateNested({ each: true })
+  questions: QuestionPayload[];
 }

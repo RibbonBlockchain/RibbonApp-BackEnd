@@ -44,10 +44,16 @@ export class QuestionnaireService {
       }
 
       if (body.category) {
-        const [category] = await tx
+        let [category] = await tx
           .insert(QuestionnaireCategory)
           .values({ name: body.category, slug: createSlug(body.category) })
+          .onConflictDoNothing()
           .returning();
+
+        if (!category)
+          category = await tx.query.QuestionnaireCategory.findFirst({
+            where: eq(QuestionnaireCategory.name, body.category),
+          });
 
         categoryName = category.name;
         body.categoryId = category.id;
@@ -100,6 +106,93 @@ export class QuestionnaireService {
                 .values({ questionId: question.id, point: option.point, text: option.value });
             }),
           );
+        }),
+      );
+    });
+
+    return {};
+  }
+
+  async HttpHandleUpdateQuestionnaire(body: Dto.UpdateQuestionnaireBody) {
+    await this.provider.db.transaction(async (tx) => {
+      const category = await tx.query.QuestionnaireCategory.findFirst({
+        where: eq(QuestionnaireCategory.id, body.categoryId),
+      });
+
+      const [questionnaire] = await tx
+        .update(Questionnaire)
+        .set({
+          name: category.name,
+          reward: body.reward,
+          type: 'QUESTIONNAIRE',
+          categoryId: body.categoryId,
+          description: body.description,
+        })
+        .where(eq(Questionnaire.id, body.id))
+        .returning({ id: Questionnaire.id });
+
+      await Promise.all(
+        body.questions.map(async (data, index) => {
+          console.log(index, index === 0, index === body.questions.length - 1);
+
+          if (!data.id) {
+            const [question] = await tx
+              .insert(Question)
+              .values({
+                type: data.type,
+                text: data.question,
+                isFirst: index === 0,
+                taskId: questionnaire.id,
+                isLast: index === body.questions.length - 1,
+              })
+              .returning({ id: Question.id })
+              .onConflictDoUpdate({
+                target: [Question.text, Question.taskId],
+                set: {
+                  type: data.type,
+                  text: data.question,
+                  isFirst: index === 0,
+                  taskId: questionnaire.id,
+                  isLast: index === body.questions.length - 1,
+                },
+              });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                await tx
+                  .insert(QuestionOptions)
+                  .values({ questionId: question.id, point: option.point, text: option.value })
+                  .onConflictDoNothing({ target: [QuestionOptions.questionId, QuestionOptions.text] });
+              }),
+            );
+          } else {
+            const [question] = await tx
+              .update(Question)
+              .set({
+                type: data.type,
+                text: data.question,
+                isFirst: index === 0,
+                taskId: questionnaire.id,
+                isLast: index === body.questions.length - 1,
+              })
+              .where(eq(Question.id, data.id))
+              .returning({ id: Question.id });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                if (!option.id) {
+                  return await tx
+                    .insert(QuestionOptions)
+                    .values({ questionId: question.id, point: option.point, text: option.value });
+                } else {
+                  return await tx
+                    .update(QuestionOptions)
+                    .set({ questionId: question.id, point: option.point, text: option.value })
+                    .where(eq(QuestionOptions.id, option.id));
+                }
+              }),
+            );
+          }
         }),
       );
     });

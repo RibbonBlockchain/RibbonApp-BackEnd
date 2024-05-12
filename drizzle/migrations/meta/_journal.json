@@ -211,6 +211,20 @@
       "when": 1715521008746,
       "tag": "0030_aspiring_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1715524504981,
+      "tag": "0031_next_silverclaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1715524568567,
+      "tag": "0032_slimy_morgan_stark",
+      "breakpoints": true
     }
   ]
 }
