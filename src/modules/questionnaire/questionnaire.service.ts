@@ -133,10 +133,8 @@ export class QuestionnaireService {
 
       await Promise.all(
         body.questions.map(async (data, index) => {
-          console.log(index, index === 0, index === body.questions.length - 1);
-
           if (!data.id) {
-            const [question] = await tx
+            let [question] = await tx
               .insert(Question)
               .values({
                 type: data.type,
@@ -156,6 +154,8 @@ export class QuestionnaireService {
                   isLast: index === body.questions.length - 1,
                 },
               });
+
+            if (!question) question = await tx.query.Question.findFirst({ where: eq(Question.text, data.question) });
 
             await Promise.all(
               data?.options?.map(async (option) => {
@@ -183,7 +183,8 @@ export class QuestionnaireService {
                 if (!option.id) {
                   return await tx
                     .insert(QuestionOptions)
-                    .values({ questionId: question.id, point: option.point, text: option.value });
+                    .values({ questionId: question.id, point: option.point, text: option.value })
+                    .onConflictDoNothing();
                 } else {
                   return await tx
                     .update(QuestionOptions)
