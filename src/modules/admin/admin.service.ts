@@ -1,11 +1,12 @@
 import * as Dto from './dto';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import { and, eq, inArray } from 'drizzle-orm';
-import { Auth, TUser, User } from '../drizzle/schema';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
+import { generatePagination, getPage } from '@/core/utils/page';
+import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { Auth, RewardPartner, TUser, User } from '../drizzle/schema';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -64,5 +65,30 @@ export class AdminService {
 
     await this.provider.db.update(Auth).set({ accessToken, refreshToken }).where(eq(Auth.userId, userId));
     return { accessToken, refreshToken };
+  }
+
+  async HttpHandleGetRewardPartners({ q, page, pageSize }: Dto.GetRewardPartners) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(ilike(RewardPartner.name, searchQuery), ilike(RewardPartner.token, searchQuery))
+      : undefined;
+
+    return await this.provider.db.transaction(async (tx) => {
+      const data = await tx.query.RewardPartner.findMany({
+        limit,
+        offset,
+        where: queryFilter,
+        orderBy: desc(RewardPartner.updatedAt),
+      });
+
+      const [{ total }] = await tx
+        .select({ total: sql<number>`cast(count(${RewardPartner.id}) as int)` })
+        .from(RewardPartner)
+        .where(queryFilter);
+
+      return { data, totalBalance: 10_000, pagination: generatePagination(page, pageSize, total) };
+    });
   }
 }

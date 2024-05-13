@@ -1,5 +1,5 @@
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { HasLowerCase, HasNumber, HasSpecialCharacter, HasUpperCase } from '@/core/validators';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class AdminLoginBody {
   @IsString()
@@ -31,4 +31,18 @@ export class AdminChangePasswordBody {
   @HasLowerCase()
   @HasSpecialCharacter()
   newPassword: string;
+}
+
+export class GetRewardPartners {
+  @IsString()
+  @IsOptional()
+  q: string;
+
+  @IsInt()
+  @IsOptional()
+  page: number;
+
+  @IsInt()
+  @IsOptional()
+  pageSize: number;
 }

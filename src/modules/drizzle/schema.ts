@@ -426,6 +426,18 @@ export const Notification = ribbonSchema.table('notification', {
     .references(() => User.id),
   isRead: boolean('isRead').default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const RewardPartner = ribbonSchema.table('reward_partner', {
+  id: serial('id').primaryKey(),
+  logo: varchar('logo'),
+  name: varchar('name'),
+  token: varchar('token'),
+  value: doublePrecision('value').default(0),
+  volume: doublePrecision('volume').default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 // Relations
