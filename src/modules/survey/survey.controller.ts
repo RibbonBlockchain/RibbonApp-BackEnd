@@ -48,6 +48,14 @@ export class SurveyController {
   }
 
   @Version(VERSION_ONE)
+  @Patch('/admin/survey/status')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateSurveyStatus(@Body() body: Dto.UpdateSurveyStatusBody) {
+    const data = await this.survey.HttpHandleUpdateSurveyStatus(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/admin/survey/:id')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getSurveyById(@Param('id') id: number) {

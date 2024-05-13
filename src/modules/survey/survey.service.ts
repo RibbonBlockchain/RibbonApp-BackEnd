@@ -116,7 +116,15 @@ export class SurveyService {
   }
 
   async HttphandleGetSurveyById(id: number) {
-    return await this.provider.db.query.Survey.findFirst({ where: eq(Survey.id, id), with: { questions: true } });
+    return await this.provider.db.query.Survey.findFirst({
+      where: eq(Survey.id, id),
+      with: { questions: { with: { options: true } }, category: true },
+    });
+  }
+
+  async HttpHandleUpdateSurveyStatus(body: Dto.UpdateSurveyStatusBody) {
+    await this.provider.db.update(Survey).set({ status: body.status }).where(eq(Survey.id, body.id));
+    return {};
   }
 
   async HttpHandleRateSurvey(body: Dto.RateSurveyBody, user: TUser) {
@@ -143,25 +151,50 @@ export class SurveyService {
 
   async HttpHandleAddSurvey(body: Dto.AddSurveyBody) {
     await this.provider.db.transaction(async (tx) => {
-      const category = await tx.query.SurveyCategory.findFirst({
-        where: eq(SurveyCategory.id, body.categoryId),
-      });
+      let categoryName = '';
 
-      if (!category) throw new BadRequestException('Category not found');
+      if (body.categoryId) {
+        const category = await tx.query.SurveyCategory.findFirst({
+          where: eq(SurveyCategory.id, body.categoryId),
+        });
+        categoryName = category.name;
+      }
+
+      if (body.category) {
+        let [category] = await tx
+          .insert(SurveyCategory)
+          .values({ name: body.category, slug: createSlug(body.category) })
+          .onConflictDoNothing()
+          .returning();
+
+        if (!category)
+          category = await tx.query.QuestionnaireCategory.findFirst({
+            where: eq(SurveyCategory.name, body.category),
+          });
+
+        categoryName = category.name;
+        body.categoryId = category.id;
+      }
+
+      if (!categoryName) throw new BadRequestException('Invalid survey category');
+
+      const code = generateCode();
+      const slug = createSlug(categoryName + ' ' + code);
 
       const [survey] = await tx
         .insert(Survey)
         .values({
-          description: '',
-          name: category.name,
+          slug,
+          name: categoryName,
           reward: body.reward,
-          categoryId: category.id,
+          categoryId: body.categoryId,
+          description: body.description,
         })
         .returning({ id: Survey.id });
 
       await Promise.all(
         body.questions.map(async (data, index) => {
-          await tx
+          const [question] = await tx
             .insert(SurveyQuestion)
             .values({
               type: data.type,
@@ -170,15 +203,25 @@ export class SurveyService {
               isFirst: index === 0,
               isLast: index === body.questions.length - 1,
             })
+            .returning({ id: SurveyQuestion.id })
             .onConflictDoUpdate({
               target: [SurveyQuestion.text, SurveyQuestion.surveyId],
               set: {
+                type: data.type,
                 text: data.question,
                 surveyId: survey.id,
                 isFirst: index === 0,
                 isLast: index === body.questions.length - 1,
               },
             });
+
+          await Promise.all(
+            data?.options?.map(async (option) => {
+              await tx
+                .insert(SurveyQuestionOptions)
+                .values({ questionId: question.id, point: option.point, text: option.value });
+            }),
+          );
         }),
       );
     });
