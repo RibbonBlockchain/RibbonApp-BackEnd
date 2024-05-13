@@ -40,12 +40,27 @@ export class AdminService {
 
   async HttpHandleGetDashboardSummary() {
     return await this.provider.db.transaction(async (tx) => {
-      const [{ task }] = await tx.select({ task: count() }).from(Tassk);
-      const [{ survey }] = await tx.select({ survey: count() }).from(Survey);
-      const [{ questionnaire }] = await tx.select({ questionnaire: count() }).from(Questionnaire);
-      const [{ taskResponse }] = await tx.select({ taskResponse: count() }).from(TasskQuestionAnswer);
-      const [{ surveyResponse }] = await tx.select({ surveyResponse: count() }).from(SurveyQuestionAnswer);
-      const [{ questionnaireResponse }] = await tx.select({ questionnaireResponse: count() }).from(Answer);
+      const [
+        [{ task }],
+        [{ survey }],
+        [{ questionnaire }],
+        [{ taskResponse }],
+        [{ surveyResponse }],
+        [{ questionnaireResponse }],
+        [{ totalTaskActivities }],
+        [{ totalSurveyActivities }],
+        [{ totalQuestionnaireActivities }],
+      ] = await Promise.all([
+        await tx.select({ task: count() }).from(Tassk),
+        await tx.select({ survey: count() }).from(Survey),
+        await tx.select({ questionnaire: count() }).from(Questionnaire),
+        await tx.select({ taskResponse: count() }).from(TasskQuestionAnswer),
+        await tx.select({ surveyResponse: count() }).from(SurveyQuestionAnswer),
+        await tx.select({ questionnaireResponse: count() }).from(Answer),
+        await tx.select({ totalTaskActivities: count() }).from(TasskActivity),
+        await tx.select({ totalSurveyActivities: count() }).from(SurveyActivity),
+        await tx.select({ totalQuestionnaireActivities: count() }).from(QuestionnaireActivity),
+      ]);
 
       const [{ inactiveUsers }] = await tx
         .select({ inactiveUsers: count() })
@@ -56,12 +71,6 @@ export class AdminService {
         .select({ activeUsers: count() })
         .from(User)
         .where(and(eq(User.role, 'PATIENT'), eq(User.status, 'ACTIVE')));
-
-      const [{ totalTaskActivities }] = await tx.select({ totalTaskActivities: count() }).from(TasskActivity);
-      const [{ totalSurveyActivities }] = await tx.select({ totalSurveyActivities: count() }).from(SurveyActivity);
-      const [{ totalQuestionnaireActivities }] = await tx
-        .select({ totalQuestionnaireActivities: count() })
-        .from(QuestionnaireActivity);
 
       const [{ completedTaskActivities }] = await tx
         .select({ completedTaskActivities: count() })

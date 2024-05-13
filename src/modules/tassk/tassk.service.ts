@@ -101,7 +101,7 @@ export class TasskService {
         with: { questions: { limit: 1 }, activities: { limit: 1 }, category: true },
         extras: {
           totalResponses:
-            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${TasskActivity} WHERE ${Tassk.id} = tassk_activity.task_id)`.as(
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${TasskActivity} WHERE ${Tassk.id} = tassk_activity.tassk_id)`.as(
               'responses',
             ),
           totalQuestions:
@@ -123,7 +123,7 @@ export class TasskService {
   async HttphandleGetTasskById(id: number) {
     return await this.provider.db.query.Tassk.findFirst({
       where: eq(Tassk.id, id),
-      with: { category: true, questions: { with: { options: true } } },
+      with: { questions: true, category: true },
     });
   }
 
