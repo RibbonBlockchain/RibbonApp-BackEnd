@@ -12,7 +12,7 @@ export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Version(VERSION_ONE)
-  @Post('/dashboard/summary')
+  @Get('/dashboard/summary')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetDashboardSummary() {
     const data = await this.admin.HttpHandleGetDashboardSummary();

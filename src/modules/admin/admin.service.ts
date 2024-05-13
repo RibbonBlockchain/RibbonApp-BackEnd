@@ -1,3 +1,18 @@
+import {
+  Auth,
+  User,
+  TUser,
+  Tassk,
+  Answer,
+  Survey,
+  Questionnaire,
+  RewardPartner,
+  TasskActivity,
+  SurveyActivity,
+  TasskQuestionAnswer,
+  SurveyQuestionAnswer,
+  QuestionnaireActivity,
+} from '../drizzle/schema';
 import * as Dto from './dto';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
@@ -5,9 +20,8 @@ import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
 import { generatePagination, getPage } from '@/core/utils/page';
-import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
-import { Auth, RewardPartner, TUser, User } from '../drizzle/schema';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { and, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 
 @Injectable()
 export class AdminService {
@@ -25,7 +39,63 @@ export class AdminService {
   }
 
   async HttpHandleGetDashboardSummary() {
-    return {};
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ task }] = await tx.select({ task: count() }).from(Tassk);
+      const [{ survey }] = await tx.select({ survey: count() }).from(Survey);
+      const [{ questionnaire }] = await tx.select({ questionnaire: count() }).from(Questionnaire);
+      const [{ taskResponse }] = await tx.select({ taskResponse: count() }).from(TasskQuestionAnswer);
+      const [{ surveyResponse }] = await tx.select({ surveyResponse: count() }).from(SurveyQuestionAnswer);
+      const [{ questionnaireResponse }] = await tx.select({ questionnaireResponse: count() }).from(Answer);
+
+      const [{ inactiveUsers }] = await tx
+        .select({ inactiveUsers: count() })
+        .from(User)
+        .where(and(eq(User.role, 'PATIENT'), eq(User.status, 'ONBOARDING')));
+
+      const [{ activeUsers }] = await tx
+        .select({ activeUsers: count() })
+        .from(User)
+        .where(and(eq(User.role, 'PATIENT'), eq(User.status, 'ACTIVE')));
+
+      const [{ totalTaskActivities }] = await tx.select({ totalTaskActivities: count() }).from(TasskActivity);
+      const [{ totalSurveyActivities }] = await tx.select({ totalSurveyActivities: count() }).from(SurveyActivity);
+      const [{ totalQuestionnaireActivities }] = await tx
+        .select({ totalQuestionnaireActivities: count() })
+        .from(QuestionnaireActivity);
+
+      const [{ completedTaskActivities }] = await tx
+        .select({ completedTaskActivities: count() })
+        .from(TasskActivity)
+        .where(eq(TasskActivity.status, 'COMPLETED'));
+
+      const [{ completedSurveykActivities }] = await tx
+        .select({ completedSurveykActivities: count() })
+        .from(SurveyActivity)
+        .where(eq(SurveyActivity.status, 'COMPLETED'));
+
+      const [{ completedQuestionnaireActivities }] = await tx
+        .select({ completedQuestionnaireActivities: count() })
+        .from(QuestionnaireActivity)
+        .where(eq(QuestionnaireActivity.status, 'COMPLETED'));
+
+      const totalResponses = taskResponse + surveyResponse + questionnaireResponse;
+      const totalActivities = totalQuestionnaireActivities + totalSurveyActivities + totalTaskActivities;
+      const completedActivities =
+        completedQuestionnaireActivities + completedSurveykActivities + completedTaskActivities;
+      const completionRate = (completedActivities / totalActivities) * 100;
+
+      return {
+        task,
+        survey,
+        activeUsers,
+        questionnaire,
+        inactiveUsers,
+        completionRate,
+        totalResponses,
+        totalActivities,
+        rewardPoints: 10_000,
+      };
+    });
   }
 
   async HttpHandleChangePassword(body: Dto.AdminChangePasswordBody, reqUser: TUser) {
