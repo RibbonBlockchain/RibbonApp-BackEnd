@@ -9,7 +9,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { generatePagination, getPage } from '@/core/utils/page';
@@ -36,7 +36,12 @@ export class TasskService {
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await tx.query.TasskCategory.findMany({ where: queryFilter, limit, offset });
+      const data = await tx.query.TasskCategory.findMany({
+        limit,
+        offset,
+        where: queryFilter,
+        orderBy: desc(TasskCategory.updatedAt),
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${TasskCategory.id}) as int)` })
@@ -45,6 +50,27 @@ export class TasskService {
 
       return { data, pagination: generatePagination(page, pageSize, total) };
     });
+  }
+
+  async HttpHandleGetTaskSummary() {
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ active }] = await tx
+        .select({ active: sql<number>`cast(count(${Tassk.id}) as int)` })
+        .from(Tassk)
+        .where(eq(Tassk.status, 'ACTIVE'));
+
+      const [{ closed }] = await tx
+        .select({ closed: sql<number>`cast(count(${Tassk.id}) as int)` })
+        .from(Tassk)
+        .where(eq(Tassk.status, 'CLOSED'));
+
+      return { count: { active, closed } };
+    });
+  }
+
+  async HttpHandleUpdateTaskStatus(body: Dto.UpdateTaskStatusBody) {
+    await this.provider.db.update(Tassk).set({ status: body.status }).where(eq(Tassk.id, body.id));
+    return {};
   }
 
   async HttpHandleCreateTasskCategory(body: Dto.CreateTasskCategoryBody) {
@@ -56,28 +82,49 @@ export class TasskService {
     return {};
   }
 
-  async HttphandleGetTassks({ q, page, pageSize }: Dto.GetAllTasskQuery) {
+  async HttphandleGetTassks({ q, page, status, pageSize }: Dto.GetAllTasskQuery) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });
+
+    const statusFilter = status ? eq(Tassk.status, status) : undefined;
 
     const queryFilter = q
       ? or(ilike(Tassk.name, searchQuery), ilike(Tassk.slug, searchQuery), ilike(Tassk.description, searchQuery))
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await tx.query.Tassk.findMany({ where: queryFilter, limit, offset });
+      const data = await tx.query.Tassk.findMany({
+        limit,
+        offset,
+        orderBy: desc(Tassk.updatedAt),
+        where: and(statusFilter, queryFilter),
+        with: { questions: { limit: 1 }, activities: { limit: 1 }, category: true },
+        extras: {
+          totalResponses:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${TasskActivity} WHERE ${Tassk.id} = tassk_activity.task_id)`.as(
+              'responses',
+            ),
+          totalQuestions:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${TasskQuestion} WHERE ${Tassk.id} = task_question.task_id)`.as(
+              'totalQuestions',
+            ),
+        },
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${Tassk.id}) as int)` })
         .from(Tassk)
-        .where(queryFilter);
+        .where(and(statusFilter, queryFilter));
 
       return { data, pagination: generatePagination(page, pageSize, total) };
     });
   }
 
   async HttphandleGetTasskById(id: number) {
-    return await this.provider.db.query.Tassk.findFirst({ where: eq(Tassk.id, id), with: { questions: true } });
+    return await this.provider.db.query.Tassk.findFirst({
+      where: eq(Tassk.id, id),
+      with: { category: true, questions: { with: { options: true } } },
+    });
   }
 
   async HttpHandleRateTassk(body: Dto.RateTasskBody, user: TUser) {
@@ -104,25 +151,50 @@ export class TasskService {
 
   async HttpHandleAddTassk(body: Dto.AddTasskBody) {
     await this.provider.db.transaction(async (tx) => {
-      const category = await tx.query.TasskCategory.findFirst({
-        where: eq(TasskCategory.id, body.categoryId),
-      });
+      let categoryName = '';
 
-      if (!category) throw new BadRequestException('Category not found');
+      if (body.categoryId) {
+        const category = await tx.query.TasskCategory.findFirst({
+          where: eq(TasskCategory.id, body.categoryId),
+        });
+        categoryName = category.name;
+      }
+
+      if (body.category) {
+        let [category] = await tx
+          .insert(TasskCategory)
+          .values({ name: body.category, slug: createSlug(body.category) })
+          .onConflictDoNothing()
+          .returning();
+
+        if (!category)
+          category = await tx.query.TasskCategory.findFirst({
+            where: eq(TasskCategory.name, body.category),
+          });
+
+        categoryName = category.name;
+        body.categoryId = category.id;
+      }
+
+      if (!categoryName) throw new BadRequestException('Category not found');
+
+      const code = generateCode();
+      const slug = createSlug(categoryName + ' ' + code);
 
       const [survey] = await tx
         .insert(Tassk)
         .values({
+          slug,
           description: '',
-          name: category.name,
+          name: categoryName,
           reward: body.reward,
-          categoryId: category.id,
+          categoryId: body.categoryId,
         })
         .returning({ id: Tassk.id });
 
       await Promise.all(
         body.questions.map(async (data, index) => {
-          await tx
+          const [question] = await tx
             .insert(TasskQuestion)
             .values({
               type: data.type,
@@ -131,15 +203,25 @@ export class TasskService {
               isFirst: index === 0,
               isLast: index === body.questions.length - 1,
             })
+            .returning({ id: TasskQuestion.id })
             .onConflictDoUpdate({
               target: [TasskQuestion.text, TasskQuestion.taskId],
               set: {
+                type: data.type,
                 taskId: survey.id,
                 text: data.question,
                 isFirst: index === 0,
                 isLast: index === body.questions.length - 1,
               },
             });
+
+          await Promise.all(
+            data?.options?.map(async (option) => {
+              await tx
+                .insert(TasskQuestionOptions)
+                .values({ questionId: question.id, point: option.point, text: option.value });
+            }),
+          );
         }),
       );
     });
@@ -156,29 +238,28 @@ export class TasskService {
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
         let taskId = 0;
-        const code = generateCode();
-        const name = `${category}-${code}`;
         const questions = sheets[category];
 
-        const [{ id: categoryId }] = await this.provider.db
+        const [cat] = await this.provider.db
           .insert(TasskCategory)
           .values({ name: category, slug: createSlug(category), description: '' })
           .onConflictDoNothing()
-          .returning({ id: TasskCategory.id });
+          .returning();
 
         for (const question of questions) {
           if (question.id === 'id') {
+            const name = `${category} ${generateCode()}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
               .insert(Tassk)
-              .values({ categoryId, name, description: '', slug: createSlug(name), reward })
+              .values({ categoryId: cat.id, name: category, description: '', slug: createSlug(name), reward })
               .returning({ id: Tassk.id });
 
             taskId = res?.id;
           } else {
-            const isLast = false;
             const isFirst = question.id === 1;
+            const isLast = question.id === questions?.length - 1;
 
             const [res] = await this.provider.db
               .insert(TasskQuestion)
@@ -194,5 +275,93 @@ export class TasskService {
     );
 
     fs.rm(file.path, () => {});
+  }
+
+  async HttpHandleUpdateTassk(body: Dto.UpdateTasskBody) {
+    await this.provider.db.transaction(async (tx) => {
+      const category = await tx.query.TasskCategory.findFirst({
+        where: eq(TasskCategory.id, body.categoryId),
+      });
+
+      const [task] = await tx
+        .update(Tassk)
+        .set({
+          name: category.name,
+          reward: body.reward,
+          categoryId: body.categoryId,
+          description: body.description,
+        })
+        .where(eq(Tassk.id, body.id))
+        .returning({ id: Tassk.id });
+
+      await Promise.all(
+        body.questions.map(async (data, index) => {
+          if (!data.id) {
+            let [question] = await tx
+              .insert(TasskQuestion)
+              .values({
+                type: data.type,
+                taskId: task.id,
+                text: data.question,
+                isFirst: index === 0,
+                isLast: index === body.questions.length - 1,
+              })
+              .returning({ id: TasskQuestion.id })
+              .onConflictDoUpdate({
+                target: [TasskQuestion.text, TasskQuestion.taskId],
+                set: {
+                  taskId: task.id,
+                  type: data.type,
+                  text: data.question,
+                  isFirst: index === 0,
+                  isLast: index === body.questions.length - 1,
+                },
+              });
+
+            if (!question)
+              question = await tx.query.Question.findFirst({ where: eq(TasskQuestion.text, data.question) });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                await tx
+                  .insert(TasskQuestionOptions)
+                  .values({ questionId: question.id, point: option.point, text: option.value })
+                  .onConflictDoNothing({ target: [TasskQuestionOptions.questionId, TasskQuestionOptions.text] });
+              }),
+            );
+          } else {
+            const [question] = await tx
+              .update(TasskQuestion)
+              .set({
+                type: data.type,
+                taskId: task.id,
+                text: data.question,
+                isFirst: index === 0,
+                isLast: index === body.questions.length - 1,
+              })
+              .where(eq(TasskQuestion.id, data.id))
+              .returning({ id: TasskQuestion.id });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                if (!option.id) {
+                  return await tx
+                    .insert(TasskQuestionOptions)
+                    .values({ questionId: question.id, point: option.point, text: option.value })
+                    .onConflictDoNothing();
+                } else {
+                  return await tx
+                    .update(TasskQuestionOptions)
+                    .set({ questionId: question.id, point: option.point, text: option.value })
+                    .where(eq(TasskQuestionOptions.id, option.id));
+                }
+              }),
+            );
+          }
+        }),
+      );
+    });
+
+    return {};
   }
 }

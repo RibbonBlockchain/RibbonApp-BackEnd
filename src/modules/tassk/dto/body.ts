@@ -2,13 +2,43 @@ import { Type } from 'class-transformer';
 import { QuestionTypeMap, TQuestionType } from '@/modules/drizzle/schema';
 import { IsInt, IsNotEmpty, IsNumber, IsArray, ValidateNested, IsIn, IsString, IsOptional } from 'class-validator';
 
+export class UpdateTasskBody {
+  @IsInt()
+  @IsNotEmpty()
+  id: number;
+
+  @IsInt()
+  @IsOptional()
+  categoryId: number;
+
+  @IsNumber()
+  reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @IsArray()
+  @Type(() => QuestionPayload)
+  @ValidateNested({ each: true })
+  questions: QuestionPayload[];
+}
+
 export class AddTasskBody {
   @IsInt()
   @IsNotEmpty()
   categoryId: number;
 
+  @IsString()
+  @IsOptional()
+  category: string;
+
   @IsNumber()
   reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
 
   @IsArray()
   @Type(() => QuestionPayload)
@@ -17,6 +47,10 @@ export class AddTasskBody {
 }
 
 class QuestionPayload {
+  @IsInt()
+  @IsOptional()
+  id: number;
+
   @IsNotEmpty()
   @IsIn(QuestionTypeMap)
   type: TQuestionType;
@@ -33,6 +67,10 @@ class QuestionPayload {
 }
 
 class OptionPayload {
+  @IsInt()
+  @IsOptional()
+  id: number;
+
   @IsInt()
   @IsNotEmpty()
   point: number;
