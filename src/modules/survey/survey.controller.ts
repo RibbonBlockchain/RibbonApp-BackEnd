@@ -72,6 +72,14 @@ export class SurveyController {
   }
 
   @Version(VERSION_ONE)
+  @Patch('/admin/survey')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateQuestions(@Body() body: Dto.UpdateSurveyBody) {
+    const data = await this.survey.HttpHandleUpdateQuestionnaire(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Post('/admin/survey/category')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async createSurveyCategory(@Body() body: Dto.CreateSurveyCategoryBody) {

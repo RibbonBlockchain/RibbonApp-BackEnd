@@ -24,6 +24,28 @@ export class AddSurveyBody {
   questions: QuestionPayload[];
 }
 
+export class UpdateSurveyBody {
+  @IsInt()
+  @IsNotEmpty()
+  id: number;
+
+  @IsInt()
+  @IsOptional()
+  categoryId: number;
+
+  @IsNumber()
+  reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @IsArray()
+  @Type(() => QuestionPayload)
+  @ValidateNested({ each: true })
+  questions: QuestionPayload[];
+}
+
 class QuestionPayload {
   @IsInt()
   @IsOptional()

@@ -238,29 +238,28 @@ export class SurveyService {
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
         let surveyId = 0;
-        const code = generateCode();
-        const name = `${category}-${code}`;
         const questions = sheets[category];
 
-        const [{ id: categoryId }] = await this.provider.db
+        const [cat] = await this.provider.db
           .insert(SurveyCategory)
           .values({ name: category, slug: createSlug(category), description: '' })
           .onConflictDoNothing()
-          .returning({ id: SurveyCategory.id });
+          .returning();
 
         for (const question of questions) {
           if (question.id === 'id') {
+            const name = `${category} ${generateCode()}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
             const [res] = await this.provider.db
               .insert(Survey)
-              .values({ categoryId, name, description: '', slug: createSlug(name), reward })
+              .values({ categoryId: cat.id, name, description: '', slug: createSlug(name), reward })
               .returning({ id: Survey.id });
 
             surveyId = res?.id;
           } else {
-            const isLast = false;
             const isFirst = question.id === 1;
+            const isLast = question.id === questions?.length - 1;
 
             const [res] = await this.provider.db
               .insert(SurveyQuestion)
@@ -282,6 +281,181 @@ export class SurveyService {
     data.map(async ({ optionId, point }) => {
       await this.provider.db.update(SurveyQuestionOptions).set({ point }).where(eq(SurveyQuestionOptions.id, optionId));
     });
+    return {};
+  }
+
+  async HttpHandleUpdateQuestionnaire(body: Dto.UpdateSurveyBody) {
+    await this.provider.db.transaction(async (tx) => {
+      const category = await tx.query.QuestionnaireCategory.findFirst({
+        where: eq(SurveyCategory.id, body.categoryId),
+      });
+
+      const [survey] = await tx
+        .update(Survey)
+        .set({
+          name: category.name,
+          reward: body.reward,
+          categoryId: body.categoryId,
+          description: body.description,
+        })
+        .where(eq(Survey.id, body.id))
+        .returning({ id: Survey.id });
+
+      await Promise.all(
+        body.questions.map(async (data, index) => {
+          if (!data.id) {
+            let [question] = await tx
+              .insert(SurveyQuestion)
+              .values({
+                type: data.type,
+                text: data.question,
+                surveyId: survey.id,
+                isFirst: index === 0,
+                isLast: index === body.questions.length - 1,
+              })
+              .returning({ id: SurveyQuestion.id })
+              .onConflictDoUpdate({
+                target: [SurveyQuestion.text, SurveyQuestion.surveyId],
+                set: {
+                  type: data.type,
+                  text: data.question,
+                  surveyId: survey.id,
+                  isFirst: index === 0,
+                  isLast: index === body.questions.length - 1,
+                },
+              });
+
+            if (!question)
+              question = await tx.query.Question.findFirst({ where: eq(SurveyQuestion.text, data.question) });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                await tx
+                  .insert(SurveyQuestionOptions)
+                  .values({ questionId: question.id, point: option.point, text: option.value })
+                  .onConflictDoNothing({ target: [SurveyQuestionOptions.questionId, SurveyQuestionOptions.text] });
+              }),
+            );
+          } else {
+            const [question] = await tx
+              .update(SurveyQuestion)
+              .set({
+                type: data.type,
+                text: data.question,
+                surveyId: survey.id,
+                isFirst: index === 0,
+                isLast: index === body.questions.length - 1,
+              })
+              .where(eq(SurveyQuestion.id, data.id))
+              .returning({ id: SurveyQuestion.id });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                if (!option.id) {
+                  return await tx
+                    .insert(SurveyQuestionOptions)
+                    .values({ questionId: question.id, point: option.point, text: option.value })
+                    .onConflictDoNothing();
+                } else {
+                  return await tx
+                    .update(SurveyQuestionOptions)
+                    .set({ questionId: question.id, point: option.point, text: option.value })
+                    .where(eq(SurveyQuestionOptions.id, option.id));
+                }
+              }),
+            );
+          }
+        }),
+      );
+    });
+
+    return {};
+  }
+  async HttpHandleUpdateSurvey(body: Dto.UpdateSurveyBody) {
+    await this.provider.db.transaction(async (tx) => {
+      const category = await tx.query.SurveyCategory.findFirst({
+        where: eq(SurveyCategory.id, body.categoryId),
+      });
+
+      const [survey] = await tx
+        .update(Survey)
+        .set({
+          name: category.name,
+          reward: body.reward,
+          categoryId: body.categoryId,
+          description: body.description,
+        })
+        .where(eq(Survey.id, body.id))
+        .returning({ id: Survey.id });
+
+      await Promise.all(
+        body.questions.map(async (data, index) => {
+          if (!data.id) {
+            let [question] = await tx
+              .insert(SurveyQuestion)
+              .values({
+                type: data.type,
+                surveyId: survey.id,
+                text: data.question,
+                isFirst: index === 0,
+                isLast: index === body.questions.length - 1,
+              })
+              .returning({ id: SurveyQuestion.id })
+              .onConflictDoUpdate({
+                target: [SurveyQuestion.text, SurveyQuestion.surveyId],
+                set: {
+                  type: data.type,
+                  text: data.question,
+                  surveyId: survey.id,
+                  isFirst: index === 0,
+                  isLast: index === body.questions.length - 1,
+                },
+              });
+
+            if (!question)
+              question = await tx.query.Question.findFirst({ where: eq(SurveyQuestion.text, data.question) });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                await tx
+                  .insert(SurveyQuestionOptions)
+                  .values({ questionId: question.id, point: option.point, text: option.value })
+                  .onConflictDoNothing({ target: [SurveyQuestionOptions.questionId, SurveyQuestionOptions.text] });
+              }),
+            );
+          } else {
+            const [question] = await tx
+              .update(SurveyQuestion)
+              .set({
+                type: data.type,
+                text: data.question,
+                surveyId: survey.id,
+                isFirst: index === 0,
+                isLast: index === body.questions.length - 1,
+              })
+              .where(eq(SurveyQuestion.id, data.id))
+              .returning({ id: SurveyQuestion.id });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                if (!option.id) {
+                  return await tx
+                    .insert(SurveyQuestionOptions)
+                    .values({ questionId: question.id, point: option.point, text: option.value })
+                    .onConflictDoNothing();
+                } else {
+                  return await tx
+                    .update(SurveyQuestionOptions)
+                    .set({ questionId: question.id, point: option.point, text: option.value })
+                    .where(eq(SurveyQuestionOptions.id, option.id));
+                }
+              }),
+            );
+          }
+        }),
+      );
+    });
+
     return {};
   }
 }
