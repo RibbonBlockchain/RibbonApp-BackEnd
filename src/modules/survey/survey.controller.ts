@@ -1,3 +1,15 @@
+import {
+  Get,
+  Body,
+  Post,
+  Param,
+  Patch,
+  Query,
+  Version,
+  Controller,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import * as Dto from './dto';
 import { TUser } from '../drizzle/schema';
 import { RESPONSE } from '@/core/responses';
@@ -6,18 +18,6 @@ import { SurveyService } from './survey.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UploadedFile,
-  UseInterceptors,
-  Version,
-} from '@nestjs/common';
 
 @Controller()
 export class SurveyController {
@@ -36,6 +36,14 @@ export class SurveyController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getSurveys(@Query() query: Dto.GetAllSurveyQuery) {
     const data = await this.survey.HttphandleGetSurveys(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/admin/survey/summary')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getSurveySummary() {
+    const data = await this.survey.HttpHandleGetSurveySummary();
     return { data, message: RESPONSE.SUCCESS };
   }
 

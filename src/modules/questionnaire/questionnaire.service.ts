@@ -287,7 +287,7 @@ export class QuestionnaireService {
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${Questionnaire.id}) as int)` })
         .from(Questionnaire)
-        .where(queryFilter);
+        .where(and(statusFilter, queryFilter));
 
       return { data, pagination: generatePagination(page, pageSize, total) };
     });

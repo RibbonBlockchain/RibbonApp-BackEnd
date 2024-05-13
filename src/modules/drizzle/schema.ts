@@ -151,6 +151,7 @@ export const Survey = ribbonSchema.table('survey', {
     .notNull()
     .references(() => SurveyCategory.id),
   duration: integer('duration').default(60),
+  status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

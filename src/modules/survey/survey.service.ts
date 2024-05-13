@@ -9,7 +9,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { generatePagination, getPage } from '@/core/utils/page';
@@ -36,7 +36,12 @@ export class SurveyService {
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await tx.query.SurveyCategory.findMany({ where: queryFilter, limit, offset });
+      const data = await tx.query.SurveyCategory.findMany({
+        limit,
+        offset,
+        where: queryFilter,
+        orderBy: desc(SurveyCategory.updatedAt),
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${SurveyCategory.id}) as int)` })
@@ -56,23 +61,57 @@ export class SurveyService {
     return {};
   }
 
-  async HttphandleGetSurveys({ q, page, pageSize }: Dto.GetAllSurveyQuery) {
+  async HttphandleGetSurveys({ q, page, status, pageSize }: Dto.GetAllSurveyQuery) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });
+
+    const statusFilter = status ? eq(Survey.status, status) : undefined;
 
     const queryFilter = q
       ? or(ilike(Survey.name, searchQuery), ilike(Survey.slug, searchQuery), ilike(Survey.description, searchQuery))
       : undefined;
 
     return await this.provider.db.transaction(async (tx) => {
-      const data = await tx.query.Survey.findMany({ where: queryFilter, limit, offset });
+      const data = await tx.query.Survey.findMany({
+        limit,
+        offset,
+        orderBy: desc(Survey.updatedAt),
+        where: and(queryFilter, statusFilter),
+        with: { questions: { limit: 1 }, activities: { limit: 1 }, category: true },
+        extras: {
+          totalResponses:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${SurveyActivity} WHERE ${Survey.id} = survey_activity.survey_id)`.as(
+              'responses',
+            ),
+          totalQuestions:
+            sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${SurveyQuestion} WHERE ${Survey.id} = survey_question.survey_id)`.as(
+              'totalQuestions',
+            ),
+        },
+      });
 
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${Survey.id}) as int)` })
         .from(Survey)
-        .where(queryFilter);
+        .where(and(statusFilter, queryFilter));
 
       return { data, pagination: generatePagination(page, pageSize, total) };
+    });
+  }
+
+  async HttpHandleGetSurveySummary() {
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ active }] = await tx
+        .select({ active: sql<number>`cast(count(${Survey.id}) as int)` })
+        .from(Survey)
+        .where(eq(Survey.status, 'ACTIVE'));
+
+      const [{ closed }] = await tx
+        .select({ closed: sql<number>`cast(count(${Survey.id}) as int)` })
+        .from(Survey)
+        .where(eq(Survey.status, 'CLOSED'));
+
+      return { count: { active, closed } };
     });
   }
 
