@@ -101,7 +101,7 @@ export class RateSurveyBody {
   surveyId: number;
 }
 
-export class SesData {
+export class UpdateSesBody {
   @IsNotEmpty()
   @IsNumber()
   optionId: number;
@@ -109,9 +109,4 @@ export class SesData {
   @IsNotEmpty()
   @IsNumber()
   point: number;
-}
-
-export class UpdateSes {
-  @IsArray()
-  data: SesData[];
 }

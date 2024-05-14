@@ -277,11 +277,10 @@ export class SurveyService {
     fs.rm(file.path, () => {});
   }
 
-  async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
-    data.map(async ({ optionId, point }) => {
+  async HttpHandleUpdateSes(input: Dto.UpdateSesBody[]) {
+    input.map(async ({ optionId, point }) => {
       await this.provider.db.update(SurveyQuestionOptions).set({ point }).where(eq(SurveyQuestionOptions.id, optionId));
     });
-    return {};
   }
 
   async HttpHandleUpdateQuestionnaire(body: Dto.UpdateSurveyBody) {

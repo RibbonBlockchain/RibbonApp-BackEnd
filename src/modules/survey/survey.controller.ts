@@ -106,8 +106,8 @@ export class SurveyController {
 
   @AuthGuard()
   @Version(VERSION_ONE)
-  @Patch('/update-ses')
-  async updateSes(@Body() body: Dto.UpdateSes) {
+  @Patch('survey/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSesBody[]) {
     return await this.survey.HttpHandleUpdateSes(body);
   }
 }

@@ -111,7 +111,7 @@ export class UpdateQuestionnaireBody {
   questions: QuestionPayload[];
 }
 
-export class SesData {
+export class UpdateSesData {
   @IsNotEmpty()
   @IsNumber()
   optionId: number;
@@ -119,9 +119,4 @@ export class SesData {
   @IsNotEmpty()
   @IsNumber()
   point: number;
-}
-
-export class UpdateSes {
-  @IsArray()
-  data: SesData[];
 }

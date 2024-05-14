@@ -34,7 +34,7 @@ export class TaskController {
   @AuthGuard()
   @Version(VERSION_ONE)
   @Patch('/update-ses')
-  async updateSes(@Body() body: Dto.UpdateSes) {
+  async updateSes(@Body() body: Dto.UpdateSesData[]) {
     return await this.taskService.HttpHandleUpdateSes(body);
   }
 

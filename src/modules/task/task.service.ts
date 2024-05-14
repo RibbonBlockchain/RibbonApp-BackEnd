@@ -266,8 +266,8 @@ export class TaskService {
     return { data };
   }
 
-  async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
-    data.map(async ({ optionId, point }) => {
+  async HttpHandleUpdateSes(input: Dto.UpdateSesData[]) {
+    input.map(async ({ optionId, point }) => {
       await this.provider.db.update(TasskQuestionOptions).set({ point }).where(eq(TasskQuestionOptions.id, optionId));
     });
     return {};

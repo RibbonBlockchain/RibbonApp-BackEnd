@@ -106,8 +106,8 @@ export class QuestionnaireController {
 
   @AuthGuard()
   @Version(VERSION_ONE)
-  @Patch('/update-ses')
-  async updateSes(@Body() body: Dto.UpdateSes) {
+  @Patch('/questionnaire/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSesData[]) {
     return await this.questionnaireService.HttpHandleUpdateSes(body);
   }
 }
