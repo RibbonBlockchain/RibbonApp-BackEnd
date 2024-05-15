@@ -441,6 +441,8 @@ export const RewardPartner = ribbonSchema.table('reward_partner', {
 });
 
 // Relations
+
+// user
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
@@ -448,59 +450,21 @@ export const UserRelations = relations(User, ({ one, many }) => ({
   notifications: many(Notification),
 }));
 
+export const AuthRelations = relations(Auth, ({ one }) => ({
+  user: one(User, { fields: [Auth.userId], references: [User.id] }),
+}));
+
+export const NotificationRelations = relations(Notification, ({ one }) => ({
+  user: one(User, { fields: [Notification.userId], references: [User.id] }),
+}));
+// user
+
+// questionnaire
 export const QuestionnaireRelations = relations(Questionnaire, ({ one, many }) => ({
   questions: many(Question),
   ratings: many(QuestionnaireRating),
   activities: many(QuestionnaireActivity),
   category: one(QuestionnaireCategory, { fields: [Questionnaire.categoryId], references: [QuestionnaireCategory.id] }),
-}));
-
-export const SurveyRelations = relations(Survey, ({ one, many }) => ({
-  ratings: many(SurveyRating),
-  questions: many(SurveyQuestion),
-  activities: many(SurveyActivity),
-  category: one(SurveyCategory, { fields: [Survey.categoryId], references: [SurveyCategory.id] }),
-}));
-
-export const SurveyQuestionRelations = relations(SurveyQuestion, ({ one, many }) => ({
-  options: many(SurveyQuestionOptions),
-  survey: one(Survey, { fields: [SurveyQuestion.surveyId], references: [Survey.id] }),
-}));
-
-export const TasskRelations = relations(Tassk, ({ one, many }) => ({
-  ratings: many(TasskRating),
-  questions: many(TasskQuestion),
-  activities: many(TasskActivity),
-  category: one(TasskCategory, { fields: [Tassk.categoryId], references: [TasskCategory.id] }),
-}));
-
-export const TasskQuestionRelations = relations(TasskQuestion, ({ one, many }) => ({
-  options: many(TasskQuestionOptions),
-  survey: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
-}));
-
-export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => ({
-  question: one(TasskQuestion, { fields: [TasskQuestionAnswer.questionId], references: [TasskQuestion.id] }),
-  user: one(User, { fields: [TasskQuestionAnswer.userId], references: [User.id] }),
-}));
-
-export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
-  survey: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
-  user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
-}));
-
-export const SurveyAnswerRelations = relations(SurveyQuestionAnswer, ({ one }) => ({
-  question: one(SurveyQuestion, { fields: [SurveyQuestionAnswer.questionId], references: [SurveyQuestion.id] }),
-  option: one(SurveyQuestionOptions, {
-    references: [SurveyQuestionOptions.id],
-    fields: [SurveyQuestionAnswer.optionId],
-  }),
-  user: one(User, { fields: [SurveyQuestionAnswer.userId], references: [User.id] }),
-}));
-
-export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
-  survey: one(Survey, { fields: [SurveyActivity.surveyId], references: [Survey.id] }),
-  user: one(User, { fields: [SurveyActivity.userId], references: [User.id] }),
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
@@ -522,11 +486,60 @@ export const QuestionnaireActivityRelations = relations(QuestionnaireActivity, (
   task: one(Questionnaire, { fields: [QuestionnaireActivity.taskId], references: [Questionnaire.id] }),
   user: one(User, { fields: [QuestionnaireActivity.userId], references: [User.id] }),
 }));
+// questionnaire
 
-export const AuthRelations = relations(Auth, ({ one }) => ({
-  user: one(User, { fields: [Auth.userId], references: [User.id] }),
+// survey
+export const SurveyRelations = relations(Survey, ({ one, many }) => ({
+  ratings: many(SurveyRating),
+  questions: many(SurveyQuestion),
+  activities: many(SurveyActivity),
+  category: one(SurveyCategory, { fields: [Survey.categoryId], references: [SurveyCategory.id] }),
 }));
 
-export const NotificationRelations = relations(Notification, ({ one }) => ({
-  user: one(User, { fields: [Notification.userId], references: [User.id] }),
+export const SurveyAnswerRelations = relations(SurveyQuestionAnswer, ({ one }) => ({
+  question: one(SurveyQuestion, { fields: [SurveyQuestionAnswer.questionId], references: [SurveyQuestion.id] }),
+  option: one(SurveyQuestionOptions, {
+    references: [SurveyQuestionOptions.id],
+    fields: [SurveyQuestionAnswer.optionId],
+  }),
+  user: one(User, { fields: [SurveyQuestionAnswer.userId], references: [User.id] }),
 }));
+
+export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
+  survey: one(Survey, { fields: [SurveyActivity.surveyId], references: [Survey.id] }),
+  user: one(User, { fields: [SurveyActivity.userId], references: [User.id] }),
+}));
+
+export const SurveyQuestionRelations = relations(SurveyQuestion, ({ one, many }) => ({
+  options: many(SurveyQuestionOptions),
+  survey: one(Survey, { fields: [SurveyQuestion.surveyId], references: [Survey.id] }),
+}));
+
+export const SurveyOptionsRelations = relations(SurveyQuestionOptions, ({ one }) => ({
+  question: one(SurveyQuestion, { fields: [SurveyQuestionOptions.questionId], references: [SurveyQuestion.id] }),
+}));
+// survey
+
+// Tassk
+export const TasskRelations = relations(Tassk, ({ one, many }) => ({
+  ratings: many(TasskRating),
+  questions: many(TasskQuestion),
+  activities: many(TasskActivity),
+  category: one(TasskCategory, { fields: [Tassk.categoryId], references: [TasskCategory.id] }),
+}));
+
+export const TasskQuestionRelations = relations(TasskQuestion, ({ one, many }) => ({
+  options: many(TasskQuestionOptions),
+  survey: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
+}));
+
+export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => ({
+  question: one(TasskQuestion, { fields: [TasskQuestionAnswer.questionId], references: [TasskQuestion.id] }),
+  user: one(User, { fields: [TasskQuestionAnswer.userId], references: [User.id] }),
+}));
+
+export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
+  survey: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
+  user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
+}));
+// Tassk

@@ -118,7 +118,7 @@ export class SurveyService {
   async HttphandleGetSurveyById(id: number) {
     return await this.provider.db.query.Survey.findFirst({
       where: eq(Survey.id, id),
-      with: { questions: true, category: true },
+      with: { questions: { with: { options: true } }, category: true },
     });
   }
 
