@@ -425,7 +425,9 @@ export const Notification = ribbonSchema.table('notification', {
     .notNull()
     .references(() => User.id),
   isRead: boolean('isRead').default(false),
-  senderId: integer('sender_id').default(1),
+  senderId: integer('sender_id')
+    .notNull()
+    .references(() => User.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -457,6 +459,7 @@ export const AuthRelations = relations(Auth, ({ one }) => ({
 
 export const NotificationRelations = relations(Notification, ({ one }) => ({
   user: one(User, { fields: [Notification.userId], references: [User.id] }),
+  sender: one(User, { fields: [Notification.senderId], references: [User.id] }),
 }));
 // user
 
