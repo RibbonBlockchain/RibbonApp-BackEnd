@@ -5,11 +5,19 @@ import { AdminService } from './admin.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Post, Query, Version } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
 
 @Controller('/admin')
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
+
+  @Version(VERSION_ONE)
+  @Get('/report/activities/:type')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetActivityReports(@Param('type') param: any) {
+    const data = await this.admin.HttpHandleGetActivityReports(param);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 
   @Version(VERSION_ONE)
   @Get('/dashboard/summary')

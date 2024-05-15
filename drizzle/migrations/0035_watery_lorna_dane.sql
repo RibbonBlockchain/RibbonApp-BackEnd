@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."notification" ADD COLUMN "sender_id" integer DEFAULT 1;

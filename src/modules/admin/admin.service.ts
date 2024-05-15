@@ -56,6 +56,10 @@ export class AdminService {
     });
   }
 
+  async HttpHandleGetActivityReports(param: any) {
+    console.log(param);
+  }
+
   async HttpHandleGetDashboardSummary() {
     return await this.provider.db.transaction(async (tx) => {
       const [

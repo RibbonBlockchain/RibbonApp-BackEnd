@@ -425,6 +425,7 @@ export const Notification = ribbonSchema.table('notification', {
     .notNull()
     .references(() => User.id),
   isRead: boolean('isRead').default(false),
+  senderId: integer('sender_id').default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
