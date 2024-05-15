@@ -165,6 +165,7 @@ export const SurveyActivity = ribbonSchema.table('survey_activity', {
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const SurveyRating = ribbonSchema.table(
@@ -261,6 +262,7 @@ export const TasskActivity = ribbonSchema.table('tassk_activity', {
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const TasskRating = ribbonSchema.table(
@@ -415,6 +417,7 @@ export const QuestionnaireActivity = ribbonSchema.table('questionnaire_activity'
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const Notification = ribbonSchema.table('notification', {

@@ -58,6 +58,50 @@ export class AdminService {
 
   async HttpHandleGetActivityReports(param: any) {
     console.log(param);
+
+    return await this.provider.db.transaction(async (tx) => {
+      const [[{ totalTaskActivities }], [{ totalSurveyActivities }], [{ totalQuestionnaireActivities }]] =
+        await Promise.all([
+          await tx.select({ totalTaskActivities: count() }).from(TasskActivity),
+          await tx.select({ totalSurveyActivities: count() }).from(SurveyActivity),
+          await tx.select({ totalQuestionnaireActivities: count() }).from(QuestionnaireActivity),
+        ]);
+
+      const [{ completedTaskActivities }] = await tx
+        .select({ completedTaskActivities: count() })
+        .from(TasskActivity)
+        .where(eq(TasskActivity.status, 'COMPLETED'));
+
+      const [{ completedSurveykActivities }] = await tx
+        .select({ completedSurveykActivities: count() })
+        .from(SurveyActivity)
+        .where(eq(SurveyActivity.status, 'COMPLETED'));
+
+      const [{ completedQuestionnaireActivities }] = await tx
+        .select({ completedQuestionnaireActivities: count() })
+        .from(QuestionnaireActivity)
+        .where(eq(QuestionnaireActivity.status, 'COMPLETED'));
+
+      const totalActivities = totalQuestionnaireActivities + totalSurveyActivities + totalTaskActivities;
+
+      const completedActivities =
+        completedQuestionnaireActivities + completedSurveykActivities + completedTaskActivities;
+
+      const completionRate = (completedActivities / totalActivities) * 100;
+
+      const summary = await tx
+        .select({ count: count(), month: sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')` })
+        .from(QuestionnaireActivity)
+        .groupBy(sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')`);
+
+      console.log(summary);
+
+      return {
+        totalActivities,
+        averageCompletionRate: completionRate,
+        pendingActivities: totalActivities - completedActivities,
+      };
+    });
   }
 
   async HttpHandleGetDashboardSummary() {
