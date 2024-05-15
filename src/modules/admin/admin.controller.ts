@@ -5,17 +5,41 @@ import { AdminService } from './admin.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Version } from '@nestjs/common';
 
 @Controller('/admin')
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Version(VERSION_ONE)
-  @Get('/report/activities/:type')
+  @Get('/report/activities/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleGetActivityReports(@Param('type') param: any) {
-    const data = await this.admin.HttpHandleGetActivityReports(param);
+  async HttpHandleGetQuestionnaireActivityReports() {
+    const data = await this.admin.HttpHandleGetQuestionnaireActivityReports();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/report/activities/survey')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetSurveyActivityReports() {
+    const data = await this.admin.HttpHandleGetSurveyActivityReports();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/report/activities/task')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetTaskActivityReports() {
+    const data = await this.admin.HttpHandleGetTaskActivityReports();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/report/users')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetUserReports() {
+    const data = await this.admin.HttpHandleGetUserReports();
     return { data, message: RESPONSE.SUCCESS };
   }
 

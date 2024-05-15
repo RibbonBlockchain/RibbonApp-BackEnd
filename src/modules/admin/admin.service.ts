@@ -17,12 +17,28 @@ import {
 import * as Dto from './dto';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
+import { endOfDay, oneYearAgo } from '@/core/utils';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+
+const months = [
+  { id: 'Jan', name: 'January', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Feb', name: 'February', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Mar', name: 'March', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Apr', name: 'April', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'May', name: 'May', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Jun', name: 'June', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Jul', name: 'July', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Aug', name: 'August', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Sep', name: 'September', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Oct', name: 'October', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Nov', name: 'November', completed: 0, pending: 0, active: 0, inactive: 0 },
+  { id: 'Dec', name: 'December', completed: 0, pending: 0, active: 0, inactive: 0 },
+];
 
 @Injectable()
 export class AdminService {
@@ -56,50 +72,253 @@ export class AdminService {
     });
   }
 
-  async HttpHandleGetActivityReports(param: any) {
-    console.log(param);
+  async HttpHandleGetQuestionnaireActivityReports() {
+    let pending: any[] = [];
+    let completed: any[] = [];
 
     return await this.provider.db.transaction(async (tx) => {
-      const [[{ totalTaskActivities }], [{ totalSurveyActivities }], [{ totalQuestionnaireActivities }]] =
-        await Promise.all([
-          await tx.select({ totalTaskActivities: count() }).from(TasskActivity),
-          await tx.select({ totalSurveyActivities: count() }).from(SurveyActivity),
-          await tx.select({ totalQuestionnaireActivities: count() }).from(QuestionnaireActivity),
-        ]);
+      const [{ total }] = await tx.select({ total: count() }).from(QuestionnaireActivity);
 
-      const [{ completedTaskActivities }] = await tx
-        .select({ completedTaskActivities: count() })
-        .from(TasskActivity)
-        .where(eq(TasskActivity.status, 'COMPLETED'));
-
-      const [{ completedSurveykActivities }] = await tx
-        .select({ completedSurveykActivities: count() })
-        .from(SurveyActivity)
-        .where(eq(SurveyActivity.status, 'COMPLETED'));
-
-      const [{ completedQuestionnaireActivities }] = await tx
-        .select({ completedQuestionnaireActivities: count() })
+      const [{ totalCompleted }] = await tx
+        .select({ totalCompleted: count() })
         .from(QuestionnaireActivity)
         .where(eq(QuestionnaireActivity.status, 'COMPLETED'));
 
-      const totalActivities = totalQuestionnaireActivities + totalSurveyActivities + totalTaskActivities;
+      const completionRate = (totalCompleted / total) * 100;
 
-      const completedActivities =
-        completedQuestionnaireActivities + completedSurveykActivities + completedTaskActivities;
+      const now = new Date();
+      const min = new Date(oneYearAgo());
+      const max = new Date(endOfDay(now.toISOString()));
 
-      const completionRate = (completedActivities / totalActivities) * 100;
-
-      const summary = await tx
-        .select({ count: count(), month: sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')` })
+      pending = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')`,
+        })
         .from(QuestionnaireActivity)
-        .groupBy(sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')`);
+        .groupBy(sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')`)
+        .where(
+          and(
+            gte(QuestionnaireActivity.updatedAt, min),
+            lte(QuestionnaireActivity.updatedAt, max),
+            eq(QuestionnaireActivity.status, 'PROCESSING'),
+          ),
+        );
 
-      console.log(summary);
+      completed = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')`,
+        })
+        .from(QuestionnaireActivity)
+        .groupBy(sql`to_char(${QuestionnaireActivity.updatedAt}, 'Month')`)
+        .where(
+          and(
+            gte(QuestionnaireActivity.updatedAt, min),
+            lte(QuestionnaireActivity.updatedAt, max),
+            eq(QuestionnaireActivity.status, 'COMPLETED'),
+          ),
+        );
+
+      pending.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].pending = val.count;
+      });
+
+      completed.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].completed = val.count;
+      });
 
       return {
-        totalActivities,
+        total,
+        data: months,
+        pending: total - totalCompleted,
         averageCompletionRate: completionRate,
-        pendingActivities: totalActivities - completedActivities,
+      };
+    });
+  }
+
+  async HttpHandleGetSurveyActivityReports() {
+    let pending: any[] = [];
+    let completed: any[] = [];
+
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ total }] = await tx.select({ total: count() }).from(SurveyActivity);
+
+      const [{ totalCompleted }] = await tx
+        .select({ totalCompleted: count() })
+        .from(SurveyActivity)
+        .where(eq(SurveyActivity.status, 'COMPLETED'));
+
+      const completionRate = (totalCompleted / total) * 100;
+
+      const now = new Date();
+      const min = new Date(oneYearAgo());
+      const max = new Date(endOfDay(now.toISOString()));
+
+      pending = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${SurveyActivity.updatedAt}, 'Month')`,
+        })
+        .from(SurveyActivity)
+        .groupBy(sql`to_char(${SurveyActivity.updatedAt}, 'Month')`)
+        .where(
+          and(
+            lte(SurveyActivity.updatedAt, max),
+            gte(SurveyActivity.updatedAt, min),
+            eq(SurveyActivity.status, 'PROCESSING'),
+          ),
+        );
+
+      completed = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${SurveyActivity.updatedAt}, 'Month')`,
+        })
+        .from(SurveyActivity)
+        .groupBy(sql`to_char(${SurveyActivity.updatedAt}, 'Month')`)
+        .where(
+          and(
+            lte(SurveyActivity.updatedAt, max),
+            gte(SurveyActivity.updatedAt, min),
+            eq(SurveyActivity.status, 'COMPLETED'),
+          ),
+        );
+
+      pending.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].pending = val.count;
+      });
+
+      completed.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].completed = val.count;
+      });
+
+      return {
+        total,
+        data: months,
+        pending: total - totalCompleted,
+        averageCompletionRate: completionRate,
+      };
+    });
+  }
+
+  async HttpHandleGetTaskActivityReports() {
+    let pending: any[] = [];
+    let completed: any[] = [];
+
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ total }] = await tx.select({ total: count() }).from(TasskActivity);
+
+      const [{ totalCompleted }] = await tx
+        .select({ totalCompleted: count() })
+        .from(TasskActivity)
+        .where(eq(TasskActivity.status, 'COMPLETED'));
+
+      const completionRate = (totalCompleted / total) * 100;
+
+      const now = new Date();
+      const min = new Date(oneYearAgo());
+      const max = new Date(endOfDay(now.toISOString()));
+
+      pending = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${TasskActivity.updatedAt}, 'Month')`,
+        })
+        .from(TasskActivity)
+        .groupBy(sql`to_char(${TasskActivity.updatedAt}, 'Month')`)
+        .where(
+          and(
+            gte(TasskActivity.updatedAt, min),
+            lte(TasskActivity.updatedAt, max),
+            eq(TasskActivity.status, 'PROCESSING'),
+          ),
+        );
+
+      completed = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${TasskActivity.updatedAt}, 'Month')`,
+        })
+        .from(TasskActivity)
+        .groupBy(sql`to_char(${TasskActivity.updatedAt}, 'Month')`)
+        .where(
+          and(
+            lte(TasskActivity.updatedAt, max),
+            gte(TasskActivity.updatedAt, min),
+            eq(TasskActivity.status, 'COMPLETED'),
+          ),
+        );
+
+      pending.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].pending = val.count;
+      });
+
+      completed.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].completed = val.count;
+      });
+
+      return {
+        total,
+        data: months,
+        pending: total - totalCompleted,
+        averageCompletionRate: completionRate,
+      };
+    });
+  }
+
+  async HttpHandleGetUserReports() {
+    let active: any[] = [];
+    let inactive: any[] = [];
+
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ total }] = await tx.select({ total: count() }).from(User);
+
+      const [{ totalActive }] = await tx.select({ totalActive: count() }).from(User).where(eq(User.status, 'ACTIVE'));
+
+      const now = new Date();
+      const min = new Date(oneYearAgo());
+      const max = new Date(endOfDay(now.toISOString()));
+
+      inactive = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${User.createdAt}, 'Month')`,
+        })
+        .from(User)
+        .groupBy(sql`to_char(${User.createdAt}, 'Month')`)
+        .where(and(gte(User.createdAt, min), lte(User.createdAt, max), eq(User.status, 'ONBOARDING')));
+
+      active = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${User.createdAt}, 'Month')`,
+        })
+        .from(User)
+        .groupBy(sql`to_char(${User.createdAt}, 'Month')`)
+        .where(and(gte(User.createdAt, min), lte(User.createdAt, max), eq(User.status, 'ACTIVE')));
+
+      inactive.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].inactive = val.count;
+      });
+
+      active.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].active = val.count;
+      });
+
+      return {
+        total,
+        data: months,
+        active: totalActive,
+        inactive: total - totalActive,
       };
     });
   }
