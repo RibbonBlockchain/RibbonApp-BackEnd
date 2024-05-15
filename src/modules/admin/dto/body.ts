@@ -46,3 +46,17 @@ export class GetRewardPartners {
   @IsOptional()
   pageSize: number;
 }
+
+export class GetAllNotificationsQuery {
+  @IsString()
+  @IsOptional()
+  q: string;
+
+  @IsInt()
+  @IsOptional()
+  page: number;
+
+  @IsInt()
+  @IsOptional()
+  pageSize: number;
+}

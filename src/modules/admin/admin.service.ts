@@ -5,6 +5,7 @@ import {
   Tassk,
   Answer,
   Survey,
+  Notification,
   Questionnaire,
   RewardPartner,
   TasskActivity,
@@ -36,6 +37,23 @@ export class AdminService {
 
     await this.provider.db.update(Auth).set({ accessToken: null, refreshToken: null }).where(eq(Auth.userId, user.id));
     return {};
+  }
+
+  async HttpHandleGetNotifications({ q, page, pageSize }: Dto.GetAllNotificationsQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(ilike(Notification.message, searchQuery), ilike(Notification.title, searchQuery))
+      : undefined;
+
+    return await this.provider.db.query.Notification.findMany({
+      limit,
+      offset,
+      where: queryFilter,
+      with: { user: true },
+      orderBy: desc(Notification.updatedAt),
+    });
   }
 
   async HttpHandleGetDashboardSummary() {

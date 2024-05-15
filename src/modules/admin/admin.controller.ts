@@ -28,6 +28,14 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/notifications')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetNotifications(@Query() query: Dto.GetAllNotificationsQuery) {
+    const data = await this.admin.HttpHandleGetNotifications(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Post('/password/change')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleChangePassword(@ReqUser() user: TUser, @Body() body: Dto.AdminChangePasswordBody) {
