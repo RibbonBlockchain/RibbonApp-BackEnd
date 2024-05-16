@@ -67,7 +67,7 @@ export class AdminService {
       limit,
       offset,
       where: queryFilter,
-      with: { user: true },
+      with: { user: true, sender: true },
       orderBy: desc(Notification.updatedAt),
     });
   }
