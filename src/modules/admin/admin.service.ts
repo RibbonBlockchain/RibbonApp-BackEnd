@@ -25,21 +25,6 @@ import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 
-const months = [
-  { id: 'Jan', name: 'January', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Feb', name: 'February', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Mar', name: 'March', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Apr', name: 'April', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'May', name: 'May', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Jun', name: 'June', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Jul', name: 'July', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Aug', name: 'August', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Sep', name: 'September', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Oct', name: 'October', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Nov', name: 'November', completed: 0, pending: 0, active: 0, inactive: 0 },
-  { id: 'Dec', name: 'December', completed: 0, pending: 0, active: 0, inactive: 0 },
-];
-
 @Injectable()
 export class AdminService {
   constructor(
@@ -75,6 +60,21 @@ export class AdminService {
   async HttpHandleGetQuestionnaireActivityReports() {
     let pending: any[] = [];
     let completed: any[] = [];
+
+    const months = [
+      { id: 'Jan', name: 'January', completed: 0, pending: 0 },
+      { id: 'Feb', name: 'February', completed: 0, pending: 0 },
+      { id: 'Mar', name: 'March', completed: 0, pending: 0 },
+      { id: 'Apr', name: 'April', completed: 0, pending: 0 },
+      { id: 'May', name: 'May', completed: 0, pending: 0 },
+      { id: 'Jun', name: 'June', completed: 0, pending: 0 },
+      { id: 'Jul', name: 'July', completed: 0, pending: 0 },
+      { id: 'Aug', name: 'August', completed: 0, pending: 0 },
+      { id: 'Sep', name: 'September', completed: 0, pending: 0 },
+      { id: 'Oct', name: 'October', completed: 0, pending: 0 },
+      { id: 'Nov', name: 'November', completed: 0, pending: 0 },
+      { id: 'Dec', name: 'December', completed: 0, pending: 0 },
+    ];
 
     return await this.provider.db.transaction(async (tx) => {
       const [{ total }] = await tx.select({ total: count() }).from(QuestionnaireActivity);
@@ -143,6 +143,21 @@ export class AdminService {
     let pending: any[] = [];
     let completed: any[] = [];
 
+    const months = [
+      { id: 'Jan', name: 'January', completed: 0, pending: 0 },
+      { id: 'Feb', name: 'February', completed: 0, pending: 0 },
+      { id: 'Mar', name: 'March', completed: 0, pending: 0 },
+      { id: 'Apr', name: 'April', completed: 0, pending: 0 },
+      { id: 'May', name: 'May', completed: 0, pending: 0 },
+      { id: 'Jun', name: 'June', completed: 0, pending: 0 },
+      { id: 'Jul', name: 'July', completed: 0, pending: 0 },
+      { id: 'Aug', name: 'August', completed: 0, pending: 0 },
+      { id: 'Sep', name: 'September', completed: 0, pending: 0 },
+      { id: 'Oct', name: 'October', completed: 0, pending: 0 },
+      { id: 'Nov', name: 'November', completed: 0, pending: 0 },
+      { id: 'Dec', name: 'December', completed: 0, pending: 0 },
+    ];
+
     return await this.provider.db.transaction(async (tx) => {
       const [{ total }] = await tx.select({ total: count() }).from(SurveyActivity);
 
@@ -210,6 +225,21 @@ export class AdminService {
     let pending: any[] = [];
     let completed: any[] = [];
 
+    const months = [
+      { id: 'Jan', name: 'January', completed: 0, pending: 0 },
+      { id: 'Feb', name: 'February', completed: 0, pending: 0 },
+      { id: 'Mar', name: 'March', completed: 0, pending: 0 },
+      { id: 'Apr', name: 'April', completed: 0, pending: 0 },
+      { id: 'May', name: 'May', completed: 0, pending: 0 },
+      { id: 'Jun', name: 'June', completed: 0, pending: 0 },
+      { id: 'Jul', name: 'July', completed: 0, pending: 0 },
+      { id: 'Aug', name: 'August', completed: 0, pending: 0 },
+      { id: 'Sep', name: 'September', completed: 0, pending: 0 },
+      { id: 'Oct', name: 'October', completed: 0, pending: 0 },
+      { id: 'Nov', name: 'November', completed: 0, pending: 0 },
+      { id: 'Dec', name: 'December', completed: 0, pending: 0 },
+    ];
+
     return await this.provider.db.transaction(async (tx) => {
       const [{ total }] = await tx.select({ total: count() }).from(TasskActivity);
 
@@ -276,6 +306,21 @@ export class AdminService {
   async HttpHandleGetUserReports() {
     let active: any[] = [];
     let inactive: any[] = [];
+
+    const months = [
+      { id: 'Jan', name: 'January', active: 0, inactive: 0 },
+      { id: 'Feb', name: 'February', active: 0, inactive: 0 },
+      { id: 'Mar', name: 'March', active: 0, inactive: 0 },
+      { id: 'Apr', name: 'April', active: 0, inactive: 0 },
+      { id: 'May', name: 'May', active: 0, inactive: 0 },
+      { id: 'Jun', name: 'June', active: 0, inactive: 0 },
+      { id: 'Jul', name: 'July', active: 0, inactive: 0 },
+      { id: 'Aug', name: 'August', active: 0, inactive: 0 },
+      { id: 'Sep', name: 'September', active: 0, inactive: 0 },
+      { id: 'Oct', name: 'October', active: 0, inactive: 0 },
+      { id: 'Nov', name: 'November', active: 0, inactive: 0 },
+      { id: 'Dec', name: 'December', active: 0, inactive: 0 },
+    ];
 
     return await this.provider.db.transaction(async (tx) => {
       const [{ total }] = await tx.select({ total: count() }).from(User);
