@@ -36,6 +36,10 @@ export const QuestionnaireStatusMap = ['ACTIVE', 'CLOSED'] as const;
 export const QuestionnaireStatusEnum = pgEnum('questionnaire_status', QuestionnaireStatusMap);
 export type TQuestionnaireStatus = (typeof QuestionnaireStatusEnum.enumValues)[number];
 
+export const TransactionStatusMap = ['SUCCESS'] as const;
+export const TransactionStatusEnum = pgEnum('transaction_status', TransactionStatusMap);
+export type TTransactionStatus = (typeof TransactionStatusEnum.enumValues)[number];
+
 export const VerificationCodeReasonMap = ['FORGOT_PIN', 'SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
 export const VerificationCodeReasonEnum = pgEnum('verification_code_reason', VerificationCodeReasonMap);
 export type TVerificationCodeReason = (typeof VerificationCodeReasonEnum.enumValues)[number];
@@ -152,6 +156,17 @@ export const Survey = ribbonSchema.table('survey', {
     .references(() => SurveyCategory.id),
   duration: integer('duration').default(60),
   status: QuestionnaireStatusEnum('status').default('ACTIVE'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const Transaction = ribbonSchema.table('transaction', {
+  id: serial('id').primaryKey(),
+  amount: doublePrecision('reward').default(0.1),
+  userId: integer('category_id')
+    .notNull()
+    .references(() => SurveyCategory.id),
+  status: TransactionStatusEnum('status').default('SUCCESS'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

@@ -368,6 +368,71 @@ export class AdminService {
     });
   }
 
+  async HttpHandleGetRewardReports() {
+    let active: any[] = [];
+    let inactive: any[] = [];
+
+    const months = [
+      { id: 'Jan', name: 'January', outflow: 0, inflow: 0 },
+      { id: 'Feb', name: 'February', outflow: 0, inflow: 0 },
+      { id: 'Mar', name: 'March', outflow: 0, inflow: 0 },
+      { id: 'Apr', name: 'April', outflow: 0, inflow: 0 },
+      { id: 'May', name: 'May', outflow: 0, inflow: 0 },
+      { id: 'Jun', name: 'June', outflow: 0, inflow: 0 },
+      { id: 'Jul', name: 'July', outflow: 0, inflow: 0 },
+      { id: 'Aug', name: 'August', outflow: 0, inflow: 0 },
+      { id: 'Sep', name: 'September', outflow: 0, inflow: 0 },
+      { id: 'Oct', name: 'October', outflow: 0, inflow: 0 },
+      { id: 'Nov', name: 'November', outflow: 0, inflow: 0 },
+      { id: 'Dec', name: 'December', outflow: 0, inflow: 0 },
+    ];
+
+    return await this.provider.db.transaction(async (tx) => {
+      const [{ total }] = await tx.select({ total: count() }).from(User);
+
+      const [{ totalActive }] = await tx.select({ totalActive: count() }).from(User).where(eq(User.status, 'ACTIVE'));
+
+      const now = new Date();
+      const min = new Date(oneYearAgo());
+      const max = new Date(endOfDay(now.toISOString()));
+
+      inactive = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${User.createdAt}, 'Month')`,
+        })
+        .from(User)
+        .groupBy(sql`to_char(${User.createdAt}, 'Month')`)
+        .where(and(gte(User.createdAt, min), lte(User.createdAt, max), eq(User.status, 'ONBOARDING')));
+
+      active = await tx
+        .select({
+          count: count(),
+          month: sql`to_char(${User.createdAt}, 'Month')`,
+        })
+        .from(User)
+        .groupBy(sql`to_char(${User.createdAt}, 'Month')`)
+        .where(and(gte(User.createdAt, min), lte(User.createdAt, max), eq(User.status, 'ACTIVE')));
+
+      inactive.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].inflow = val.count;
+      });
+
+      active.forEach((val) => {
+        const index = months.findIndex((x) => x.name === val.month?.trim());
+        months[index].outflow = val.count;
+      });
+
+      return {
+        total,
+        data: months,
+        inflow: totalActive,
+        outflow: total - totalActive,
+      };
+    });
+  }
+
   async HttpHandleGetDashboardSummary() {
     return await this.provider.db.transaction(async (tx) => {
       const [

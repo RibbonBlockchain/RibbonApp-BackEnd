@@ -44,6 +44,14 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/report/rewards')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetRewardReports() {
+    const data = await this.admin.HttpHandleGetUserReports();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/dashboard/summary')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetDashboardSummary() {
