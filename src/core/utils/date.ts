@@ -15,6 +15,13 @@ export const startOfDay = (dateStr: string) => {
   return dateObj.toISOString();
 };
 
+export const startOfMonth = (datestr: string) => {
+  const dateObj = new Date(datestr);
+  dateObj.setDate(1);
+  dateObj.setHours(0, 0, 0, 0);
+  return dateObj.toISOString();
+};
+
 export const startOfYear = (dateStr: string) => {
   const dateObj = new Date(dateStr);
   dateObj.setMonth(0);

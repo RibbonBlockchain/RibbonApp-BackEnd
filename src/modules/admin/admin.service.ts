@@ -13,11 +13,18 @@ import {
   TasskQuestionAnswer,
   SurveyQuestionAnswer,
   QuestionnaireActivity,
+  Wallet,
+  QuestionnaireRating,
+  SurveyRating,
+  TasskRating,
 } from '../drizzle/schema';
 import * as Dto from './dto';
+import * as XLSX from 'xlsx';
+import { promises as fs } from 'fs';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { endOfDay, oneYearAgo } from '@/core/utils';
+import { MailerService } from '@nestjs-modules/mailer';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
@@ -29,6 +36,7 @@ import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle
 export class AdminService {
   constructor(
     private readonly token: TokenService,
+    private readonly mailer: MailerService,
     private readonly argon: ArgonService,
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
@@ -55,6 +63,58 @@ export class AdminService {
       with: { user: true, sender: true },
       orderBy: desc(Notification.updatedAt),
     });
+  }
+
+  async HttpHandleDownloadReport() {
+    const users = await this.provider.db
+      .select({
+        'User ID': User.id,
+        'User Location': User.phone,
+        'User SES Score': Wallet.point,
+        // 'Tasks Completed': sql<number>`sum(${QuestionnaireActivity.id} + ${SurveyActivity.id} + ${TasskActivity.id})`,
+        'Total Rewards Earned': Wallet.balance,
+        'Daily Rewards Earned': Wallet.balance,
+        // 'Average Ratings (1-5)': sum(count(Questionnaire.id)),
+      })
+      .from(User)
+      .leftJoin(Wallet, eq(User.id, Wallet.userId))
+      .leftJoin(TasskRating, eq(User.id, TasskRating.userId))
+      .leftJoin(SurveyRating, eq(User.id, SurveyRating.userId))
+      .leftJoin(QuestionnaireRating, eq(User.id, QuestionnaireRating.userId))
+      // .leftJoin(TasskActivity, and(eq(User.id, TasskActivity.userId), eq(TasskActivity.status, 'COMPLETED')))
+      // .leftJoin(SurveyActivity, and(eq(User.id, SurveyActivity.userId), eq(SurveyActivity.status, 'COMPLETED')))
+      // .leftJoin(
+      //   QuestionnaireActivity,
+      //   and(eq(User.id, QuestionnaireActivity.userId), eq(QuestionnaireActivity.status, 'COMPLETED')),
+      // )
+      .groupBy(User.id, Wallet.point, Wallet.balance);
+
+    const worksheet = XLSX.utils.json_to_sheet(users);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Dates');
+
+    // XLSX.utils.sheet_add_aoa(worksheet, [['Name', 'Birthday']], { origin: 'A1' });
+    // const max_width = users.reduce((w, r) => Math.max(w, r['User ID']), 10);
+    // worksheet['!cols'] = [{ wch: max_width }];
+
+    XLSX.writeFile(workbook, 'Reports.xlsx', { compression: true });
+    const file = await fs.readFile('Reports.xlsx');
+
+    await this.mailer.sendMail({
+      subject: 'Report',
+      text: 'Report is attached',
+      to: [process.env.EMAIL_USER],
+      from: process.env.EMAIL_USER,
+      attachments: [
+        {
+          content: Buffer.from(file.buffer),
+          filename: 'Reports.xlsx',
+          contentDisposition: 'attachment',
+        },
+      ],
+    });
+
+    return {};
   }
 
   async HttpHandleGetQuestionnaireActivityReports() {

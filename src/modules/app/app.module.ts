@@ -9,6 +9,7 @@ import { UserModule } from '../user/user.module';
 import { TaskModule } from '../task/task.module';
 import { TasskModule } from '../tassk/tassk.module';
 import { AdminModule } from '../admin/admin.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 import { SurveyModule } from '../survey/survey.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { DrizzleModule } from '../drizzle/drizzle.module';
@@ -30,6 +31,14 @@ import { QuestionnaireModule } from '../questionnaire/questionnaire.module';
     QuestionnaireModule,
     ConfigModule.forRoot({ load: [config], isGlobal: true }),
     MulterModule.register({ dest: '/uploads', storage: diskStorage({ destination: 'uploads' }) }),
+    MailerModule.forRoot({
+      transport: {
+        port: 465,
+        secure: true,
+        host: 'smtp.gmail.com',
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      },
+    }),
   ],
 })
 export class AppModule {}
