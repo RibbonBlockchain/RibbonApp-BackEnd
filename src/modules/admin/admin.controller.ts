@@ -52,7 +52,7 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
-  @Get('/report/download')
+  @Get('/report/downloads')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleDownloadReport(@ReqUser() user: TUser) {
     const data = await this.admin.HttpHandleDownloadReport(user);
