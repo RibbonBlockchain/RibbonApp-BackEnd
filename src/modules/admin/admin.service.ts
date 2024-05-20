@@ -65,50 +65,48 @@ export class AdminService {
     });
   }
 
-  async HttpHandleDownloadReport() {
+  async HttpHandleDownloadReport(admin: TUser) {
     const users = await this.provider.db
       .select({
         'User ID': User.id,
         'User Location': User.phone,
         'User SES Score': Wallet.point,
-        // 'Tasks Completed': sql<number>`sum(${QuestionnaireActivity.id} + ${SurveyActivity.id} + ${TasskActivity.id})`,
         'Total Rewards Earned': Wallet.balance,
         'Daily Rewards Earned': Wallet.balance,
-        // 'Average Ratings (1-5)': sum(count(Questionnaire.id)),
+        'Questionnaires Completed': count(QuestionnaireActivity.id),
+        'Surveys Completed': count(SurveyActivity.id),
+        'Tasks Completed': count(TasskActivity.id),
+        'Average Ratings (1-5)': count(QuestionnaireRating.id),
       })
       .from(User)
       .leftJoin(Wallet, eq(User.id, Wallet.userId))
       .leftJoin(TasskRating, eq(User.id, TasskRating.userId))
       .leftJoin(SurveyRating, eq(User.id, SurveyRating.userId))
       .leftJoin(QuestionnaireRating, eq(User.id, QuestionnaireRating.userId))
-      // .leftJoin(TasskActivity, and(eq(User.id, TasskActivity.userId), eq(TasskActivity.status, 'COMPLETED')))
-      // .leftJoin(SurveyActivity, and(eq(User.id, SurveyActivity.userId), eq(SurveyActivity.status, 'COMPLETED')))
-      // .leftJoin(
-      //   QuestionnaireActivity,
-      //   and(eq(User.id, QuestionnaireActivity.userId), eq(QuestionnaireActivity.status, 'COMPLETED')),
-      // )
+      .leftJoin(TasskActivity, and(eq(User.id, TasskActivity.userId), eq(TasskActivity.status, 'COMPLETED')))
+      .leftJoin(SurveyActivity, and(eq(User.id, SurveyActivity.userId), eq(SurveyActivity.status, 'COMPLETED')))
+      .leftJoin(
+        QuestionnaireActivity,
+        and(eq(User.id, QuestionnaireActivity.userId), eq(QuestionnaireActivity.status, 'COMPLETED')),
+      )
       .groupBy(User.id, Wallet.point, Wallet.balance);
 
     const worksheet = XLSX.utils.json_to_sheet(users);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Dates');
 
-    // XLSX.utils.sheet_add_aoa(worksheet, [['Name', 'Birthday']], { origin: 'A1' });
-    // const max_width = users.reduce((w, r) => Math.max(w, r['User ID']), 10);
-    // worksheet['!cols'] = [{ wch: max_width }];
-
     XLSX.writeFile(workbook, 'Reports.xlsx', { compression: true });
     const file = await fs.readFile('Reports.xlsx');
 
     await this.mailer.sendMail({
-      subject: 'Report',
-      text: 'Report is attached',
-      to: [process.env.EMAIL_USER],
+      to: admin.email,
+      subject: `RibbonProtocol Report | ${new Date().toDateString()}`,
+      text: 'The request report for Ribbon Protocol can be download below',
       from: process.env.EMAIL_USER,
       attachments: [
         {
           content: Buffer.from(file.buffer),
-          filename: 'Reports.xlsx',
+          filename: `RibbonProtocolReport-${new Date().getTime()}.xlsx`,
           contentDisposition: 'attachment',
         },
       ],
