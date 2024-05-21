@@ -5,18 +5,18 @@ import {
   Tassk,
   Answer,
   Survey,
+  Wallet,
+  TasskRating,
+  SurveyRating,
   Notification,
   Questionnaire,
   RewardPartner,
   TasskActivity,
   SurveyActivity,
+  QuestionnaireRating,
   TasskQuestionAnswer,
   SurveyQuestionAnswer,
   QuestionnaireActivity,
-  Wallet,
-  QuestionnaireRating,
-  SurveyRating,
-  TasskRating,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -30,7 +30,7 @@ import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 
 @Injectable()
 export class AdminService {
@@ -73,10 +73,10 @@ export class AdminService {
         'User SES Score': Wallet.point,
         'Total Rewards Earned': Wallet.balance,
         'Daily Rewards Earned': User.numberOfClaims,
-        'Questionnaires Completed': count(QuestionnaireActivity.id),
-        'Surveys Completed': count(SurveyActivity.id),
-        'Tasks Completed': count(TasskActivity.id),
-        'Total Ratings': count(QuestionnaireRating.id),
+        'Questionnaires Completed': countDistinct(QuestionnaireActivity.id),
+        'Surveys Completed': countDistinct(SurveyActivity.id),
+        'Tasks Completed': countDistinct(TasskActivity.id),
+        'Total Ratings': countDistinct(QuestionnaireRating.id),
       })
       .from(User)
       .leftJoin(Wallet, eq(User.id, Wallet.userId))
@@ -89,7 +89,8 @@ export class AdminService {
         QuestionnaireActivity,
         and(eq(User.id, QuestionnaireActivity.userId), eq(QuestionnaireActivity.status, 'COMPLETED')),
       )
-      .groupBy(User.id, Wallet.point, Wallet.balance);
+      .orderBy(User.id)
+      .groupBy(User.id, Wallet.point, Wallet.balance, QuestionnaireActivity.userId);
 
     const worksheet = XLSX.utils.json_to_sheet(users);
     const workbook = XLSX.utils.book_new();
