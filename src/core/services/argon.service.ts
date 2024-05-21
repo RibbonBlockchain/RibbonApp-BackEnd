@@ -15,7 +15,7 @@ export class ArgonService {
   async verify(plain: string, hash: string): Promise<boolean> {
     if (!plain || !hash) return false;
 
-    const options: any = this.config.get('argon2')!;
-    return await Argon2.verify(hash, plain, options);
+    const secret = this.config.getOrThrow('PASSWORD_HASHING_SECRET')!;
+    return await Argon2.verify(hash, plain, { secret });
   }
 }
