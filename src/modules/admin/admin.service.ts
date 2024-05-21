@@ -72,11 +72,11 @@ export class AdminService {
         'User Location': User.phone,
         'User SES Score': Wallet.point,
         'Total Rewards Earned': Wallet.balance,
-        'Daily Rewards Earned': Wallet.balance,
+        'Daily Rewards Earned': User.numberOfClaims,
         'Questionnaires Completed': count(QuestionnaireActivity.id),
         'Surveys Completed': count(SurveyActivity.id),
         'Tasks Completed': count(TasskActivity.id),
-        'Average Ratings (1-5)': count(QuestionnaireRating.id),
+        'Total Ratings': count(QuestionnaireRating.id),
       })
       .from(User)
       .leftJoin(Wallet, eq(User.id, Wallet.userId))
@@ -555,7 +555,7 @@ export class AdminService {
         completionRate,
         totalResponses,
         totalActivities,
-        rewardPoints: 10_000,
+        rewardPoints: 131_146_529.536,
       };
     });
   }
