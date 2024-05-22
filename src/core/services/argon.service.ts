@@ -16,6 +16,7 @@ export class ArgonService {
     if (!plain || !hash) return false;
 
     const secret = this.config.getOrThrow('PASSWORD_HASHING_SECRET')!;
+    console.log(secret);
     return await Argon2.verify(hash, plain, { secret });
   }
 }
