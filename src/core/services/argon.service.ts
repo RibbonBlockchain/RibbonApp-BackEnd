@@ -8,18 +8,12 @@ export class ArgonService {
 
   async hash(plain: string): Promise<string> {
     const secret = this.config.getOrThrow('PASSWORD_HASHING_SECRET')!;
-    return (await Argon2.hash(plain, { secret })).toString();
+    return (await Argon2.hash(plain, { secret: Buffer.from(secret) })).toString();
   }
 
   async verify(plain: string, hash: string): Promise<boolean> {
     if (!plain || !hash) return false;
-
     const secret = this.config.getOrThrow('PASSWORD_HASHING_SECRET')!;
-    console.log(secret);
-    try {
-      return await Argon2.verify(hash, plain, { secret });
-    } catch (err) {
-      console.log(err);
-    }
+    return await Argon2.verify(hash, plain, { secret: Buffer.from(secret) });
   }
 }
