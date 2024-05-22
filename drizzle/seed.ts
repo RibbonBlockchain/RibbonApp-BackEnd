@@ -42,6 +42,16 @@ const admins = [
     role: 'SUPER_ADMIN' as const,
     email: 's2admin@ribbon.com',
   },
+  {
+    pin: '0000',
+    lastName: 'Admin',
+    firstName: 'Super',
+    phone: '+2349026503963',
+    password: 'Password123?',
+    status: 'ACTIVE' as const,
+    role: 'SUPER_ADMIN' as const,
+    email: 's3admin@ribbon.com',
+  },
 ];
 
 const tasks = [
@@ -121,9 +131,11 @@ const main = async () => {
         .returning();
 
       if (user?.id) {
-        await tx
-          .insert(Auth)
-          .values({ userId: user.id, password: await Argon2.hash(admin.password), pin: await Argon2.hash(admin.pin) });
+        await tx.insert(Auth).values({
+          userId: user.id,
+          password: await Argon2.hash(admin.password, { secret: Buffer.from(process.env.PASSWORD_HASHING_SECRET) }),
+          pin: await Argon2.hash(admin.pin, { secret: Buffer.from(process.env.PASSWORD_HASHING_SECRET) }),
+        });
       }
     });
   });
