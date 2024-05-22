@@ -579,7 +579,7 @@ export class AdminService {
       where: and(eq(User.email, body.email), inArray(User.role, ['ADMIN', 'SUPER_ADMIN'])),
     });
 
-    console.log(admin);
+    console.log(admin, body);
 
     const isEmailValid = !!admin?.id;
     if (!isEmailValid) throw new BadRequestException(RESPONSE.INVALID_CREDENTIALS);

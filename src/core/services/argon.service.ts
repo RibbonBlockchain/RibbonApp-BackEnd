@@ -7,9 +7,8 @@ export class ArgonService {
   constructor(private readonly config: ConfigService) {}
 
   async hash(plain: string): Promise<string> {
-    const options: any = this.config.get('argon2')!;
-
-    return (await Argon2.hash(plain, options)).toString();
+    const secret = this.config.getOrThrow('PASSWORD_HASHING_SECRET')!;
+    return (await Argon2.hash(plain, { secret })).toString();
   }
 
   async verify(plain: string, hash: string): Promise<boolean> {
