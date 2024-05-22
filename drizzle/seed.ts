@@ -22,6 +22,16 @@ const admins = [
     role: 'SUPER_ADMIN' as const,
     email: 'superadmin@ribbon.com',
   },
+  {
+    pin: '0000',
+    lastName: 'Admin',
+    firstName: 'Super',
+    phone: '+2349026503961',
+    password: 'Password123?',
+    status: 'ACTIVE' as const,
+    role: 'SUPER_ADMIN' as const,
+    email: 'sadmin@ribbon.com',
+  },
 ];
 
 const tasks = [
