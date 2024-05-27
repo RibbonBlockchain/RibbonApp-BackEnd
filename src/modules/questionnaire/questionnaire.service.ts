@@ -333,11 +333,17 @@ export class QuestionnaireService {
         let questionnaireId = 0;
         const questions = sheets[category];
 
-        const [cat] = await this.provider.db
+        let [cat] = await this.provider.db
           .insert(QuestionnaireCategory)
           .values({ name: category, slug: createSlug(category), description: '' })
           .onConflictDoNothing()
           .returning();
+
+        if (!cat) {
+          cat = await this.provider.db.query.QuestionnaireCategory.findFirst({
+            where: eq(QuestionnaireCategory.slug, createSlug(category)),
+          });
+        }
 
         for (const question of questions) {
           console.log('question', question);
