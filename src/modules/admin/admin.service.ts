@@ -61,12 +61,12 @@ export class AdminService {
     const data = await this.provider.db.query.NotificationHistory.findMany({
       limit,
       offset,
-      with: {},
+      with: { sender: true },
       where: and(queryFilter, adminFilter),
       orderBy: desc(Notification.updatedAt),
     });
 
-    const res = data.map((d) => ({ ...d, user: d }));
+    const res = data.map((d) => ({ ...d, user: d.sender }));
 
     return res;
   }
