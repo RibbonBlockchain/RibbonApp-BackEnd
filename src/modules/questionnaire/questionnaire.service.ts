@@ -340,22 +340,25 @@ export class QuestionnaireService {
           .returning();
 
         for (const question of questions) {
-          if (question.id === 'id') {
+          console.log('question', question);
+          if (question?.id === 'id') {
             const name = `${category} ${generateCode()}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
+            console.log('category', cat);
             const [res] = await this.provider.db
               .insert(Questionnaire)
               .values({
                 reward,
                 name: category,
                 description: '',
-                categoryId: cat.id,
+                categoryId: cat?.id,
                 type: 'QUESTIONNAIRE',
                 slug: createSlug(name),
               })
               .returning({ id: Questionnaire.id });
 
+            console.log('res', res);
             questionnaireId = res?.id;
           } else {
             const isFirst = question.id === 1;
