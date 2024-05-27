@@ -346,12 +346,10 @@ export class QuestionnaireService {
         }
 
         for (const question of questions) {
-          console.log('question', question);
           if (question?.id === 'id') {
             const name = `${category} ${generateCode()}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
-            console.log('category', cat);
             const [res] = await this.provider.db
               .insert(Questionnaire)
               .values({
@@ -364,7 +362,6 @@ export class QuestionnaireService {
               })
               .returning({ id: Questionnaire.id });
 
-            console.log('res', res);
             questionnaireId = res?.id;
           } else {
             const isFirst = question.id === 1;
