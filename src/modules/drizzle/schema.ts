@@ -450,6 +450,17 @@ export const Notification = ribbonSchema.table('notification', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const NotificationHistory = ribbonSchema.table('notification_history', {
+  id: serial('id').primaryKey(),
+  title: varchar('title'),
+  message: varchar('message'),
+  senderId: integer('sender_id')
+    .notNull()
+    .references(() => User.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 export const RewardPartner = ribbonSchema.table('reward_partner', {
   id: serial('id').primaryKey(),
   logo: varchar('logo'),
@@ -478,6 +489,10 @@ export const AuthRelations = relations(Auth, ({ one }) => ({
 export const NotificationRelations = relations(Notification, ({ one }) => ({
   user: one(User, { fields: [Notification.userId], references: [User.id] }),
   sender: one(User, { fields: [Notification.senderId], references: [User.id] }),
+}));
+
+export const NotificationHistoryRelations = relations(NotificationHistory, ({ one }) => ({
+  sender: one(User, { fields: [NotificationHistory.senderId], references: [User.id] }),
 }));
 // user
 

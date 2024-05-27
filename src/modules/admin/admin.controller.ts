@@ -78,8 +78,8 @@ export class AdminController {
   @Version(VERSION_ONE)
   @Get('/notifications')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleGetNotifications(@Query() query: Dto.GetAllNotificationsQuery) {
-    const data = await this.admin.HttpHandleGetNotifications(query);
+  async HttpHandleGetNotifications(@ReqUser() user: TUser, @Query() query: Dto.GetAllNotificationsQuery) {
+    const data = await this.admin.HttpHandleGetNotifications(query, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 

@@ -48,7 +48,7 @@ export class AdminService {
     return {};
   }
 
-  async HttpHandleGetNotifications({ q, page, pageSize }: Dto.GetAllNotificationsQuery) {
+  async HttpHandleGetNotifications({ q, page, pageSize }: Dto.GetAllNotificationsQuery, user: TUser) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });
 
@@ -56,13 +56,19 @@ export class AdminService {
       ? or(ilike(Notification.message, searchQuery), ilike(Notification.title, searchQuery))
       : undefined;
 
-    return await this.provider.db.query.Notification.findMany({
+    const adminFilter = eq(Notification.senderId, user.id);
+
+    const data = await this.provider.db.query.NotificationHistory.findMany({
       limit,
       offset,
-      where: queryFilter,
-      with: { user: true, sender: true },
+      with: {},
+      where: and(queryFilter, adminFilter),
       orderBy: desc(Notification.updatedAt),
     });
+
+    const res = data.map((d) => ({ ...d, user: d }));
+
+    return res;
   }
 
   async HttpHandleDownloadReport(admin: TUser) {

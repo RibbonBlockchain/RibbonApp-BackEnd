@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { Inject, Injectable } from '@nestjs/common';
 import { TDbProvider } from '../drizzle/drizzle.module';
-import { Notification, TUser } from '../drizzle/schema';
+import { Notification, NotificationHistory, TUser } from '../drizzle/schema';
 
 @Injectable()
 export class NotificationService {
@@ -14,6 +14,8 @@ export class NotificationService {
     const users = await this.provider.db.query.User.findMany({ with: {} });
 
     if (users.length <= 0) return { data: {} };
+
+    await this.provider.db.insert(NotificationHistory).values({ senderId: admin.id, message, title });
 
     users.map(async (user) => {
       await this.provider.db
