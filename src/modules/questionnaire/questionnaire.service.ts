@@ -327,7 +327,10 @@ export class QuestionnaireService {
 
     const totalRatings = (questionnaire.totalRatings || 0) + 1;
     const ratings = (questionnaire.ratings || 0 + body.rating) / totalRatings;
-    await this.provider.db.update(Questionnaire).set({ ratings, totalRatings });
+    await this.provider.db
+      .update(Questionnaire)
+      .set({ ratings, totalRatings })
+      .where(eq(Questionnaire.id, questionnaire.id));
 
     return {};
   }
