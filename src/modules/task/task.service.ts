@@ -142,7 +142,7 @@ export class TaskService {
       where: eq(Question.id, questionId),
     });
 
-    const isTextAnswer = !!question?.options?.length;
+    const isTextAnswer = (!question?.options?.length && question.type !== 'BOOLEAN') || question.type === 'LONG_ANSWER';
 
     if (isTextAnswer && !answer) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
 
