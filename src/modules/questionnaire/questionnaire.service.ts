@@ -325,8 +325,8 @@ export class QuestionnaireService {
       .values({ questionId: activity.taskId, userId: user.id, rating })
       .onConflictDoNothing();
 
-    const ratings = (questionnaire.ratings || 0) + 1;
-    const totalRatings = (questionnaire.totalRatings + body.rating) / ratings;
+    const totalRatings = (questionnaire.totalRatings || 0) + 1;
+    const ratings = (questionnaire.ratings || 0 + body.rating) / totalRatings;
     await this.provider.db.update(Questionnaire).set({ ratings, totalRatings });
 
     return {};
