@@ -138,10 +138,11 @@ export class TaskService {
     });
 
     const question = await this.provider.db.query.Question.findFirst({
+      with: { options: true },
       where: eq(Question.id, questionId),
     });
 
-    const isTextAnswer = question.type === 'LONG_ANSWER' || question.type === 'SHORT_ANSWER';
+    const isTextAnswer = !!question?.options?.length;
 
     if (isTextAnswer && !answer) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
 
