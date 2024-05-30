@@ -326,7 +326,8 @@ export class QuestionnaireService {
       .onConflictDoNothing();
 
     const totalRatings = (questionnaire.totalRatings || 0) + 1;
-    const ratings = (questionnaire.ratings || 0 + body.rating) / totalRatings;
+    const ratings = ((questionnaire.ratings || 0) + body.rating) / totalRatings;
+    console.log(body.rating, totalRatings, ratings);
     await this.provider.db
       .update(Questionnaire)
       .set({ ratings, totalRatings })
