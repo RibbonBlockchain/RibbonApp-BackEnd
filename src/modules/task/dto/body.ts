@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsNumberString, IsPhoneNumber, Length } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator';
 
 export class TaskQuestionResponseDto {
   @IsNotEmpty()
@@ -9,9 +9,15 @@ export class TaskQuestionResponseDto {
   @IsNumber()
   taskId: number;
 
-  @IsNotEmpty()
   @IsNumber()
+  @IsOptional()
+  @IsNotEmpty()
   optionId: number;
+
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  answer: string;
 }
 
 export class RequestPhoneVerificationTask {

@@ -123,7 +123,7 @@ export class TaskService {
   }
 
   async HttpHandleAnswerTaskQuestion(input: Dto.TaskQuestionResponseDto, user: TUser) {
-    const { optionId, questionId, taskId } = input;
+    const { answer, optionId, questionId, taskId } = input;
 
     const task = await this.provider.db.query.Questionnaire.findFirst({
       where: eq(Questionnaire.id, taskId),
@@ -140,6 +140,10 @@ export class TaskService {
     const question = await this.provider.db.query.Question.findFirst({
       where: eq(Question.id, questionId),
     });
+
+    const isTextAnswer = question.type === 'LONG_ANSWER' || question.type === 'SHORT_ANSWER';
+
+    if (isTextAnswer && !answer) thr;
 
     const option = await this.provider.db.query.QuestionOptions.findFirst({ where: eq(QuestionOptions.id, optionId) });
 
@@ -244,7 +248,7 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
-    const completedFilter = completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : null;
+    const completedFilter = completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : undefined;
 
     const data = await this.provider.db.query.Questionnaire.findMany({
       orderBy: desc(Questionnaire.updatedAt),
