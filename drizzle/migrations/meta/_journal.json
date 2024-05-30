@@ -274,6 +274,13 @@
       "when": 1717082799782,
       "tag": "0039_long_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1717084291934,
+      "tag": "0040_nebulous_spiral",
+      "breakpoints": true
     }
   ]
 }

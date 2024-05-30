@@ -133,6 +133,8 @@ export const Questionnaire = ribbonSchema.table('questionnaire', {
   slug: varchar('slug').unique(),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
+  ratings: integer('ratings'),
+  totalRatings: integer('total_ratings'),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
   categoryId: integer('category_id')

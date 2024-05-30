@@ -312,12 +312,22 @@ export class QuestionnaireService {
 
     if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_QUESTIONNAIRE_TO_CONTINUE);
 
+    const questionnaire = await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.id, activity.taskId),
+    });
+
+    if (!questionnaire) throw new BadRequestException(RESPONSE.INVALID_TASK);
+
     const rating = Math.max(0, Math.min(body.rating, 5));
 
     await this.provider.db
       .insert(QuestionnaireRating)
       .values({ questionId: activity.taskId, userId: user.id, rating })
       .onConflictDoNothing();
+
+    const ratings = (questionnaire.ratings || 0) + 1;
+    const totalRatings = (questionnaire.totalRatings + body.rating) / ratings;
+    await this.provider.db.update(Questionnaire).set({ ratings, totalRatings });
 
     return {};
   }
