@@ -244,10 +244,12 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
+    const completedFilter = completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : null;
+
     const data = await this.provider.db.query.Questionnaire.findMany({
       orderBy: desc(Questionnaire.updatedAt),
       with: { questions: { with: { options: true } } },
-      where: completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : null,
+      where: and(eq(Questionnaire.status, 'ACTIVE'), completedFilter),
     });
 
     const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
