@@ -410,12 +410,11 @@ export const QuestionOptions = ribbonSchema.table(
 
 export const Answer = ribbonSchema.table('answer', {
   id: serial('id').primaryKey(),
+  text: varchar('text'),
   questionId: integer('question_id')
     .notNull()
     .references(() => Question.id),
-  optionId: integer('option_id')
-    .notNull()
-    .references(() => QuestionOptions.id),
+  optionId: integer('option_id').references(() => QuestionOptions.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),

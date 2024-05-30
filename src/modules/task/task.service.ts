@@ -143,7 +143,7 @@ export class TaskService {
 
     const isTextAnswer = question.type === 'LONG_ANSWER' || question.type === 'SHORT_ANSWER';
 
-    if (isTextAnswer && !answer) thr;
+    if (isTextAnswer && !answer) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
 
     const option = await this.provider.db.query.QuestionOptions.findFirst({ where: eq(QuestionOptions.id, optionId) });
 
@@ -159,16 +159,14 @@ export class TaskService {
 
       await this.provider.db
         .update(Wallet)
-        .set({ balance: wallet.balance + task.reward })
+        .set({ balance: wallet.balance + task.reward, point: option.point + wallet.point })
         .where(eq(Wallet.userId, user.id));
     }
 
-    await this.provider.db
-      .update(Wallet)
-      .set({ point: option.point + wallet.point })
-      .where(eq(Wallet.userId, user.id));
-
-    return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
+    return await this.provider.db
+      .insert(Answer)
+      .values({ questionId, optionId, text: answer, userId: user.id })
+      .execute();
   }
 
   async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: string }) {

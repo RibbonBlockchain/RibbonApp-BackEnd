@@ -1,6 +1,8 @@
 export const RESPONSE = {
   SUCCESS: 'Success',
 
+  INVALID_RESPONSE: 'Invalid response',
+
   INVALID_PIN: 'Invalid credentials',
 
   NOT_LOGGED_IN: 'Invalid authentication! Login',

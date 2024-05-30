@@ -267,6 +267,13 @@
       "when": 1716834775970,
       "tag": "0038_friendly_robbie_robertson",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1717082799782,
+      "tag": "0039_long_the_stranger",
+      "breakpoints": true
     }
   ]
 }
