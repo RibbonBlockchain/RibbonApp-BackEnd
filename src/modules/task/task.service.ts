@@ -123,7 +123,7 @@ export class TaskService {
   }
 
   async HttpHandleAnswerTaskQuestion(input: Dto.TaskQuestionResponseDto, user: TUser) {
-    const { answer, optionId, questionId, taskId } = input;
+    const { optionId, questionId, taskId } = input;
 
     const task = await this.provider.db.query.Questionnaire.findFirst({
       where: eq(Questionnaire.id, taskId),
@@ -143,10 +143,18 @@ export class TaskService {
     });
 
     const isTextAnswer = (!question?.options?.length && question.type !== 'BOOLEAN') || question.type === 'LONG_ANSWER';
+    if (isTextAnswer && typeof optionId !== 'string') throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
 
-    if (isTextAnswer && !answer) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
+    let answer = '';
+    let singleOption: any = 0;
 
-    const option = await this.provider.db.query.QuestionOptions.findFirst({ where: eq(QuestionOptions.id, optionId) });
+    if (typeof optionId === 'string') answer = optionId;
+    if (typeof optionId === 'number') singleOption = optionId;
+    if (typeof optionId !== 'string' && typeof optionId !== 'number') singleOption = optionId?.[0];
+
+    const option = await this.provider.db.query.QuestionOptions.findFirst({
+      where: eq(QuestionOptions.id, singleOption),
+    });
 
     if (!userTaskActivity) {
       await this.provider.db.insert(QuestionnaireActivity).values({ taskId, userId: user.id }).execute();
@@ -166,7 +174,7 @@ export class TaskService {
 
     return await this.provider.db
       .insert(Answer)
-      .values({ questionId, optionId, text: answer, userId: user.id })
+      .values({ questionId, optionId: singleOption, text: answer, userId: user.id })
       .execute();
   }
 
