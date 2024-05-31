@@ -172,6 +172,8 @@ export class TaskService {
         .where(eq(Wallet.userId, user.id));
     }
 
+    console.log(singleOption, answer);
+
     return await this.provider.db
       .insert(Answer)
       .values({ questionId, optionId: singleOption, text: answer, userId: user.id })
