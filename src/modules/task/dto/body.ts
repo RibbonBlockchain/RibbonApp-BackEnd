@@ -10,7 +10,6 @@ export class TaskQuestionResponseDto {
   taskId: number;
 
   @IsOptional()
-  @IsNotEmpty()
   optionId: string | number | string[];
 }
 
