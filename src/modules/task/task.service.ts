@@ -176,7 +176,7 @@ export class TaskService {
 
     return await this.provider.db
       .insert(Answer)
-      .values({ questionId, optionId: singleOption, text: answer, userId: user.id })
+      .values({ questionId, optionId: singleOption || 75, text: answer, userId: user.id })
       .execute();
   }
 
