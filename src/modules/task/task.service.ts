@@ -150,7 +150,7 @@ export class TaskService {
 
     if (typeof optionId === 'string') answer = optionId;
     if (typeof optionId === 'number') singleOption = optionId;
-    if (typeof optionId !== 'string' && typeof optionId !== 'number') singleOption = optionId?.[0];
+    if (Array.isArray(optionId)) singleOption = optionId?.[0];
 
     const option = await this.provider.db.query.QuestionOptions.findFirst({
       where: eq(QuestionOptions.id, singleOption),
