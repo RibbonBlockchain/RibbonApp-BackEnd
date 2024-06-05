@@ -639,4 +639,13 @@ export class AdminService {
 
     return {};
   }
+
+  async HttpHandleMintVault(body: Dto.AdminMintVaultBody, user: TUser | undefined) {
+    // TODO: connect partners to admin account
+    console.log(user);
+    const address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
+    await this.contract.mint(address, body.amount);
+
+    return {};
+  }
 }

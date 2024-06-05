@@ -39,7 +39,7 @@ export class ContractService {
   async claimPoints(address: string, intAmount: any) {
     const contract1 = this.Vault();
 
-    const amount = ethers.utils.parseUnits(intAmount);
+    const amount = ethers.utils.parseUnits(String(intAmount));
     const result = await contract1.connect(this.signer).claimPoints(address, amount);
 
     const receipt = await result.wait();
@@ -50,11 +50,23 @@ export class ContractService {
   async swapToPaymentCoin(address: string, intAmount: any) {
     const contract1 = this.Vault();
 
-    const amount = ethers.utils.parseUnits(intAmount);
+    const amount = ethers.utils.parseUnits(String(intAmount));
     const result = await contract1.connect(this.signer).swapToPaymentCoin(address, amount);
     const receipt = await result.wait();
     console.log(receipt);
-
     console.log('worldcoinclaimed');
+  }
+
+  async mint(address: string, intAmount: any) {
+    const contract0 = this.pointsContract();
+
+    let i = contract0.counterId();
+    console.log(i, 'counter');
+
+    const amount = ethers.utils.parseUnits(String(intAmount));
+
+    const result = await contract0.connect(this.signer).mint(address, amount);
+    const receipt = await result.wait();
+    console.log(receipt);
   }
 }

@@ -107,8 +107,17 @@ export class AdminController {
 
   @Version(VERSION_ONE)
   @Post('/create-vault')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleCreateVault(@ReqUser() user: TUser | undefined) {
     const data = await this.admin.HttpHandleCreateVault(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Post('/mint-vault')
+  @Version(VERSION_ONE)
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleMintVault(@Body() body: Dto.AdminMintVaultBody, @ReqUser() user: TUser | undefined) {
+    const data = await this.admin.HttpHandleMintVault(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 }
