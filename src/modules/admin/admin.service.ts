@@ -28,6 +28,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
+import { ContractService } from '../contract/contract.service';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
@@ -35,9 +36,10 @@ import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, or, sql 
 @Injectable()
 export class AdminService {
   constructor(
+    private readonly argon: ArgonService,
     private readonly token: TokenService,
     private readonly mailer: MailerService,
-    private readonly argon: ArgonService,
+    private readonly contract: ContractService,
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
@@ -629,5 +631,12 @@ export class AdminService {
 
       return { data, totalBalance: 10_000, pagination: generatePagination(page, pageSize, total) };
     });
+  }
+
+  async HttpHandleCreateVault(user: TUser | undefined) {
+    // TODO: connect partners to admin account
+    await this.contract.createVault(String(user.id));
+
+    return {};
   }
 }

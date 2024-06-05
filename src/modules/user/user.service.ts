@@ -11,17 +11,20 @@ import * as Dto from './dto';
 import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
-import { hasTimeExpired } from '@/core/utils';
 import { quickOTP } from '@/core/utils/code';
+import { hasTimeExpired } from '@/core/utils';
+import { ClaimPointBody, SwapPointBody } from '../contract/dto';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
+import { ContractService } from '../contract/contract.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject(DATABASE) private readonly provider: TDbProvider,
     private readonly twilio: TwilioService,
+    private readonly contract: ContractService,
+    @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
   async HttpHandleUpdateProfile(body: Dto.HandleUpdateProfile, user: TUser) {
@@ -165,5 +168,23 @@ export class UserService {
     });
 
     return { data: notification };
+  }
+
+  async HttpHandleClaimPoint(body: ClaimPointBody, user: TUser) {
+    // TODO: add address to wallet schema
+    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+    console.log(wallet);
+
+    const address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
+    await this.contract.claimPoints(address, body.amount);
+  }
+
+  async HttpHandleSwapPoint(body: SwapPointBody, user: TUser) {
+    // TODO: add address to wallet schema
+    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+    console.log(wallet);
+
+    const address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
+    await this.contract.swapToPaymentCoin(address, body.amount);
   }
 }

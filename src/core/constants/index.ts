@@ -1,4 +1,6 @@
 export const ROLES = 'ROLES';
+export const POINT = 'POINT';
+export const VAULT = 'VAULT';
 export const TWILIO = 'TWILIO';
 export const DATABASE = 'DATABASE';
 export const X_REFRESH_TOKEN = 'x-refresh-token';

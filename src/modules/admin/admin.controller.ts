@@ -104,4 +104,11 @@ export class AdminController {
     const data = await this.admin.HttpHandleLogout(user);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @Version(VERSION_ONE)
+  @Post('/create-vault')
+  async HttpHandleCreateVault(@ReqUser() user: TUser | undefined) {
+    const data = await this.admin.HttpHandleCreateVault(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 }
