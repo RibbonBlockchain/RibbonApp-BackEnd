@@ -40,8 +40,7 @@ export class ContractService {
       let vaultDetails = await contract0.vaultIdentifcation(i);
       return { vaultAddress: vaultDetails?.[0] };
     } catch (error) {
-      let message = '';
-      if (error?.code === 'UNPREDICTABLE_GAS_LIMIT') message = 'Insufficient gas fee';
+      let message = error?.error?.reason || error?.reason || 'Unable to process request';
       throw new BadRequestException(message || error?.reason);
     }
   }
@@ -59,9 +58,7 @@ export class ContractService {
       await result.wait();
       return {};
     } catch (error) {
-      let message = '';
-      if (error?.code === 'UNPREDICTABLE_GAS_LIMIT') message = 'Insufficient gas fee';
-
+      let message = error?.error?.reason || error?.reason || 'Unable to process request';
       throw new BadRequestException(message || error?.reason);
     }
   }
@@ -78,9 +75,7 @@ export class ContractService {
 
       return {};
     } catch (error) {
-      let message = '';
-      if (error?.code === 'UNPREDICTABLE_GAS_LIMIT') message = 'Insufficient gas fee';
-
+      let message = error?.error?.reason || error?.reason || 'Unable to process request';
       throw new BadRequestException(message || error?.reason);
     }
   }
