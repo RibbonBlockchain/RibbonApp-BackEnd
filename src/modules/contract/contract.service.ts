@@ -21,7 +21,7 @@ export class ContractService {
     @Inject(POINT) private readonly PointsABI: any,
   ) {}
 
-  async createVault(body: { name: string; address: string; points: number }) {
+  async createVault(body: { name: string; address: string; points: any }) {
     try {
       const contract0 = await this.pointsContract();
 
@@ -29,7 +29,7 @@ export class ContractService {
 
       const result = await contract0
         .connect(this.signer)
-        .createVault(body.name, this.vaultOwner, body.address, String(body.points));
+        .createVault(body.name, this.vaultOwner, body.address, body.points);
 
       console.log('res', result);
 
@@ -46,17 +46,17 @@ export class ContractService {
     }
   }
 
-  async claimPoints(address: string, intAmount: any, vaultAddress: string) {
+  async claimPoints(address: string, amount: any, vaultAddress: string) {
     try {
       const Vault = () => new ethers.Contract(vaultAddress, this.VaultABI, this.provider);
 
       const contract1 = Vault();
 
-      const amount = ethers.utils.parseUnits(String(intAmount));
       const result = await contract1.connect(this.signer).claimPoints(address, amount);
 
       // limit amount to 10_000
       await result.wait();
+
       return {};
     } catch (error) {
       console.log(error);
@@ -65,13 +65,12 @@ export class ContractService {
     }
   }
 
-  async swapToPaymentCoin(address: string, intAmount: any, vaultAddress: string) {
+  async swapToPaymentCoin(address: string, amount: any, vaultAddress: string) {
     try {
       const Vault = () => new ethers.Contract(vaultAddress, this.VaultABI, this.provider);
 
       const contract1 = Vault();
 
-      const amount = ethers.utils.parseUnits(String(intAmount));
       const result = await contract1.connect(this.signer).swapToPaymentCoin(address, amount);
       await result.wait();
 

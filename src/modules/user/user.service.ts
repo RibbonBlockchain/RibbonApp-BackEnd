@@ -14,11 +14,13 @@ import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
-import { ClaimPointBody, SwapPointBody } from '../contract/dto';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { ContractService } from '../contract/contract.service';
+import { ClaimPointBody, SwapPointBody } from '../contract/dto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+
+const minPoint = 10_000_000_000_000_000_000_000;
 
 @Injectable()
 export class UserService {
@@ -172,10 +174,10 @@ export class UserService {
   }
 
   async HttpHandleClaimPoint(body: ClaimPointBody, user: TUser) {
-    if (body.amount < 10_000) throw new BadRequestException('You cannot claim less than 10,000 points');
+    if (+body.amount < minPoint) throw new BadRequestException('You cannot claim less than 10,000 points');
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin'),
+      where: eq(RewardPartner.name, 'Worldcoin-1'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
@@ -188,10 +190,10 @@ export class UserService {
   }
 
   async HttpHandleSwapPoint(body: SwapPointBody, user: TUser) {
-    if (body.amount < 10_000) throw new BadRequestException('You cannot swap less than 10,000 points');
+    if (+body.amount < minPoint) throw new BadRequestException('You cannot swap less than 10,000 points');
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin'),
+      where: eq(RewardPartner.name, 'Worldcoin-1'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');

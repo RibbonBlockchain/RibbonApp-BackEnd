@@ -1,5 +1,5 @@
-import { IsEmail, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { HasLowerCase, HasNumber, HasSpecialCharacter, HasUpperCase } from '@/core/validators';
+import { IsEmail, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsNumberString } from 'class-validator';
 
 export class AdminLoginBody {
   @IsString()
@@ -20,9 +20,9 @@ export class AdminCreateVaultBody {
   @IsNotEmpty()
   address: string;
 
-  @IsNumber()
   @IsNotEmpty()
-  points: number;
+  @IsNumberString()
+  points: string;
 }
 
 export class AdminMintVaultBody {
