@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
 import { POINT, VAULT } from '@/core/constants';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ContractService {
@@ -22,44 +22,67 @@ export class ContractService {
   ) {}
 
   async createVault(body: { name: string; address: string; points: number }) {
-    const contract0 = await this.pointsContract();
+    try {
+      const contract0 = await this.pointsContract();
 
-    let i = await contract0.counterId();
+      let i = await contract0.counterId();
 
-    const result = await contract0
-      .connect(this.signer)
-      .createVault(body.name, this.vaultOwner, body.address, String(body.points));
+      const result = await contract0
+        .connect(this.signer)
+        .createVault(body.name, this.vaultOwner, body.address, String(body.points));
 
-    await result.wait();
+      console.log('res', result);
 
-    let vaultDetails = await contract0.vaultIdentifcation(i);
-    return { vaultAddress: vaultDetails?.[0] };
+      const aw = await result.wait();
+
+      console.log('aw', aw);
+
+      let vaultDetails = await contract0.vaultIdentifcation(i);
+      return { vaultAddress: vaultDetails?.[0] };
+    } catch (error) {
+      let message = '';
+      if (error?.code === 'UNPREDICTABLE_GAS_LIMIT') message = 'Insufficient gas fee';
+      throw new BadRequestException(message || error?.reason);
+    }
   }
 
   async claimPoints(address: string, intAmount: any, vaultAddress: string) {
-    const Vault = () => new ethers.Contract(vaultAddress, this.VaultABI, this.provider);
+    try {
+      const Vault = () => new ethers.Contract(vaultAddress, this.VaultABI, this.provider);
 
-    const contract1 = Vault();
+      const contract1 = Vault();
 
-    const amount = ethers.utils.parseUnits(String(intAmount));
-    const result = await contract1.connect(this.signer).claimPoints(address, amount);
+      const amount = ethers.utils.parseUnits(String(intAmount));
+      const result = await contract1.connect(this.signer).claimPoints(address, amount);
 
-    // limit amount to 10_000
+      // limit amount to 10_000
+      await result.wait();
+      return {};
+    } catch (error) {
+      let message = '';
+      if (error?.code === 'UNPREDICTABLE_GAS_LIMIT') message = 'Insufficient gas fee';
 
-    await result.wait();
-    return {};
+      throw new BadRequestException(message || error?.reason);
+    }
   }
 
   async swapToPaymentCoin(address: string, intAmount: any, vaultAddress: string) {
-    const Vault = () => new ethers.Contract(vaultAddress, this.VaultABI, this.provider);
+    try {
+      const Vault = () => new ethers.Contract(vaultAddress, this.VaultABI, this.provider);
 
-    const contract1 = Vault();
+      const contract1 = Vault();
 
-    const amount = ethers.utils.parseUnits(String(intAmount));
-    const result = await contract1.connect(this.signer).swapToPaymentCoin(address, amount);
-    await result.wait();
+      const amount = ethers.utils.parseUnits(String(intAmount));
+      const result = await contract1.connect(this.signer).swapToPaymentCoin(address, amount);
+      await result.wait();
 
-    return {};
+      return {};
+    } catch (error) {
+      let message = '';
+      if (error?.code === 'UNPREDICTABLE_GAS_LIMIT') message = 'Insufficient gas fee';
+
+      throw new BadRequestException(message || error?.reason);
+    }
   }
 
   async mint(address: string, intAmount: any) {
