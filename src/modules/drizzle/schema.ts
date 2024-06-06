@@ -10,6 +10,7 @@ import {
   pgSchema,
   timestamp,
   doublePrecision,
+  text,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -83,6 +84,7 @@ export const User = ribbonSchema.table('user', {
   dob: date('dob'),
   socials: jsonb('socals'),
   worldId: varchar('world_id'),
+  partnerId: integer('partner_id').references(() => RewardPartner.id),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
   numberOfClaims: integer('numberOfClaims').default(0),
@@ -467,6 +469,7 @@ export const RewardPartner = ribbonSchema.table('reward_partner', {
   logo: varchar('logo'),
   name: varchar('name'),
   token: varchar('token'),
+  vaultAddress: text('vault_address'),
   value: doublePrecision('value').default(0),
   volume: doublePrecision('volume').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -479,6 +482,7 @@ export const RewardPartner = ribbonSchema.table('reward_partner', {
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
+  partner: one(RewardPartner, { fields: [User.partnerId], references: [RewardPartner.id] }),
   activities: many(QuestionnaireActivity),
   notifications: many(Notification),
 }));

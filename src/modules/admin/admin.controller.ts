@@ -108,8 +108,8 @@ export class AdminController {
   @Version(VERSION_ONE)
   @Post('/create-vault')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleCreateVault(@ReqUser() user: TUser | undefined) {
-    const data = await this.admin.HttpHandleCreateVault(user);
+  async HttpHandleCreateVault(@Body() body: Dto.AdminCreateVaultBody, @ReqUser() user: TUser | undefined) {
+    const data = await this.admin.HttpHandleCreateVault(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 

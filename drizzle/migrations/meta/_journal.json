@@ -288,6 +288,13 @@
       "when": 1717086325900,
       "tag": "0041_known_senator_kelly",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1717670361958,
+      "tag": "0042_fixed_shotgun",
+      "breakpoints": true
     }
   ]
 }

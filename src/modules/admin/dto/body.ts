@@ -15,6 +15,16 @@ export class AdminLoginBody {
   email: string;
 }
 
+export class AdminCreateVaultBody {
+  @IsString()
+  @IsNotEmpty()
+  address: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  points: number;
+}
+
 export class AdminMintVaultBody {
   @IsNumber()
   @IsNotEmpty()

@@ -6,6 +6,7 @@ import {
   Questionnaire,
   VerificationCode,
   QuestionnaireActivity,
+  RewardPartner,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import { and, eq } from 'drizzle-orm';
@@ -171,20 +172,34 @@ export class UserService {
   }
 
   async HttpHandleClaimPoint(body: ClaimPointBody, user: TUser) {
-    // TODO: add address to wallet schema
-    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
-    console.log(wallet);
+    if (body.amount < 10_000) throw new BadRequestException('You cannot claim less than 10,000 points');
 
-    const address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
-    await this.contract.claimPoints(address, body.amount);
+    const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.name, 'Worldcoin'),
+    });
+
+    if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
+
+    // TODO: add address to wallet schema
+    await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+    await this.contract.claimPoints(body.address, body.amount, worldCoinPartner.vaultAddress);
+    return {};
   }
 
   async HttpHandleSwapPoint(body: SwapPointBody, user: TUser) {
-    // TODO: add address to wallet schema
-    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
-    console.log(wallet);
+    if (body.amount < 10_000) throw new BadRequestException('You cannot swap less than 10,000 points');
 
-    const address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
-    await this.contract.swapToPaymentCoin(address, body.amount);
+    const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.name, 'Worldcoin'),
+    });
+
+    if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
+
+    // TODO: add address to wallet schema
+    await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+    await this.contract.swapToPaymentCoin(body.address, body.amount, worldCoinPartner.vaultAddress);
+    return {};
   }
 }

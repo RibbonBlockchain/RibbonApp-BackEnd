@@ -633,11 +633,26 @@ export class AdminService {
     });
   }
 
-  async HttpHandleCreateVault(user: TUser | undefined) {
-    // TODO: connect partners to admin account
-    await this.contract.createVault(String(user.id));
+  async HttpHandleCreateVault(body: Dto.AdminCreateVaultBody, user: TUser | undefined) {
+    if (!user?.partnerId) throw new BadRequestException('Account not linked to any partner');
 
-    return {};
+    const partner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.id, user.partnerId),
+    });
+
+    if (!partner?.name) throw new BadRequestException('Partner linked to your account is not active');
+
+    // TODO: connect partners to admin account
+    const res = await this.contract.createVault({ name: partner.name, address: body.address, points: body.points });
+
+    if (res.vaultAddress) {
+      await this.provider.db
+        .update(RewardPartner)
+        .set({ vaultAddress: res.vaultAddress })
+        .where(eq(RewardPartner.id, partner.id));
+    }
+
+    return { vaultAddres: res.vaultAddress };
   }
 
   async HttpHandleMintVault(body: Dto.AdminMintVaultBody, user: TUser | undefined) {
