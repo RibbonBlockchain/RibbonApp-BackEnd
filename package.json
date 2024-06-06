@@ -47,6 +47,7 @@
     "otp-generator": "^4.0.1",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.2.0",
+    "rimraf": "^5.0.7",
     "rxjs": "^7.8.1",
     "twilio": "^4.23.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
