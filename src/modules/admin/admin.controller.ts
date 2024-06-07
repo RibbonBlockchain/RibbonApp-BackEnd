@@ -68,7 +68,7 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
-  @Get('/rating/distribution')
+  @Get('/rating/overview')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetRatingsDistribution() {
     const data = await this.admin.HttpHandleRatingDistrubution();
