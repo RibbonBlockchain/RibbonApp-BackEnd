@@ -68,6 +68,14 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/rating/distribution')
+  // @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetRatingsDistribution() {
+    const data = await this.admin.HttpHandleRatingDistrubution();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/reward-partner')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetRewardPartners(@Query() query: Dto.GetRewardPartners) {
