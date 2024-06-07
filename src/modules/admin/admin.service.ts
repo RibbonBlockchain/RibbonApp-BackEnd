@@ -609,6 +609,10 @@ export class AdminService {
     return { accessToken, refreshToken };
   }
 
+  async HttpHandleGetRewardPartnerById(id: number) {
+    return await this.provider.db.query.RewardPartner.findFirst({ with: {}, where: eq(RewardPartner.id, id) });
+  }
+
   async HttpHandleGetRewardPartners({ q, page, pageSize }: Dto.GetRewardPartners) {
     const searchQuery = `%${q}%`;
     const { limit, offset } = getPage({ page, pageSize });

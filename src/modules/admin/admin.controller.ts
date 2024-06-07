@@ -5,7 +5,7 @@ import { AdminService } from './admin.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Post, Query, Version } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
 
 @Controller('/admin')
 export class AdminController {
@@ -72,6 +72,14 @@ export class AdminController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetRatingsDistribution() {
     const data = await this.admin.HttpHandleRatingDistrubution();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/reward-partner/:id')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetRewardPartnerById(@Param('id') id: number) {
+    const data = await this.admin.HttpHandleGetRewardPartnerById(id);
     return { data, message: RESPONSE.SUCCESS };
   }
 
