@@ -128,4 +128,12 @@ export class AdminController {
     const data = await this.admin.HttpHandleWalletTransfer(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @Version(VERSION_ONE)
+  @Get('/wallet/history')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleWalletHistory(@Query() query: Dto.GetBlockTransactions, @ReqUser() user: TUser | undefined) {
+    const data = await this.admin.HttpHandleWalletHistory(query, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 }

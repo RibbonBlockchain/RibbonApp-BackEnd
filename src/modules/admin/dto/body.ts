@@ -49,6 +49,20 @@ export class AdminChangePasswordBody {
   newPassword: string;
 }
 
+export class GetBlockTransactions {
+  @IsString()
+  @IsOptional()
+  q: string;
+
+  @IsInt()
+  @IsOptional()
+  page: number;
+
+  @IsInt()
+  @IsOptional()
+  pageSize: number;
+}
+
 export class GetRewardPartners {
   @IsString()
   @IsOptional()

@@ -679,6 +679,29 @@ export class AdminService {
     return {};
   }
 
+  async HttpHandleWalletHistory({ page, pageSize }: Dto.GetBlockTransactions, user: TUser | undefined) {
+    console.log(user);
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.name, 'Worldcoin-1'),
+    });
+
+    const data = await this.provider.db.query.BlockTransaction.findMany({
+      limit,
+      offset,
+      where: eq(BlockTransaction.partnerId, worldCoinPartner.id),
+      orderBy: desc(BlockTransaction.updatedAt),
+    });
+
+    const [{ total }] = await this.provider.db
+      .select({ total: sql<number>`cast(count(${BlockTransaction.id}) as int)` })
+      .from(BlockTransaction)
+      .where(eq(BlockTransaction.partnerId, worldCoinPartner.id));
+
+    return { data, pagination: generatePagination(page, pageSize, total) };
+  }
+
   async HttpHandleRatingDistrubution() {
     const data = await this.provider.db
       .select()
