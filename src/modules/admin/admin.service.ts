@@ -678,4 +678,51 @@ export class AdminService {
 
     return {};
   }
+
+  async HttpHandleRatingDistrubution() {
+    const data = await this.provider.db
+      .select()
+      .from(QuestionnaireRating)
+      .innerJoin(Questionnaire, eq(QuestionnaireRating.questionId, Questionnaire.id));
+
+    const qIds: any[] = (await this.provider.db.query.Questionnaire.findMany()).map((q) => q.id);
+
+    const ratings = data.map((r) => r.questionnaire_rating);
+    const qidsWithRatings = [...new Set(data.map((r) => r.questionnaire).map((q) => q.id))];
+    const qidsWithoutRatings = qIds.filter((id) => !qidsWithRatings.includes(id));
+
+    const percentageWithRating = (qidsWithRatings.length / qIds.length) * 100;
+    const percentageWithoutRating = (qidsWithoutRatings.length / qIds.length) * 100;
+
+    const ratingCounts = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
+
+    if (ratings.length <= 0) return ratingCounts;
+
+    ratings.forEach((item: any) => {
+      ratingCounts[item.rating]++;
+    });
+
+    const totalRatings = ratings.length;
+
+    const ratingDistributions = {};
+
+    for (let rating in ratingCounts) {
+      ratingDistributions[rating] = ((ratingCounts[rating] / totalRatings) * 100).toFixed(2);
+    }
+
+    const ratingsStatus = {
+      withRating: percentageWithRating.toFixed(2),
+      withoutRating: percentageWithoutRating.toFixed(2),
+    };
+
+    const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(2);
+
+    return { ratingDistributions, ratingsStatus, totalAverageRatings };
+  }
 }
