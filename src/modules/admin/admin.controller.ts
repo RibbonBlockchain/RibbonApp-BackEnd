@@ -113,11 +113,11 @@ export class AdminController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
-  @Post('/mint-vault')
   @Version(VERSION_ONE)
+  @Post('/wallet-transfer')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleMintVault(@Body() body: Dto.AdminMintVaultBody, @ReqUser() user: TUser | undefined) {
-    const data = await this.admin.HttpHandleMintVault(body, user);
+  async HttpHandleWalletTransfer(@Body() body: Dto.AdminWalletTransferBody, @ReqUser() user: TUser | undefined) {
+    const data = await this.admin.HttpHandleWalletTransfer(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 }

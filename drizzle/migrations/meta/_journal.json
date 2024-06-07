@@ -295,6 +295,13 @@
       "when": 1717670361958,
       "tag": "0042_fixed_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1717761537181,
+      "tag": "0043_talented_wolverine",
+      "breakpoints": true
     }
   ]
 }

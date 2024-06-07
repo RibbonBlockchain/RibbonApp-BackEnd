@@ -17,6 +17,7 @@ import {
   TasskQuestionAnswer,
   SurveyQuestionAnswer,
   QuestionnaireActivity,
+  BlockTransaction,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -655,11 +656,25 @@ export class AdminService {
     return { vaultAddres: res.vaultAddress };
   }
 
-  async HttpHandleMintVault(body: Dto.AdminMintVaultBody, user: TUser | undefined) {
+  async HttpHandleWalletTransfer(body: Dto.AdminWalletTransferBody, user: TUser | undefined) {
     // TODO: connect partners to admin account
     console.log(user);
-    const address = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65';
-    await this.contract.mint(address, body.amount);
+
+    const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.name, 'Worldcoin-1'),
+    });
+
+    if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
+
+    const res = await this.contract.transfer(worldCoinPartner.vaultAddress, body.amount);
+
+    await this.provider.db.insert(BlockTransaction).values({
+      userId: user.id,
+      amount: +body.amount,
+      metadata: JSON.stringify(res),
+      partnerId: worldCoinPartner.id,
+      points: +body.amount,
+    });
 
     return {};
   }

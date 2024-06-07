@@ -476,7 +476,26 @@ export const RewardPartner = ribbonSchema.table('reward_partner', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const BlockTransaction = ribbonSchema.table('block_transaction', {
+  id: serial('id').primaryKey(),
+  amount: doublePrecision('amount'),
+  points: doublePrecision('points'),
+  metadata: jsonb('metadata'),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  partnerId: integer('partner_id').references(() => RewardPartner.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 // Relations
+
+//
+export const BlockTransactionRelations = relations(BlockTransaction, ({ one }) => ({
+  admin: one(User, { fields: [BlockTransaction.userId], references: [User.id] }),
+  partner: one(RewardPartner, { fields: [BlockTransaction.partnerId], references: [RewardPartner.id] }),
+}));
 
 // user
 export const UserRelations = relations(User, ({ one, many }) => ({

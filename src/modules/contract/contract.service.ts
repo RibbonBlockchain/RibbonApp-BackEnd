@@ -82,17 +82,12 @@ export class ContractService {
     }
   }
 
-  async mint(address: string, intAmount: any) {
+  async transfer(address: string, amount: any) {
     const contract0 = this.pointsContract();
-
-    let i = contract0.counterId();
-    console.log(i, 'counter');
-
-    const amount = ethers.utils.parseUnits(String(intAmount));
-
-    const result = await contract0.connect(this.signer).mint(address, amount);
-    const receipt = await result.wait();
-    console.log(receipt);
+    console.log(address, amount);
+    const result = await contract0.connect(this.signer).transfer(address, amount);
+    console.log('result', result);
+    return await result.wait();
   }
 }
 
