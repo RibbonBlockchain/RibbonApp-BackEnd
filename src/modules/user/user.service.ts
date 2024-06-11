@@ -20,7 +20,8 @@ import { ContractService } from '../contract/contract.service';
 import { ClaimPointBody, SwapPointBody } from '../contract/dto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
-const minPoint = 10_000_000_000_000_000_000_000;
+const minPoint = 10_000;
+const factor = 1000_000_000_000_000_000;
 
 @Injectable()
 export class UserService {
@@ -174,7 +175,14 @@ export class UserService {
   }
 
   async HttpHandleClaimPoint(body: ClaimPointBody, user: TUser) {
-    if (+body.amount < minPoint) throw new BadRequestException('You cannot claim less than 10,000 points');
+    const amount = +body.amount / factor;
+    if (amount < minPoint) throw new BadRequestException('You cannot claim less than 10,000 points');
+
+    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+    if (wallet.point < amount) {
+      throw new BadRequestException('You do not have enough points in your wallet');
+    }
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
       where: eq(RewardPartner.name, 'Worldcoin-1'),
@@ -183,9 +191,10 @@ export class UserService {
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
 
     // TODO: add address to wallet schema
-    await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
 
+    const newPointBalance = wallet?.point - amount;
     await this.contract.claimPoints(body.address, body.amount, worldCoinPartner.vaultAddress);
+    await this.provider.db.update(Wallet).set({ point: newPointBalance }).where(eq(Wallet.id, wallet.id));
     return {};
   }
 
