@@ -193,7 +193,7 @@ export class UserService {
     // TODO: add address to wallet schema
 
     const newPointBalance = wallet?.point - amount;
-    const newBalance = newPointBalance * 5_000;
+    const newBalance = newPointBalance / 5_000;
 
     await this.contract.claimPoints(body.address, body.amount, worldCoinPartner.vaultAddress);
     await this.provider.db
