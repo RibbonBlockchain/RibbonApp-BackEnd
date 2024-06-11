@@ -19,6 +19,8 @@ import {
   QuestionnaireActivity,
   BlockTransaction,
   QuestionnaireCategory,
+  SurveyCategory,
+  TasskCategory,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -706,88 +708,125 @@ export class AdminService {
     return { data, pagination: generatePagination(page, pageSize, total) };
   }
 
-  async HttpHandleRatingDistrubution() {
-    const data = await this.provider.db
-      .select()
-      .from(QuestionnaireRating)
-      .innerJoin(Questionnaire, eq(QuestionnaireRating.questionId, Questionnaire.id));
+  async HttpHandleRatingOverview(type: 's' | 't' | 'q') {
+    let data;
+    let typeData;
 
-    const activitiesRated = [];
+    if (type === 's') {
+      data = await this.provider.db.select().from(SurveyRating).innerJoin(Survey, eq(SurveyRating.surveyId, Survey.id));
 
-    const questionnaire = await this.provider.db
-      .select()
-      .from(Questionnaire)
-      .innerJoin(QuestionnaireCategory, eq(Questionnaire.categoryId, QuestionnaireCategory.id));
+      typeData = await this.provider.db
+        .select()
+        .from(Survey)
+        .innerJoin(SurveyCategory, eq(Survey.categoryId, SurveyCategory.id));
+    } else if (type === 'q') {
+      data = await this.provider.db
+        .select()
+        .from(QuestionnaireRating)
+        .innerJoin(Questionnaire, eq(QuestionnaireRating.questionId, Questionnaire.id));
 
-    questionnaire.map((q) =>
-      activitiesRated.push({
-        activity: q.questionnaire_category.name,
-        questionnaireId: q.questionnaire.id,
-        total: 0,
-        sum: 0,
-        average: 0,
-      }),
-    );
+      typeData = await this.provider.db
+        .select()
+        .from(Questionnaire)
+        .innerJoin(QuestionnaireCategory, eq(Questionnaire.categoryId, QuestionnaireCategory.id));
+    } else if (type === 't') {
+      data = await this.provider.db.select().from(TasskRating).innerJoin(Tassk, eq(TasskRating.taskId, Tassk.id));
 
-    const qIds: any[] = questionnaire.map((q) => q.questionnaire.id);
+      typeData = await this.provider.db
+        .select()
+        .from(Tassk)
+        .innerJoin(TasskCategory, eq(Tassk.categoryId, TasskCategory.id));
+    } else {
+      return {};
+    }
 
+    const activitiesRated = typeData.map((q) => ({
+      activity: q.questionnaire_category.name,
+      questionnaireId: q.questionnaire.id,
+      total: 0,
+      sum: 0,
+      average: 0,
+      status: '',
+    }));
+
+    const qIds: any[] = typeData.map((q) => q.questionnaire.id);
     const ratings = data.map((r) => r.questionnaire_rating);
 
-    for (let rating of ratings) {
-      const activity = activitiesRated.find((a) => a.questionnaireId === rating.questionId);
+    ratings.forEach((r) => {
+      const activity = activitiesRated.find((a) => a.questionnaireId === r.questionId);
       if (activity) {
         activity.total++;
-        activity.sum += rating.rating;
-        activity.average = (activity.sum / activity.total).toFixed(2);
+        activity.sum += r.rating;
+        activity.average = +(activity.sum / activity.total).toFixed(2);
       }
-    }
+    });
 
-    let totalSum = 0;
-    for (let i = 0; i < activitiesRated.length; i++) {
-      delete activitiesRated[i].questionnaireId;
-      totalSum += activitiesRated[i].sum;
-    }
+    let totalSum = activitiesRated.reduce((sum, activity) => sum + activity.sum, 0);
 
-    for (let i = 0; i < activitiesRated.length; i++) {
-      let percentage = ((activitiesRated[i].sum / totalSum) * 100).toFixed(2);
-      activitiesRated[i].status = `${percentage}%`;
-    }
+    activitiesRated.forEach((a) => {
+      delete a.questionnaireId;
+      a.status = `${((a.sum / totalSum) * 100).toFixed(2)}%`;
+    });
 
     const qidsWithRatings = [...new Set(data.map((r) => r.questionnaire).map((q) => q.id))];
     const qidsWithoutRatings = qIds.filter((id) => !qidsWithRatings.includes(id));
 
-    const percentageWithRating = (qidsWithRatings.length / qIds.length) * 100;
-    const percentageWithoutRating = (qidsWithoutRatings.length / qIds.length) * 100;
+    const ratedActivities = ((qidsWithRatings.length / qIds.length) * 100).toFixed(0);
+    const unratedActivities = ((qidsWithoutRatings.length / qIds.length) * 100).toFixed(0);
 
-    const ratingCounts = {
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-    };
+    let ratingDistributions = [
+      {
+        type: 0,
+        total: 0,
+        percentage: 0,
+      },
+      {
+        type: 1,
+        total: 0,
+        percentage: 0,
+      },
+      {
+        type: 2,
+        total: 0,
+        percentage: 0,
+      },
+      {
+        type: 3,
+        total: 0,
+        percentage: 0,
+      },
+      {
+        type: 4,
+        total: 0,
+        percentage: 0,
+      },
+      {
+        type: 5,
+        total: 0,
+        percentage: 0,
+      },
+    ];
 
-    if (ratings.length <= 0) return ratingCounts;
-
-    ratings.forEach((item: any) => {
-      ratingCounts[item.rating]++;
+    ratings.forEach((item) => {
+      const distribution = ratingDistributions.find((rd) => rd.type === item.rating);
+      if (distribution) distribution.total += 1;
     });
 
-    const totalRatings = ratings.length;
+    const totalRatings = ratingDistributions.reduce((sum, rating) => sum + rating.total, 0);
 
-    const ratingDistributions = {};
-
-    for (let rating in ratingCounts) {
-      ratingDistributions[rating] = ((ratingCounts[rating] / totalRatings) * 100).toFixed(2);
-    }
+    ratingDistributions = ratingDistributions.map((rating) => ({
+      ...rating,
+      percentage: totalRatings ? +((rating.total / totalRatings) * 100).toFixed(1) : 0,
+    }));
 
     const ratingsStatus = {
-      withRating: percentageWithRating.toFixed(2),
-      withoutRating: percentageWithoutRating.toFixed(2),
+      ratedActivities,
+      unratedActivities,
+      total: ratings.length,
     };
 
-    const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(2);
+    const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
 
-    return { ratingDistributions, ratingsStatus, totalAverageRatings, activitiesRated };
+    return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated };
   }
 }
