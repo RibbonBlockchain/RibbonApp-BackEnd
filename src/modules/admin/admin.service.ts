@@ -663,10 +663,9 @@ export class AdminService {
 
   async HttpHandleWalletTransfer(body: Dto.AdminWalletTransferBody, user: TUser | undefined) {
     // TODO: connect partners to admin account
-    console.log(user);
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-1'),
+      where: eq(RewardPartner.name, 'Worldcoin-2'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
@@ -689,7 +688,7 @@ export class AdminService {
     const { limit, offset } = getPage({ page, pageSize });
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-1'),
+      where: eq(RewardPartner.name, 'Worldcoin-2'),
     });
 
     const data = await this.provider.db.query.BlockTransaction.findMany({

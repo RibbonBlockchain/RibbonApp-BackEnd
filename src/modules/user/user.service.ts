@@ -188,7 +188,7 @@ export class UserService {
     }
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-1'),
+      where: eq(RewardPartner.name, 'Worldcoin-2'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
@@ -198,20 +198,25 @@ export class UserService {
     const newPointBalance = wallet?.point - amount;
     const newBalance = newPointBalance / 5_000;
 
-    await this.contract.claimPoints(body.address, body.amount, worldCoinPartner.vaultAddress);
+    const res = await this.contract.ClaimPoints(
+      body.address,
+      body.amount,
+      worldCoinPartner.name,
+      worldCoinPartner.vaultAddress,
+    );
     await this.provider.db
       .update(Wallet)
       .set({ point: newPointBalance, balance: newBalance })
       .where(eq(Wallet.id, wallet.id));
 
-    return {};
+    return res;
   }
 
   async HttpHandleSwapPoint(body: SwapPointBody, user: TUser) {
     if (+body.amount < minPoint) throw new BadRequestException('You cannot swap less than 10,000 points');
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-1'),
+      where: eq(RewardPartner.name, 'Worldcoin-2'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
@@ -219,7 +224,11 @@ export class UserService {
     // TODO: add address to wallet schema
     await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
 
-    await this.contract.swapToPaymentCoin(body.address, body.amount, worldCoinPartner.vaultAddress);
-    return {};
+    return await this.contract.SwapToPaymentCoin(
+      body.address,
+      body.amount,
+      worldCoinPartner.name,
+      worldCoinPartner.vaultAddress,
+    );
   }
 }
