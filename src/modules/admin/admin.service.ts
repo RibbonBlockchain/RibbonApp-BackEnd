@@ -18,6 +18,7 @@ import {
   SurveyQuestionAnswer,
   QuestionnaireActivity,
   BlockTransaction,
+  QuestionnaireCategory,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -712,9 +713,47 @@ export class AdminService {
       .from(QuestionnaireRating)
       .innerJoin(Questionnaire, eq(QuestionnaireRating.questionId, Questionnaire.id));
 
-    const qIds: any[] = (await this.provider.db.query.Questionnaire.findMany()).map((q) => q.id);
+    const activitiesRated = [];
+
+    const questionnaire = await this.provider.db
+      .select()
+      .from(Questionnaire)
+      .innerJoin(QuestionnaireCategory, eq(Questionnaire.categoryId, QuestionnaireCategory.id));
+
+    questionnaire.map((q) =>
+      activitiesRated.push({
+        activity: q.questionnaire_category.name,
+        questionnaireId: q.questionnaire.id,
+        total: 0,
+        sum: 0,
+        average: 0,
+      }),
+    );
+
+    const qIds: any[] = questionnaire.map((q) => q.questionnaire.id);
 
     const ratings = data.map((r) => r.questionnaire_rating);
+
+    for (let rating of ratings) {
+      const activity = activitiesRated.find((a) => a.questionnaireId === rating.questionId);
+      if (activity) {
+        activity.total++;
+        activity.sum += rating.rating;
+        activity.average = (activity.sum / activity.total).toFixed(2);
+      }
+    }
+
+    let totalSum = 0;
+    for (let i = 0; i < activitiesRated.length; i++) {
+      delete activitiesRated[i].questionnaireId;
+      totalSum += activitiesRated[i].sum;
+    }
+
+    for (let i = 0; i < activitiesRated.length; i++) {
+      let percentage = ((activitiesRated[i].sum / totalSum) * 100).toFixed(2);
+      activitiesRated[i].status = `${percentage}%`;
+    }
+
     const qidsWithRatings = [...new Set(data.map((r) => r.questionnaire).map((q) => q.id))];
     const qidsWithoutRatings = qIds.filter((id) => !qidsWithRatings.includes(id));
 
@@ -750,6 +789,6 @@ export class AdminService {
 
     const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(2);
 
-    return { ratingDistributions, ratingsStatus, totalAverageRatings };
+    return { ratingDistributions, ratingsStatus, totalAverageRatings, activitiesRated };
   }
 }
