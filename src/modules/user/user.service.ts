@@ -124,11 +124,14 @@ export class UserService {
 
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
+    const newPoint = wallet?.point + 100;
+    const newBalance = newPoint / 5000;
+
     if (!lastClaimTime) {
       // Claiming for first time
       await this.provider.db
         .update(Wallet)
-        .set({ balance: wallet.balance + 0.02 })
+        .set({ balance: newBalance, point: newPoint })
         .where(eq(Wallet.userId, user.id));
 
       await this.provider.db
