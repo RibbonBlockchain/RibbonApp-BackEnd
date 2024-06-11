@@ -5,7 +5,6 @@ import {
   Wallet,
   Question,
   Questionnaire,
-  QuestionOptions,
   VerificationCode,
   QuestionnaireActivity,
   TasskQuestionOptions,
@@ -152,10 +151,6 @@ export class TaskService {
     if (typeof optionId === 'number') singleOption = optionId;
     if (Array.isArray(optionId)) singleOption = optionId?.[0];
 
-    const option = await this.provider.db.query.QuestionOptions.findFirst({
-      where: eq(QuestionOptions.id, singleOption),
-    });
-
     if (!userTaskActivity) {
       await this.provider.db.insert(QuestionnaireActivity).values({ taskId, userId: user.id }).execute();
     }
@@ -166,13 +161,14 @@ export class TaskService {
         .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
         .where(and(eq(QuestionnaireActivity.id, userTaskActivity.id), eq(QuestionnaireActivity.userId, user.id)));
 
+      const newPoint = wallet.point + task.point;
+      const newBalance = wallet.point / 5000;
+
       await this.provider.db
         .update(Wallet)
-        .set({ balance: wallet.balance + task.reward, point: option.point + wallet.point })
+        .set({ balance: newBalance, point: newPoint })
         .where(eq(Wallet.userId, user.id));
     }
-
-    console.log(singleOption, answer);
 
     return await this.provider.db
       .insert(Answer)
