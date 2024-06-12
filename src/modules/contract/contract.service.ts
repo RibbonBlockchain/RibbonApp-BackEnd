@@ -114,7 +114,7 @@ export class ContractService {
       const signature = await wallet._signTypedData(domain, types, message);
       const { v, r, s } = ethers.utils.splitSignature(signature);
 
-      return { deadline, v, r, s };
+      return { deadline, v, r, s, vaultAddress };
     } catch (error) {
       console.log(error);
       let message = error?.error?.reason || error?.reason || 'Unable to process request';
@@ -159,7 +159,7 @@ export class ContractService {
       const signature = await wallet._signTypedData(domain, types, message);
       const { v, r, s } = ethers.utils.splitSignature(signature);
 
-      return { deadline, v, r, s };
+      return { deadline, v, r, s, vaultAddress };
     } catch (error) {
       console.log(error);
       let message = error?.error?.reason || error?.reason || 'Unable to process request';
