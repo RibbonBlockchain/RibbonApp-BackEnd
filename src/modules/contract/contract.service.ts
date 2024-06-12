@@ -23,19 +23,24 @@ export class ContractService {
 
   async createVault(body: { name: string; address: string; points: any }) {
     try {
-      const contract0 = await this.pointsContract();
+      const contract0 = this.pointsContract();
 
       let i = await contract0.counterId();
+
+      console.log(body, this.vaultOwner);
 
       const result = await contract0
         .connect(this.signer)
         .createVault(body.name, this.vaultOwner, body.address, body.points);
+
+      console.log(result);
 
       await result.wait();
 
       let vaultDetails = await contract0.vaultIdentifcation(i);
       return { vaultAddress: vaultDetails?.[0] };
     } catch (error) {
+      console.log(error);
       let message = error?.error?.reason || error?.reason || 'Unable to process request';
       throw new BadRequestException(message || error?.reason);
     }
