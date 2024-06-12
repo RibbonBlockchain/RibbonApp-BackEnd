@@ -27,13 +27,9 @@ export class ContractService {
 
       let i = await contract0.counterId();
 
-      console.log(body, this.vaultOwner);
-
       const result = await contract0
         .connect(this.signer)
         .createVault(body.name, this.vaultOwner, body.address, body.points);
-
-      console.log(result);
 
       await result.wait();
 
