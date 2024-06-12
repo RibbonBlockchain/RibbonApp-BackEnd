@@ -58,7 +58,7 @@ export class UserService {
           .values({ taskId: task.id, userId: user.id, status: 'COMPLETED' });
       }
 
-      const balance = wallet.balance + 5;
+      const balance = wallet.balance + 0.02;
 
       await this.provider.db.update(Wallet).set({ balance }).where(eq(Wallet.id, wallet.id));
     }
@@ -106,7 +106,7 @@ export class UserService {
 
     await this.provider.db.update(User).set({ phone: body.phone }).where(eq(User.id, user.auth.id)).execute();
 
-    await this.provider.db.update(Wallet).set({ balance: 3 }).where(eq(Wallet.userId, user.auth.id));
+    await this.provider.db.update(Wallet).set({ balance: 0.02 }).where(eq(Wallet.userId, user.auth.id));
 
     return {};
   }
@@ -124,15 +124,12 @@ export class UserService {
 
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
-    const newPoint = wallet?.point + 100;
-    const newBalance = newPoint / 5000;
+    const amount = 100 / 5_000;
+    const newBalance = wallet?.balance + amount;
 
     if (!lastClaimTime) {
       // Claiming for first time
-      await this.provider.db
-        .update(Wallet)
-        .set({ balance: newBalance, point: newPoint })
-        .where(eq(Wallet.userId, user.id));
+      await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.userId, user.id));
 
       await this.provider.db
         .update(User)
@@ -178,12 +175,13 @@ export class UserService {
   }
 
   async HttpHandleClaimPoint(body: ClaimPointBody, user: TUser) {
-    const amount = +body.amount / factor;
+    const amount = +body.amount / factor; // 10_000
     if (amount < minPoint) throw new BadRequestException('You cannot claim less than 10,000 points');
 
     const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+    const walletPoints = (wallet.balance || 0) * 5_000; // 20_000
 
-    if (wallet.point < amount) {
+    if (walletPoints < amount) {
       throw new BadRequestException('You do not have enough points in your wallet');
     }
 
@@ -195,8 +193,8 @@ export class UserService {
 
     // TODO: add address to wallet schema
 
-    const newPointBalance = wallet?.point - amount;
-    const newBalance = newPointBalance / 5_000;
+    const withdrawalAmount = amount / 5_000;
+    const newBalance = wallet?.balance - withdrawalAmount;
 
     const res = await this.contract.ClaimPoints(
       body.address,
@@ -204,10 +202,7 @@ export class UserService {
       worldCoinPartner.name,
       worldCoinPartner.vaultAddress,
     );
-    await this.provider.db
-      .update(Wallet)
-      .set({ point: newPointBalance, balance: newBalance })
-      .where(eq(Wallet.id, wallet.id));
+    await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.id, wallet.id));
 
     return res;
   }
