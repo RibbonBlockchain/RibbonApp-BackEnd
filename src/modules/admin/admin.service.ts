@@ -711,6 +711,7 @@ export class AdminService {
   async HttpHandleRatingOverview(type: 's' | 't' | 'q') {
     let data;
     let typeData;
+    const users = await this.provider.db.select().from(User);
 
     if (type === 's') {
       data = await this.provider.db.select().from(SurveyRating).innerJoin(Survey, eq(SurveyRating.surveyId, Survey.id));
@@ -827,6 +828,30 @@ export class AdminService {
 
     const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
 
-    return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated };
+    const userRatingsIds = ratings.map((r) => r.userId);
+    const mapUserCode = users.filter((u) => u.phone).map((u) => ({ code: u.phone.substring(0, 4), id: u.id }));
+
+    const idMap = mapUserCode.reduce((acc, item) => {
+      acc[item.id] = item;
+      return acc;
+    }, {});
+
+    const codeCount = userRatingsIds.reduce((acc, id) => {
+      const code = idMap[id]?.code;
+      if (code) {
+        acc[code] = (acc[code] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    const totalCount = userRatingsIds.length;
+
+    const geoDistribution = Object.keys(codeCount).map((code) => ({
+      code: code,
+      count: codeCount[code],
+      percentage: ((codeCount[code] / totalCount) * 100).toFixed(0) + '%',
+    }));
+
+    return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated, geoDistribution };
   }
 }
