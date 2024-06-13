@@ -224,10 +224,10 @@ export class UserService {
   }
 
   async HttpHandleWithdrawPoint(body: WithdrawPointBody, user: TUser) {
-    const amount = +body.amount / factor; // 10_000
+    const amount = +body.amount; // 10_000
     const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
 
-    const withdrawalAmount = amount / 5_000;
+    const withdrawalAmount = amount / 5_000; // 2;
     const newBalance = wallet?.balance - withdrawalAmount || 0;
 
     await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.id, wallet.id));
