@@ -4,7 +4,7 @@ import { RESPONSE } from '@/core/responses';
 import { UserService } from './user.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
-import { ClaimPointBody, SwapPointBody } from '../contract/dto';
+import { ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
 import { Body, Controller, Get, Patch, Post, Version } from '@nestjs/common';
 
@@ -56,6 +56,14 @@ export class UserController {
   @Post('/swap-point')
   async HttpSwapPoint(@Body() body: SwapPointBody, @ReqUser() user: TUser) {
     const data = await this.userService.HttpHandleSwapPoint(body, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Post('/withdraw-point')
+  async HttpWithdrawPoint(@Body() body: WithdrawPointBody, @ReqUser() user: TUser) {
+    const data = await this.userService.HttpHandleWithdrawPoint(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 

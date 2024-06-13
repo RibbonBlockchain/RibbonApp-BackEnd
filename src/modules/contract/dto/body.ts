@@ -25,3 +25,9 @@ export class SwapPointBody {
   @IsNotEmpty()
   address: string;
 }
+
+export class WithdrawPointBody {
+  @IsNotEmpty()
+  @IsNumberString()
+  amount: string;
+}

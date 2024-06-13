@@ -17,7 +17,7 @@ import { hasTimeExpired } from '@/core/utils';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { ContractService } from '../contract/contract.service';
-import { ClaimPointBody, SwapPointBody } from '../contract/dto';
+import { ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 const minPoint = 10_000;
@@ -193,16 +193,12 @@ export class UserService {
 
     // TODO: add address to wallet schema
 
-    const withdrawalAmount = amount / 5_000;
-    const newBalance = wallet?.balance - withdrawalAmount;
-
     const res = await this.contract.ClaimPoints(
       body.address,
       body.amount,
       worldCoinPartner.name,
       worldCoinPartner.vaultAddress,
     );
-    await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.id, wallet.id));
 
     return res;
   }
@@ -225,5 +221,17 @@ export class UserService {
       worldCoinPartner.name,
       worldCoinPartner.vaultAddress,
     );
+  }
+
+  async HttpHandleWithdrawPoint(body: WithdrawPointBody, user: TUser) {
+    const amount = +body.amount / factor; // 10_000
+    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+    const withdrawalAmount = amount / 5_000;
+    const newBalance = wallet?.balance - withdrawalAmount || 0;
+
+    await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.id, wallet.id));
+
+    return {};
   }
 }
