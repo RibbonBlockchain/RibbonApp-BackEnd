@@ -1,3 +1,15 @@
+import {
+  Get,
+  Body,
+  Post,
+  Param,
+  Patch,
+  Query,
+  Version,
+  Controller,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import * as Dto from './dto';
 import { TUser } from '../drizzle/schema';
 import { RESPONSE } from '@/core/responses';
@@ -6,7 +18,6 @@ import { SurveyService } from './survey.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
 
 @Controller()
 export class SurveyController {
@@ -29,6 +40,22 @@ export class SurveyController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/admin/survey/summary')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getSurveySummary() {
+    const data = await this.survey.HttpHandleGetSurveySummary();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Patch('/admin/survey/status')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateSurveyStatus(@Body() body: Dto.UpdateSurveyStatusBody) {
+    const data = await this.survey.HttpHandleUpdateSurveyStatus(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/admin/survey/:id')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getSurveyById(@Param('id') id: number) {
@@ -41,6 +68,14 @@ export class SurveyController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async addQuestions(@Body() body: Dto.AddSurveyBody) {
     const data = await this.survey.HttpHandleAddSurvey(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Patch('/admin/survey')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateQuestions(@Body() body: Dto.UpdateSurveyBody) {
+    const data = await this.survey.HttpHandleUpdateQuestionnaire(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 
@@ -67,5 +102,12 @@ export class SurveyController {
   async rateSurvey(@Body() body: Dto.RateSurveyBody, @ReqUser() user: TUser) {
     const data = await this.survey.HttpHandleRateSurvey(body, user);
     return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Patch('survey/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSesBody[]) {
+    return await this.survey.HttpHandleUpdateSes(body);
   }
 }

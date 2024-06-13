@@ -1,4 +1,15 @@
-import { IsInt, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { QuestionnaireStatusMap, TQuestionnaireStatus } from '@/modules/drizzle/schema';
+
+export class UpdateTaskStatusBody {
+  @IsNotEmpty()
+  @IsIn(QuestionnaireStatusMap)
+  status: TQuestionnaireStatus;
+
+  @IsInt()
+  @IsNotEmpty()
+  id: number;
+}
 
 export class GetTasskCategoriesQuery {
   @IsString()
@@ -26,4 +37,8 @@ export class GetAllTasskQuery {
   @IsInt()
   @IsOptional()
   pageSize: number;
+
+  @IsOptional()
+  @IsIn(QuestionnaireStatusMap)
+  status: TQuestionnaireStatus;
 }

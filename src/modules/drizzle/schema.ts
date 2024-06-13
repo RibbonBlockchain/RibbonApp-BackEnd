@@ -10,6 +10,7 @@ import {
   pgSchema,
   timestamp,
   doublePrecision,
+  text,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -35,6 +36,10 @@ export type TUserStatus = (typeof UserStatusEnum.enumValues)[number];
 export const QuestionnaireStatusMap = ['ACTIVE', 'CLOSED'] as const;
 export const QuestionnaireStatusEnum = pgEnum('questionnaire_status', QuestionnaireStatusMap);
 export type TQuestionnaireStatus = (typeof QuestionnaireStatusEnum.enumValues)[number];
+
+export const TransactionStatusMap = ['SUCCESS'] as const;
+export const TransactionStatusEnum = pgEnum('transaction_status', TransactionStatusMap);
+export type TTransactionStatus = (typeof TransactionStatusEnum.enumValues)[number];
 
 export const VerificationCodeReasonMap = ['FORGOT_PIN', 'SMS_ONBOARDING', 'PHONE_VERIFICATION'] as const;
 export const VerificationCodeReasonEnum = pgEnum('verification_code_reason', VerificationCodeReasonMap);
@@ -79,6 +84,7 @@ export const User = ribbonSchema.table('user', {
   dob: date('dob'),
   socials: jsonb('socals'),
   worldId: varchar('world_id'),
+  partnerId: integer('partner_id').references(() => RewardPartner.id),
   role: RoleEnum('role').default('PATIENT').notNull(),
   status: UserStatusEnum('status').default('ACTIVE'),
   numberOfClaims: integer('numberOfClaims').default(0),
@@ -129,9 +135,13 @@ export const Questionnaire = ribbonSchema.table('questionnaire', {
   slug: varchar('slug').unique(),
   description: varchar('description'),
   type: TaskTypeEnum('type').notNull(),
+  ratings: doublePrecision('ratings'),
+  totalRatings: integer('total_ratings'),
   point: integer('point').default(0),
   duration: integer('duration').default(60),
-  categoryId: integer('category_id').default(1),
+  categoryId: integer('category_id')
+    .notNull()
+    .references(() => QuestionnaireCategory.id),
   status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   reward: doublePrecision('reward').default(0.1),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -149,6 +159,18 @@ export const Survey = ribbonSchema.table('survey', {
     .notNull()
     .references(() => SurveyCategory.id),
   duration: integer('duration').default(60),
+  status: QuestionnaireStatusEnum('status').default('ACTIVE'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const Transaction = ribbonSchema.table('transaction', {
+  id: serial('id').primaryKey(),
+  amount: doublePrecision('reward').default(0.1),
+  userId: integer('category_id')
+    .notNull()
+    .references(() => SurveyCategory.id),
+  status: TransactionStatusEnum('status').default('SUCCESS'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -162,6 +184,7 @@ export const SurveyActivity = ribbonSchema.table('survey_activity', {
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const SurveyRating = ribbonSchema.table(
@@ -244,6 +267,7 @@ export const Tassk = ribbonSchema.table('tassk', {
     .notNull()
     .references(() => TasskCategory.id),
   duration: integer('duration').default(60),
+  status: QuestionnaireStatusEnum('status').default('ACTIVE'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -257,6 +281,7 @@ export const TasskActivity = ribbonSchema.table('tassk_activity', {
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const TasskRating = ribbonSchema.table(
@@ -373,24 +398,27 @@ export const QuestionnaireCategory = ribbonSchema.table('questionnaire_category'
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-export const QuestionOptions = ribbonSchema.table('question_options', {
-  id: serial('id').primaryKey(),
-  point: integer('point').default(0),
-  text: varchar('text'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  questionId: integer('question_id')
-    .notNull()
-    .references(() => Question.id),
-});
+export const QuestionOptions = ribbonSchema.table(
+  'question_options',
+  {
+    id: serial('id').primaryKey(),
+    point: integer('point').default(0),
+    text: varchar('text'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    questionId: integer('question_id')
+      .notNull()
+      .references(() => Question.id),
+  },
+  (t) => ({ key: unique('uniq_question_option').on(t.text, t.questionId) }),
+);
 
 export const Answer = ribbonSchema.table('answer', {
   id: serial('id').primaryKey(),
+  text: varchar('text'),
   questionId: integer('question_id')
     .notNull()
     .references(() => Question.id),
-  optionId: integer('option_id')
-    .notNull()
-    .references(() => QuestionOptions.id),
+  optionId: integer('option_id').references(() => QuestionOptions.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
@@ -407,6 +435,7 @@ export const QuestionnaireActivity = ribbonSchema.table('questionnaire_activity'
   status: UserTaskStatusEnum('status').default('PROCESSING'),
   completedDate: date('completed_date'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const Notification = ribbonSchema.table('notification', {
@@ -417,70 +446,86 @@ export const Notification = ribbonSchema.table('notification', {
     .notNull()
     .references(() => User.id),
   isRead: boolean('isRead').default(false),
+  senderId: integer('sender_id')
+    .notNull()
+    .references(() => User.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const NotificationHistory = ribbonSchema.table('notification_history', {
+  id: serial('id').primaryKey(),
+  title: varchar('title'),
+  message: varchar('message'),
+  senderId: integer('sender_id')
+    .notNull()
+    .references(() => User.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const RewardPartner = ribbonSchema.table('reward_partner', {
+  id: serial('id').primaryKey(),
+  logo: varchar('logo'),
+  name: varchar('name'),
+  token: varchar('token'),
+  vaultAddress: text('vault_address'),
+  value: doublePrecision('value').default(0),
+  volume: doublePrecision('volume').default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const BlockTransaction = ribbonSchema.table('block_transaction', {
+  id: serial('id').primaryKey(),
+  amount: doublePrecision('amount'),
+  points: doublePrecision('points'),
+  metadata: jsonb('metadata'),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  partnerId: integer('partner_id').references(() => RewardPartner.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 // Relations
+
+//
+export const BlockTransactionRelations = relations(BlockTransaction, ({ one }) => ({
+  admin: one(User, { fields: [BlockTransaction.userId], references: [User.id] }),
+  partner: one(RewardPartner, { fields: [BlockTransaction.partnerId], references: [RewardPartner.id] }),
+}));
+
+// user
 export const UserRelations = relations(User, ({ one, many }) => ({
   auth: one(Auth, { fields: [User.id], references: [Auth.userId] }),
   wallet: one(Wallet, { fields: [User.id], references: [Wallet.userId] }),
+  partner: one(RewardPartner, { fields: [User.partnerId], references: [RewardPartner.id] }),
   activities: many(QuestionnaireActivity),
   notifications: many(Notification),
 }));
 
+export const AuthRelations = relations(Auth, ({ one }) => ({
+  user: one(User, { fields: [Auth.userId], references: [User.id] }),
+}));
+
+export const NotificationRelations = relations(Notification, ({ one }) => ({
+  user: one(User, { fields: [Notification.userId], references: [User.id] }),
+  sender: one(User, { fields: [Notification.senderId], references: [User.id] }),
+}));
+
+export const NotificationHistoryRelations = relations(NotificationHistory, ({ one }) => ({
+  sender: one(User, { fields: [NotificationHistory.senderId], references: [User.id] }),
+}));
+// user
+
+// questionnaire
 export const QuestionnaireRelations = relations(Questionnaire, ({ one, many }) => ({
   questions: many(Question),
   ratings: many(QuestionnaireRating),
   activities: many(QuestionnaireActivity),
   category: one(QuestionnaireCategory, { fields: [Questionnaire.categoryId], references: [QuestionnaireCategory.id] }),
-}));
-
-export const SurveyRelations = relations(Survey, ({ one, many }) => ({
-  ratings: many(SurveyRating),
-  questions: many(SurveyQuestion),
-  activities: many(SurveyActivity),
-  category: one(SurveyCategory, { fields: [Survey.categoryId], references: [SurveyCategory.id] }),
-}));
-
-export const SurveyQuestionRelations = relations(SurveyQuestion, ({ one, many }) => ({
-  options: many(SurveyQuestionOptions),
-  survey: one(Survey, { fields: [SurveyQuestion.surveyId], references: [Survey.id] }),
-}));
-
-export const TasskRelations = relations(Tassk, ({ one, many }) => ({
-  ratings: many(TasskRating),
-  questions: many(TasskQuestion),
-  activities: many(TasskActivity),
-  category: one(TasskCategory, { fields: [Tassk.categoryId], references: [TasskCategory.id] }),
-}));
-
-export const TasskQuestionRelations = relations(TasskQuestion, ({ one, many }) => ({
-  options: many(TasskQuestionOptions),
-  survey: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
-}));
-
-export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => ({
-  question: one(TasskQuestion, { fields: [TasskQuestionAnswer.questionId], references: [TasskQuestion.id] }),
-  user: one(User, { fields: [TasskQuestionAnswer.userId], references: [User.id] }),
-}));
-
-export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
-  survey: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
-  user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
-}));
-
-export const SurveyAnswerRelations = relations(SurveyQuestionAnswer, ({ one }) => ({
-  question: one(SurveyQuestion, { fields: [SurveyQuestionAnswer.questionId], references: [SurveyQuestion.id] }),
-  option: one(SurveyQuestionOptions, {
-    references: [SurveyQuestionOptions.id],
-    fields: [SurveyQuestionAnswer.optionId],
-  }),
-  user: one(User, { fields: [SurveyQuestionAnswer.userId], references: [User.id] }),
-}));
-
-export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
-  survey: one(Survey, { fields: [SurveyActivity.surveyId], references: [Survey.id] }),
-  user: one(User, { fields: [SurveyActivity.userId], references: [User.id] }),
 }));
 
 export const QuestionRelations = relations(Question, ({ one, many }) => ({
@@ -502,11 +547,60 @@ export const QuestionnaireActivityRelations = relations(QuestionnaireActivity, (
   task: one(Questionnaire, { fields: [QuestionnaireActivity.taskId], references: [Questionnaire.id] }),
   user: one(User, { fields: [QuestionnaireActivity.userId], references: [User.id] }),
 }));
+// questionnaire
 
-export const AuthRelations = relations(Auth, ({ one }) => ({
-  user: one(User, { fields: [Auth.userId], references: [User.id] }),
+// survey
+export const SurveyRelations = relations(Survey, ({ one, many }) => ({
+  ratings: many(SurveyRating),
+  questions: many(SurveyQuestion),
+  activities: many(SurveyActivity),
+  category: one(SurveyCategory, { fields: [Survey.categoryId], references: [SurveyCategory.id] }),
 }));
 
-export const NotificationRelations = relations(Notification, ({ one }) => ({
-  user: one(User, { fields: [Notification.userId], references: [User.id] }),
+export const SurveyAnswerRelations = relations(SurveyQuestionAnswer, ({ one }) => ({
+  question: one(SurveyQuestion, { fields: [SurveyQuestionAnswer.questionId], references: [SurveyQuestion.id] }),
+  option: one(SurveyQuestionOptions, {
+    references: [SurveyQuestionOptions.id],
+    fields: [SurveyQuestionAnswer.optionId],
+  }),
+  user: one(User, { fields: [SurveyQuestionAnswer.userId], references: [User.id] }),
 }));
+
+export const SurveyActivityRelations = relations(SurveyActivity, ({ one }) => ({
+  survey: one(Survey, { fields: [SurveyActivity.surveyId], references: [Survey.id] }),
+  user: one(User, { fields: [SurveyActivity.userId], references: [User.id] }),
+}));
+
+export const SurveyQuestionRelations = relations(SurveyQuestion, ({ one, many }) => ({
+  options: many(SurveyQuestionOptions),
+  survey: one(Survey, { fields: [SurveyQuestion.surveyId], references: [Survey.id] }),
+}));
+
+export const SurveyOptionsRelations = relations(SurveyQuestionOptions, ({ one }) => ({
+  question: one(SurveyQuestion, { fields: [SurveyQuestionOptions.questionId], references: [SurveyQuestion.id] }),
+}));
+// survey
+
+// Tassk
+export const TasskRelations = relations(Tassk, ({ one, many }) => ({
+  ratings: many(TasskRating),
+  questions: many(TasskQuestion),
+  activities: many(TasskActivity),
+  category: one(TasskCategory, { fields: [Tassk.categoryId], references: [TasskCategory.id] }),
+}));
+
+export const TasskQuestionRelations = relations(TasskQuestion, ({ one, many }) => ({
+  options: many(TasskQuestionOptions),
+  survey: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
+}));
+
+export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => ({
+  question: one(TasskQuestion, { fields: [TasskQuestionAnswer.questionId], references: [TasskQuestion.id] }),
+  user: one(User, { fields: [TasskQuestionAnswer.userId], references: [User.id] }),
+}));
+
+export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
+  survey: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
+  user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
+}));
+// Tassk

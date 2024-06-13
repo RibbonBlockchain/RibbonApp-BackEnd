@@ -35,7 +35,10 @@ export class AuthGuard implements CanActivate {
     if (error && error.name === 'TokenExpiredError') return this.handleTokenRefresh(request, response);
 
     const userId = +data?.sub!;
-    const user = await this.provider.db.query.User.findFirst({ where: eq(User.id, userId), with: { auth: true } });
+    const user = await this.provider.db.query.User.findFirst({
+      where: eq(User.id, userId),
+      with: { auth: true, partner: true },
+    });
     if (!user || !user.auth || !user.auth.accessToken || user.auth.accessToken !== accessToken) throw exception;
 
     request['user'] = user;

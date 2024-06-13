@@ -6,7 +6,18 @@ import { TasskService } from './tassk.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  Version,
+} from '@nestjs/common';
 
 @Controller()
 export class TasskController {
@@ -17,6 +28,22 @@ export class TasskController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getTasskCategory(@Query() query: Dto.GetTasskCategoriesQuery) {
     const data = await this.tassk.HttpHandleGetTasskCategories(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/admin/task/summary')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getQuestionnaireSummary() {
+    const data = await this.tassk.HttpHandleGetTaskSummary();
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Patch('/admin/task/status')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateQuestionnaireStatus(@Body() body: Dto.UpdateTaskStatusBody) {
+    const data = await this.tassk.HttpHandleUpdateTaskStatus(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 
@@ -41,6 +68,14 @@ export class TasskController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async addQuestions(@Body() body: Dto.AddTasskBody) {
     const data = await this.tassk.HttpHandleAddTassk(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Patch('/admin/task')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async updateQuestions(@Body() body: Dto.UpdateTasskBody) {
+    const data = await this.tassk.HttpHandleUpdateTassk(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 

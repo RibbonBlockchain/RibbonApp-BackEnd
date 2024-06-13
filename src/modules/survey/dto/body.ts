@@ -7,8 +7,38 @@ export class AddSurveyBody {
   @IsNotEmpty()
   categoryId: number;
 
+  @IsString()
+  @IsOptional()
+  category: string;
+
   @IsNumber()
   reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
+
+  @IsArray()
+  @Type(() => QuestionPayload)
+  @ValidateNested({ each: true })
+  questions: QuestionPayload[];
+}
+
+export class UpdateSurveyBody {
+  @IsInt()
+  @IsNotEmpty()
+  id: number;
+
+  @IsInt()
+  @IsOptional()
+  categoryId: number;
+
+  @IsNumber()
+  reward: number;
+
+  @IsString()
+  @IsOptional()
+  description: string;
 
   @IsArray()
   @Type(() => QuestionPayload)
@@ -17,6 +47,10 @@ export class AddSurveyBody {
 }
 
 class QuestionPayload {
+  @IsInt()
+  @IsOptional()
+  id: number;
+
   @IsNotEmpty()
   @IsIn(QuestionTypeMap)
   type: TQuestionType;
@@ -33,6 +67,10 @@ class QuestionPayload {
 }
 
 class OptionPayload {
+  @IsInt()
+  @IsOptional()
+  id: number;
+
   @IsInt()
   @IsNotEmpty()
   point: number;
@@ -61,4 +99,14 @@ export class RateSurveyBody {
   @IsInt()
   @IsNotEmpty()
   surveyId: number;
+}
+
+export class UpdateSesBody {
+  @IsNotEmpty()
+  @IsNumber()
+  optionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  point: number;
 }

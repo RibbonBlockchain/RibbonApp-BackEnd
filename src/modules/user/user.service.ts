@@ -6,22 +6,29 @@ import {
   Questionnaire,
   VerificationCode,
   QuestionnaireActivity,
+  RewardPartner,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
-import { hasTimeExpired } from '@/core/utils';
 import { quickOTP } from '@/core/utils/code';
+import { hasTimeExpired } from '@/core/utils';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
+import { ContractService } from '../contract/contract.service';
+import { ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+
+const minPoint = 10_000;
+const factor = 1000_000_000_000_000_000;
 
 @Injectable()
 export class UserService {
   constructor(
-    @Inject(DATABASE) private readonly provider: TDbProvider,
     private readonly twilio: TwilioService,
+    private readonly contract: ContractService,
+    @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
   async HttpHandleUpdateProfile(body: Dto.HandleUpdateProfile, user: TUser) {
@@ -51,7 +58,7 @@ export class UserService {
           .values({ taskId: task.id, userId: user.id, status: 'COMPLETED' });
       }
 
-      const balance = wallet.balance + 5;
+      const balance = wallet.balance + 0.02;
 
       await this.provider.db.update(Wallet).set({ balance }).where(eq(Wallet.id, wallet.id));
     }
@@ -99,7 +106,7 @@ export class UserService {
 
     await this.provider.db.update(User).set({ phone: body.phone }).where(eq(User.id, user.auth.id)).execute();
 
-    await this.provider.db.update(Wallet).set({ balance: 3 }).where(eq(Wallet.userId, user.auth.id));
+    await this.provider.db.update(Wallet).set({ balance: 0.02 }).where(eq(Wallet.userId, user.auth.id));
 
     return {};
   }
@@ -117,12 +124,12 @@ export class UserService {
 
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
+    const amount = 100 / 5_000;
+    const newBalance = wallet?.balance + amount;
+
     if (!lastClaimTime) {
       // Claiming for first time
-      await this.provider.db
-        .update(Wallet)
-        .set({ balance: wallet.balance + 0.02 })
-        .where(eq(Wallet.userId, user.id));
+      await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.userId, user.id));
 
       await this.provider.db
         .update(User)
@@ -165,5 +172,66 @@ export class UserService {
     });
 
     return { data: notification };
+  }
+
+  async HttpHandleClaimPoint(body: ClaimPointBody, user: TUser) {
+    const amount = +body.amount / factor; // 10_000
+    if (amount < minPoint) throw new BadRequestException('You cannot claim less than 10,000 points');
+
+    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+    const walletPoints = (wallet.balance || 0) * 5_000; // 20_000
+
+    if (walletPoints < amount) {
+      throw new BadRequestException('You do not have enough points in your wallet');
+    }
+
+    const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.name, 'Worldcoin-4'),
+    });
+
+    if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
+
+    // TODO: add address to wallet schema
+
+    const res = await this.contract.ClaimPoints(
+      body.address,
+      body.amount,
+      worldCoinPartner.name,
+      worldCoinPartner.vaultAddress,
+    );
+
+    return res;
+  }
+
+  async HttpHandleSwapPoint(body: SwapPointBody, user: TUser) {
+    if (+body.amount < minPoint) throw new BadRequestException('You cannot swap less than 10,000 points');
+
+    const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.name, 'Worldcoin-4'),
+    });
+
+    if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
+
+    // TODO: add address to wallet schema
+    await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+    return await this.contract.SwapToPaymentCoin(
+      body.address,
+      body.amount,
+      worldCoinPartner.name,
+      worldCoinPartner.vaultAddress,
+    );
+  }
+
+  async HttpHandleWithdrawPoint(body: WithdrawPointBody, user: TUser) {
+    const amount = +body.amount / factor; // 10_000
+    const wallet = await this.provider.db.query.Wallet.findFirst({ where: eq(Wallet.userId, user.id) });
+
+    const withdrawalAmount = amount / 5_000;
+    const newBalance = wallet?.balance - withdrawalAmount || 0;
+
+    await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.id, wallet.id));
+
+    return {};
   }
 }

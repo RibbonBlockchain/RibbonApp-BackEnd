@@ -74,8 +74,8 @@ export class QuestionnaireController {
   @Version(VERSION_ONE)
   @Patch('/admin/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async updateQuestions(@Body() body: Dto.AddQuestionnaireBody) {
-    const data = await this.questionnaireService.HttpHandleAddQuestionnaire(body);
+  async updateQuestions(@Body() body: Dto.UpdateQuestionnaireBody) {
+    const data = await this.questionnaireService.HttpHandleUpdateQuestionnaire(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 
@@ -102,5 +102,12 @@ export class QuestionnaireController {
   async rateQuestionnaire(@Body() body: Dto.RateQuestionnaireBody, @ReqUser() user: TUser) {
     const data = await this.questionnaireService.HttpHandleRateQuestionnaire(body, user);
     return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Patch('/questionnaire/update-ses')
+  async updateSes(@Body() body: Dto.UpdateSesData[]) {
+    return await this.questionnaireService.HttpHandleUpdateSes(body);
   }
 }

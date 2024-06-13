@@ -8,3 +8,36 @@ export const hasTimeExpired = (date?: Date, minutes = 0): boolean => {
 
   return currentTime >= expirationTime;
 };
+
+export const startOfDay = (dateStr: string) => {
+  const dateObj = new Date(dateStr);
+  dateObj.setHours(0, 0, 0, 0);
+  return dateObj.toISOString();
+};
+
+export const startOfMonth = (datestr: string) => {
+  const dateObj = new Date(datestr);
+  dateObj.setDate(1);
+  dateObj.setHours(0, 0, 0, 0);
+  return dateObj.toISOString();
+};
+
+export const startOfYear = (dateStr: string) => {
+  const dateObj = new Date(dateStr);
+  dateObj.setMonth(0);
+  dateObj.setDate(1);
+  dateObj.setHours(0, 0, 0, 0);
+  return dateObj.toISOString();
+};
+
+export const endOfDay = (dateStr: string) => {
+  const dateObj = new Date(dateStr);
+  dateObj.setHours(23, 59, 59, 999);
+  return dateObj.toISOString();
+};
+
+export const oneYearAgo = (dateStr?: string): string => {
+  const date = dateStr ? new Date(dateStr) : new Date();
+  date.setFullYear(date.getFullYear() - 1);
+  return startOfDay(date.toISOString());
+};

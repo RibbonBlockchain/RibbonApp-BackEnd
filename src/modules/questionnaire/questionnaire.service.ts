@@ -44,10 +44,16 @@ export class QuestionnaireService {
       }
 
       if (body.category) {
-        const [category] = await tx
+        let [category] = await tx
           .insert(QuestionnaireCategory)
           .values({ name: body.category, slug: createSlug(body.category) })
+          .onConflictDoNothing()
           .returning();
+
+        if (!category)
+          category = await tx.query.QuestionnaireCategory.findFirst({
+            where: eq(QuestionnaireCategory.name, body.category),
+          });
 
         categoryName = category.name;
         body.categoryId = category.id;
@@ -100,6 +106,94 @@ export class QuestionnaireService {
                 .values({ questionId: question.id, point: option.point, text: option.value });
             }),
           );
+        }),
+      );
+    });
+
+    return {};
+  }
+
+  async HttpHandleUpdateQuestionnaire(body: Dto.UpdateQuestionnaireBody) {
+    await this.provider.db.transaction(async (tx) => {
+      const category = await tx.query.QuestionnaireCategory.findFirst({
+        where: eq(QuestionnaireCategory.id, body.categoryId),
+      });
+
+      const [questionnaire] = await tx
+        .update(Questionnaire)
+        .set({
+          name: category.name,
+          reward: body.reward,
+          type: 'QUESTIONNAIRE',
+          categoryId: body.categoryId,
+          description: body.description,
+        })
+        .where(eq(Questionnaire.id, body.id))
+        .returning({ id: Questionnaire.id });
+
+      await Promise.all(
+        body.questions.map(async (data, index) => {
+          if (!data.id) {
+            let [question] = await tx
+              .insert(Question)
+              .values({
+                type: data.type,
+                text: data.question,
+                isFirst: index === 0,
+                taskId: questionnaire.id,
+                isLast: index === body.questions.length - 1,
+              })
+              .returning({ id: Question.id })
+              .onConflictDoUpdate({
+                target: [Question.text, Question.taskId],
+                set: {
+                  type: data.type,
+                  text: data.question,
+                  isFirst: index === 0,
+                  taskId: questionnaire.id,
+                  isLast: index === body.questions.length - 1,
+                },
+              });
+
+            if (!question) question = await tx.query.Question.findFirst({ where: eq(Question.text, data.question) });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                await tx
+                  .insert(QuestionOptions)
+                  .values({ questionId: question.id, point: option.point, text: option.value })
+                  .onConflictDoNothing({ target: [QuestionOptions.questionId, QuestionOptions.text] });
+              }),
+            );
+          } else {
+            const [question] = await tx
+              .update(Question)
+              .set({
+                type: data.type,
+                text: data.question,
+                isFirst: index === 0,
+                taskId: questionnaire.id,
+                isLast: index === body.questions.length - 1,
+              })
+              .where(eq(Question.id, data.id))
+              .returning({ id: Question.id });
+
+            await Promise.all(
+              data?.options?.map(async (option) => {
+                if (!option.id) {
+                  return await tx
+                    .insert(QuestionOptions)
+                    .values({ questionId: question.id, point: option.point, text: option.value })
+                    .onConflictDoNothing();
+                } else {
+                  return await tx
+                    .update(QuestionOptions)
+                    .set({ questionId: question.id, point: option.point, text: option.value })
+                    .where(eq(QuestionOptions.id, option.id));
+                }
+              }),
+            );
+          }
         }),
       );
     });
@@ -177,7 +271,7 @@ export class QuestionnaireService {
         offset,
         where: and(queryFilter, statusFilter),
         orderBy: desc(Questionnaire.updatedAt),
-        with: { questions: { limit: 1 }, activities: { limit: 1 } },
+        with: { questions: { limit: 1 }, activities: { limit: 1 }, category: true },
         extras: {
           totalResponses:
             sql<number>`(SELECT CAST(COUNT(*) as int) FROM ${QuestionnaireActivity} WHERE ${Questionnaire.id} = questionnaire_activity.task_id)`.as(
@@ -193,7 +287,7 @@ export class QuestionnaireService {
       const [{ total }] = await tx
         .select({ total: sql<number>`cast(count(${Questionnaire.id}) as int)` })
         .from(Questionnaire)
-        .where(queryFilter);
+        .where(and(statusFilter, queryFilter));
 
       return { data, pagination: generatePagination(page, pageSize, total) };
     });
@@ -202,7 +296,7 @@ export class QuestionnaireService {
   async HttphandleGetQuestionnaireById(id: number) {
     return await this.provider.db.query.Questionnaire.findFirst({
       where: eq(Questionnaire.id, id),
-      with: { questions: { with: { options: true } } },
+      with: { category: true, questions: { with: { options: true } } },
     });
   }
 
@@ -218,12 +312,26 @@ export class QuestionnaireService {
 
     if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_QUESTIONNAIRE_TO_CONTINUE);
 
+    const questionnaire = await this.provider.db.query.Questionnaire.findFirst({
+      where: eq(Questionnaire.id, activity.taskId),
+    });
+
+    if (!questionnaire) throw new BadRequestException(RESPONSE.INVALID_TASK);
+
     const rating = Math.max(0, Math.min(body.rating, 5));
 
     await this.provider.db
       .insert(QuestionnaireRating)
       .values({ questionId: activity.taskId, userId: user.id, rating })
       .onConflictDoNothing();
+
+    const totalRatings = (questionnaire.totalRatings || 0) + 1;
+    const ratings = ((questionnaire.ratings || 0) + body.rating) / totalRatings;
+    console.log(body.rating, totalRatings, ratings);
+    await this.provider.db
+      .update(Questionnaire)
+      .set({ ratings, totalRatings })
+      .where(eq(Questionnaire.id, questionnaire.id));
 
     return {};
   }
@@ -239,14 +347,20 @@ export class QuestionnaireService {
         let questionnaireId = 0;
         const questions = sheets[category];
 
-        const [cat] = await this.provider.db
+        let [cat] = await this.provider.db
           .insert(QuestionnaireCategory)
           .values({ name: category, slug: createSlug(category), description: '' })
           .onConflictDoNothing()
           .returning();
 
+        if (!cat) {
+          cat = await this.provider.db.query.QuestionnaireCategory.findFirst({
+            where: eq(QuestionnaireCategory.slug, createSlug(category)),
+          });
+        }
+
         for (const question of questions) {
-          if (question.id === 'id') {
+          if (question?.id === 'id') {
             const name = `${category} ${generateCode()}`.trim();
             const reward = getRewardValue(Object.keys(question)) || 0;
 
@@ -256,7 +370,7 @@ export class QuestionnaireService {
                 reward,
                 name: category,
                 description: '',
-                categoryId: cat.id,
+                categoryId: cat?.id,
                 type: 'QUESTIONNAIRE',
                 slug: createSlug(name),
               })
@@ -281,5 +395,12 @@ export class QuestionnaireService {
     );
 
     fs.rm(file.path, () => {});
+  }
+
+  async HttpHandleUpdateSes(input: Dto.UpdateSesData[]) {
+    input.map(async ({ optionId, point }) => {
+      await this.provider.db.update(QuestionOptions).set({ point }).where(eq(QuestionOptions.id, optionId));
+    });
+    return {};
   }
 }

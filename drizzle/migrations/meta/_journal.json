@@ -183,6 +183,125 @@
       "when": 1715519175388,
       "tag": "0026_aspiring_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1715520595947,
+      "tag": "0027_conscious_major_mapleleaf",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1715520605626,
+      "tag": "0028_lowly_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1715520638003,
+      "tag": "0029_bright_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1715521008746,
+      "tag": "0030_aspiring_boomerang",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1715524504981,
+      "tag": "0031_next_silverclaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1715524568567,
+      "tag": "0032_slimy_morgan_stark",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1715594376987,
+      "tag": "0033_confused_absorbing_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1715597868009,
+      "tag": "0034_good_blonde_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1715780018219,
+      "tag": "0035_watery_lorna_dane",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1715780268770,
+      "tag": "0036_modern_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "5",
+      "when": 1715782999866,
+      "tag": "0037_wet_lucky_pierre",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "5",
+      "when": 1716834775970,
+      "tag": "0038_friendly_robbie_robertson",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1717082799782,
+      "tag": "0039_long_the_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1717084291934,
+      "tag": "0040_nebulous_spiral",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1717086325900,
+      "tag": "0041_known_senator_kelly",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1717670361958,
+      "tag": "0042_fixed_shotgun",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1717761537181,
+      "tag": "0043_talented_wolverine",
+      "breakpoints": true
     }
   ]
 }

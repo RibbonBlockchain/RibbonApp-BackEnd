@@ -8,6 +8,7 @@ import {
   QuestionOptions,
   VerificationCode,
   QuestionnaireActivity,
+  TasskQuestionOptions,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import { DATABASE } from '@/core/constants';
@@ -137,10 +138,23 @@ export class TaskService {
     });
 
     const question = await this.provider.db.query.Question.findFirst({
+      with: { options: true },
       where: eq(Question.id, questionId),
     });
 
-    const option = await this.provider.db.query.QuestionOptions.findFirst({ where: eq(QuestionOptions.id, optionId) });
+    const isTextAnswer = (!question?.options?.length && question.type !== 'BOOLEAN') || question.type === 'LONG_ANSWER';
+    if (isTextAnswer && typeof optionId !== 'string') throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
+
+    let answer = '';
+    let singleOption: any = 0;
+
+    if (typeof optionId === 'string') answer = optionId;
+    if (typeof optionId === 'number') singleOption = optionId;
+    if (Array.isArray(optionId)) singleOption = optionId?.[0];
+
+    const option = await this.provider.db.query.QuestionOptions.findFirst({
+      where: eq(QuestionOptions.id, singleOption),
+    });
 
     if (!userTaskActivity) {
       await this.provider.db.insert(QuestionnaireActivity).values({ taskId, userId: user.id }).execute();
@@ -154,13 +168,16 @@ export class TaskService {
 
       await this.provider.db
         .update(Wallet)
-        .set({ balance: wallet.balance + task.reward })
+        .set({ balance: wallet.balance + task.reward, point: option.point + wallet.point })
         .where(eq(Wallet.userId, user.id));
     }
 
-    await this.provider.db.update(Wallet).set({ point: option.point + wallet.point });
+    console.log(singleOption, answer);
 
-    return await this.provider.db.insert(Answer).values({ questionId, optionId, userId: user.id }).execute();
+    return await this.provider.db
+      .insert(Answer)
+      .values({ questionId, optionId: singleOption || 75, text: answer, userId: user.id })
+      .execute();
   }
 
   async HttpHandleGetUserCompletedTasks(user: TUser, query: { completedDate: string }) {
@@ -240,10 +257,12 @@ export class TaskService {
       completedTasksId.push(task.taskId);
     });
 
+    const completedFilter = completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : undefined;
+
     const data = await this.provider.db.query.Questionnaire.findMany({
       orderBy: desc(Questionnaire.updatedAt),
       with: { questions: { with: { options: true } } },
-      where: completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : null,
+      where: and(eq(Questionnaire.status, 'ACTIVE'), completedFilter),
     });
 
     const res = data.filter((d) => d.name !== 'Complete your profile' && d.name !== 'Verify your phone number');
@@ -265,9 +284,9 @@ export class TaskService {
     return { data };
   }
 
-  async HttpHandleUpdateSes({ data }: Dto.UpdateSes) {
-    data.map(async ({ optionId, point }) => {
-      await this.provider.db.update(QuestionOptions).set({ point }).where(eq(QuestionOptions.id, optionId));
+  async HttpHandleUpdateSes(input: Dto.UpdateSesData[]) {
+    input.map(async ({ optionId, point }) => {
+      await this.provider.db.update(TasskQuestionOptions).set({ point }).where(eq(TasskQuestionOptions.id, optionId));
     });
     return {};
   }

@@ -7,6 +7,7 @@ import {
   IsDateString,
   IsPhoneNumber,
   IsNumberString,
+  IsNumber,
 } from 'class-validator';
 import { TGender } from '@/modules/drizzle/schema';
 
@@ -59,4 +60,10 @@ export class HandleVerifyPhone {
   @IsNotEmpty()
   @IsNumberString()
   code: string;
+}
+
+export class HandleClaimPoints {
+  @IsNumber()
+  @IsNotEmpty()
+  amount: string;
 }
