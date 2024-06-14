@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS "ribbon"."cpi" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"country" varchar,
+	"value" varchar,
+	"january" varchar,
+	"february" varchar,
+	"march" varchar,
+	"april" varchar,
+	"may" varchar,
+	"june" varchar,
+	"july" varchar,
+	"august" varchar,
+	"september" varchar,
+	"october" varchar,
+	"november" varchar,
+	"december" varchar,
+	"year" varchar,
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone DEFAULT now()
+);

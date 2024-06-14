@@ -5,7 +5,8 @@ import { AdminService } from './admin.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('/admin')
 export class AdminController {
@@ -72,6 +73,24 @@ export class AdminController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetRatingsDistribution(@Query() query: { type: 's' | 't' | 'q' }) {
     const data = await this.admin.HttpHandleRatingOverview(query.type);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Post('/cpi/upload')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))
+  async uploadCpiData(@UploadedFile() file: Express.Multer.File) {
+    const data = await this.admin.HttpHandleUploadCpi(file);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/cpi')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))
+  async getCpiData(@Body() body: { year: string }) {
+    const data = await this.admin.HttpHandleGetCpiData(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 
