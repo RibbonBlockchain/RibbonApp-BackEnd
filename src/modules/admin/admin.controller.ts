@@ -71,8 +71,8 @@ export class AdminController {
   @Version(VERSION_ONE)
   @Get('/rating/overview')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleGetRatingsDistribution() {
-    const data = await this.admin.HttpHandleRatingDistrubution();
+  async HttpHandleGetRatingsDistribution(@Query() query: { type: 's' | 't' | 'q' }) {
+    const data = await this.admin.HttpHandleRatingOverview(query.type);
     return { data, message: RESPONSE.SUCCESS };
   }
 

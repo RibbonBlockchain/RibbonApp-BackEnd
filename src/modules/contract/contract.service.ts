@@ -23,7 +23,7 @@ export class ContractService {
 
   async createVault(body: { name: string; address: string; points: any }) {
     try {
-      const contract0 = await this.pointsContract();
+      const contract0 = this.pointsContract();
 
       let i = await contract0.counterId();
 
@@ -31,11 +31,7 @@ export class ContractService {
         .connect(this.signer)
         .createVault(body.name, this.vaultOwner, body.address, body.points);
 
-      console.log('res', result);
-
-      const aw = await result.wait();
-
-      console.log('aw', aw);
+      await result.wait();
 
       let vaultDetails = await contract0.vaultIdentifcation(i);
       return { vaultAddress: vaultDetails?.[0] };
@@ -82,11 +78,99 @@ export class ContractService {
     }
   }
 
+  async ClaimPoints(address: string, amount: any, vaultName: string, vaultAddress: string) {
+    try {
+      const wallet = new ethers.Wallet(this.contractPrivateKey, this.provider);
+
+      // Sign the permit message
+
+      // Define the EIP-712 domain
+      const domain = {
+        name: vaultName,
+        version: '1',
+        chainId: 11155420, // Mainnet
+        verifyingContract: vaultAddress,
+      };
+
+      // Define the types
+      const types = {
+        Permit: [
+          { name: 'owner', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+        ],
+      };
+
+      // Define the pspenderermit message
+
+      const deadline = Math.floor(Date.now() / 1000) + 1200; // 20 minutes from now
+      const message = {
+        owner: this.vaultOwner,
+        spender: address,
+        value: amount,
+        deadline: deadline,
+      };
+
+      const signature = await wallet._signTypedData(domain, types, message);
+      const { v, r, s } = ethers.utils.splitSignature(signature);
+
+      return { deadline, v, r, s, vaultAddress };
+    } catch (error) {
+      console.log(error);
+      let message = error?.error?.reason || error?.reason || 'Unable to process request';
+      throw new BadRequestException(message || error?.reason);
+    }
+  }
+
+  async SwapToPaymentCoin(address: string, amount: any, vaultName: string, vaultAddress: string) {
+    try {
+      const wallet = new ethers.Wallet(this.contractPrivateKey, this.provider);
+
+      // Sign the permit message
+
+      // Define the EIP-712 domain
+      const domain = {
+        name: vaultName,
+        version: '1',
+        chainId: 11155420, // Mainnet
+        verifyingContract: vaultAddress,
+      };
+
+      // Define the types
+      const types = {
+        Permit: [
+          { name: 'owner', type: 'address' },
+          { name: 'spender', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'deadline', type: 'uint256' },
+        ],
+      };
+
+      // Define the pspenderermit message
+
+      const deadline = Math.floor(Date.now() / 1000) + 1200; // 20 minutes from now
+      const message = {
+        owner: this.vaultOwner,
+        spender: address,
+        value: amount,
+        deadline: deadline,
+      };
+
+      const signature = await wallet._signTypedData(domain, types, message);
+      const { v, r, s } = ethers.utils.splitSignature(signature);
+
+      return { deadline, v, r, s, vaultAddress };
+    } catch (error) {
+      console.log(error);
+      let message = error?.error?.reason || error?.reason || 'Unable to process request';
+      throw new BadRequestException(message || error?.reason);
+    }
+  }
+
   async transfer(address: string, amount: any) {
     const contract0 = this.pointsContract();
-    console.log(address, amount);
-    const result = await contract0.connect(this.signer).transfer(address, amount);
-    console.log('result', result);
+    const result = await contract0.connect(this.signer).TranferToVault(address, amount);
     return await result.wait();
   }
 }
