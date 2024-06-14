@@ -19,10 +19,11 @@ import {
   QuestionnaireActivity,
   BlockTransaction,
   QuestionnaireCategory,
+  Cpi,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
-import { promises as fs } from 'fs';
+import fs, { promises } from 'fs';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { endOfDay, oneYearAgo } from '@/core/utils';
@@ -34,6 +35,7 @@ import { ContractService } from '../contract/contract.service';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import excelToJson from 'convert-excel-to-json';
 
 @Injectable()
 export class AdminService {
@@ -107,7 +109,7 @@ export class AdminService {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Dates');
 
     XLSX.writeFile(workbook, 'Reports.xlsx', { compression: true });
-    const file = await fs.readFile('Reports.xlsx');
+    const file = await promises.readFile('Reports.xlsx');
 
     await this.mailer.sendMail({
       to: admin.email,
@@ -790,5 +792,95 @@ export class AdminService {
     const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(2);
 
     return { ratingDistributions, ratingsStatus, totalAverageRatings, activitiesRated };
+  }
+
+  async HttpHandleUploadCpi(file: Express.Multer.File) {
+    const sheets = excelToJson({
+      sourceFile: file.path,
+      columnToKey: { '*': '{{columnHeader}}' },
+    });
+
+    const months = [
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    ];
+
+    const currentYear = new Date().getFullYear();
+
+    const cpiData = sheets[Object.keys(sheets)[0]].slice(1).map((entry) => {
+      const newEntry = { year: currentYear.toString() };
+      for (let key in entry) {
+        if (entry.hasOwnProperty(key)) {
+          newEntry[key.toLowerCase()] = entry[key];
+        }
+      }
+
+      months.forEach((month) => {
+        if (!(month in newEntry)) {
+          newEntry[month] = null;
+        }
+      });
+      return newEntry;
+    });
+
+    await this.provider.db.insert(Cpi).values(cpiData);
+
+    fs.rm(file.path, () => {});
+  }
+
+  async HttpHandleGetCpiData(body: { year: string }) {
+    const data = await this.provider.db.select().from(Cpi).where(eq(Cpi.year, body.year));
+
+    const months = [
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    ];
+
+    const dataWithCPI = data.map((entry) => {
+      let cpiValues = [];
+      let lastCPI = null;
+
+      // Loop through each month in the correct order and gather non-null values
+      for (let month of months) {
+        let value = entry[month];
+        if (value !== null && value !== undefined) {
+          let numValue = parseFloat(value);
+          cpiValues.push(numValue);
+          lastCPI = numValue;
+        }
+      }
+
+      // Calculate average CPI
+      let averageCPI = cpiValues.length > 0 ? cpiValues.reduce((sum, val) => sum + val, 0) / cpiValues.length : null;
+
+      // Return new entry with averageCPI and currentCPI
+      return {
+        ...entry,
+        averageCPI: averageCPI !== null ? averageCPI.toFixed(2) : null,
+        currentCPI: lastCPI !== null ? lastCPI.toFixed(2) : null,
+      };
+    });
+
+    return dataWithCPI;
   }
 }

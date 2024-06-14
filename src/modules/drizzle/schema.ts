@@ -489,6 +489,26 @@ export const BlockTransaction = ribbonSchema.table('block_transaction', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const Cpi = ribbonSchema.table('cpi', {
+  id: serial('id').primaryKey(),
+  country: varchar('country'),
+  january: varchar('january'),
+  february: varchar('february'),
+  march: varchar('march'),
+  april: varchar('april'),
+  may: varchar('may'),
+  june: varchar('june'),
+  july: varchar('july'),
+  august: varchar('august'),
+  september: varchar('september'),
+  october: varchar('october'),
+  november: varchar('november'),
+  december: varchar('december'),
+  year: varchar('year'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
 // Relations
 
 //

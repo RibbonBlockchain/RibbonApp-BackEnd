@@ -302,6 +302,20 @@
       "when": 1717761537181,
       "tag": "0043_talented_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1718356606880,
+      "tag": "0044_uneven_iron_lad",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "5",
+      "when": 1718356678473,
+      "tag": "0045_oval_mad_thinker",
+      "breakpoints": true
     }
   ]
 }
