@@ -23,6 +23,10 @@ export class AdminCreateVaultBody {
   @IsNotEmpty()
   @IsNumberString()
   points: string;
+
+  @IsInt()
+  @IsOptional()
+  partnerId: number;
 }
 
 export class AdminWalletTransferBody {

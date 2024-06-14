@@ -642,13 +642,16 @@ export class AdminService {
   }
 
   async HttpHandleCreateVault(body: Dto.AdminCreateVaultBody, user: TUser | undefined) {
-    if (!user?.partnerId) throw new BadRequestException('Account not linked to any partner');
+    if (user.role === 'SUPER_ADMIN' && !body.partnerId) throw new BadRequestException('Partner ID required');
+    if (user.role === 'ADMIN' && !user?.partnerId) throw new BadRequestException('Account not linked to any partner');
 
+    const partnerId = user.role === 'ADMIN' ? user.partnerId : body.partnerId;
     const partner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.id, user.partnerId),
+      where: eq(RewardPartner.id, partnerId),
     });
 
     if (!partner?.name) throw new BadRequestException('Partner linked to your account is not active');
+    if (partner.vaultAddress) throw new BadRequestException('A vault address already exist for this partner');
 
     // TODO: connect partners to admin account
     const res = await this.contract.createVault({ name: partner.name, address: body.address, points: body.points });
