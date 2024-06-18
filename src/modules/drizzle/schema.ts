@@ -120,6 +120,7 @@ export const VerificationCode = ribbonSchema.table('verification_code', {
 export const Wallet = ribbonSchema.table('wallet', {
   id: serial('id').primaryKey(),
   balance: doublePrecision('balance').default(0),
+  dailyReward: doublePrecision('daily_reward').default(0),
   point: doublePrecision('point').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   userId: integer('user_id')

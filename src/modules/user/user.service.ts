@@ -126,10 +126,14 @@ export class UserService {
 
     const amount = 100 / 5_000;
     const newBalance = wallet?.balance + amount;
+    const newDailyReward = wallet?.dailyReward + amount;
 
     if (!lastClaimTime) {
       // Claiming for first time
-      await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.userId, user.id));
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: newBalance, dailyReward: newDailyReward })
+        .where(eq(Wallet.userId, user.id));
 
       await this.provider.db
         .update(User)
