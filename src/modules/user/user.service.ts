@@ -234,7 +234,10 @@ export class UserService {
     const withdrawalAmount = amount / 5_000; // 2;
     const newBalance = wallet?.balance - withdrawalAmount || 0;
 
-    await this.provider.db.update(Wallet).set({ balance: newBalance }).where(eq(Wallet.id, wallet.id));
+    await this.provider.db
+      .update(Wallet)
+      .set({ balance: newBalance ?? 0 })
+      .where(eq(Wallet.id, wallet.id));
 
     return {};
   }
