@@ -22,6 +22,8 @@ import {
   Cpi,
   SurveyCategory,
   TasskCategory,
+  Question,
+  QuestionOptions,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -36,7 +38,7 @@ import { TokenService } from '@/core/services/token.service';
 import { ContractService } from '../contract/contract.service';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 import excelToJson from 'convert-excel-to-json';
 
 @Injectable()
@@ -690,8 +692,7 @@ export class AdminService {
     return {};
   }
 
-  async HttpHandleWalletHistory({ page, pageSize }: Dto.GetBlockTransactions, user: TUser | undefined) {
-    console.log(user);
+  async HttpHandleWalletHistory({ page, pageSize }: Dto.GetBlockTransactions) {
     const { limit, offset } = getPage({ page, pageSize });
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
@@ -701,8 +702,9 @@ export class AdminService {
     const data = await this.provider.db.query.BlockTransaction.findMany({
       limit,
       offset,
-      where: eq(BlockTransaction.partnerId, worldCoinPartner.id),
+      with: { admin: true },
       orderBy: desc(BlockTransaction.updatedAt),
+      where: eq(BlockTransaction.partnerId, worldCoinPartner.id),
     });
 
     const [{ total }] = await this.provider.db
@@ -994,5 +996,49 @@ export class AdminService {
       .orderBy(User.id);
 
     return { data, pagination: generatePagination(page, pageSize, total) };
+  }
+
+  async HttpHandleGetUserActivitiesReport(id: number) {
+    const questionnaires = await this.provider.db
+      .selectDistinctOn([Question.text], {
+        userId: User.id,
+        ses: Wallet.point,
+        answer: Answer.text,
+        location: User.location,
+        balance: Wallet.balance,
+        response: QuestionOptions.text,
+        category: Questionnaire.name,
+        question: Question.text,
+        reward: Questionnaire.reward,
+        rating: QuestionnaireRating.rating,
+      })
+      .from(QuestionnaireActivity)
+      .leftJoin(User, eq(QuestionnaireActivity.userId, User.id))
+      .leftJoin(Wallet, eq(Wallet.userId, User.id))
+      .leftJoin(QuestionnaireRating, eq(User.id, QuestionnaireRating.userId))
+      .leftJoin(Questionnaire, eq(Questionnaire.id, QuestionnaireActivity.taskId))
+      .leftJoin(Question, eq(Question.taskId, Questionnaire.id))
+      .leftJoin(Answer, eq(Answer.questionId, Question.id))
+      .leftJoin(QuestionOptions, eq(Answer.optionId, QuestionOptions.id))
+      .where(
+        and(
+          eq(QuestionnaireActivity.userId, id),
+          eq(QuestionnaireActivity.status, 'COMPLETED'),
+          ne(QuestionnaireActivity.type, 'DAILY_REWARD'),
+        ),
+      )
+      .groupBy(
+        User.id,
+        Answer.id,
+        Question.id,
+        Wallet.point,
+        Wallet.balance,
+        Questionnaire.id,
+        QuestionOptions.id,
+        QuestionnaireRating.id,
+        QuestionnaireActivity.id,
+      );
+
+    return questionnaires;
   }
 }

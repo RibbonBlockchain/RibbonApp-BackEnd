@@ -3,14 +3,22 @@ import { TUser } from '../drizzle/schema';
 import { RESPONSE } from '@/core/responses';
 import { AdminService } from './admin.service';
 import { VERSION_ONE } from '@/core/constants';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
 import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('/admin')
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
+
+  @Version(VERSION_ONE)
+  @Get('/report/activities/user/:id')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetUserActivitiesReport(@Param('id') id: number) {
+    const data = await this.admin.HttpHandleGetUserActivitiesReport(id);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 
   @Version(VERSION_ONE)
   @Get('/report/activities')
@@ -167,8 +175,8 @@ export class AdminController {
   @Version(VERSION_ONE)
   @Get('/wallet/history')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleWalletHistory(@Query() query: Dto.GetBlockTransactions, @ReqUser() user: TUser | undefined) {
-    const data = await this.admin.HttpHandleWalletHistory(query, user);
+  async HttpHandleWalletHistory(@Query() query: Dto.GetBlockTransactions) {
+    const data = await this.admin.HttpHandleWalletHistory(query);
     return { data, message: RESPONSE.SUCCESS };
   }
 }
