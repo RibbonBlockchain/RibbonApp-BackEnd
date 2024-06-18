@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."user" ADD COLUMN "location" varchar;

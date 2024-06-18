@@ -80,6 +80,7 @@ export const User = ribbonSchema.table('user', {
   otherNames: varchar('other_names'),
   email: varchar('email').unique(),
   phone: varchar('phone').unique(),
+  location: varchar('location'),
   gender: GenderEnum('gender'),
   dob: date('dob'),
   socials: jsonb('socals'),

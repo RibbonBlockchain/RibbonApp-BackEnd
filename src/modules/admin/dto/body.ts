@@ -94,3 +94,17 @@ export class GetAllNotificationsQuery {
   @IsOptional()
   pageSize: number;
 }
+
+export class GetUsersActivitiesReportsQuery {
+  @IsString()
+  @IsOptional()
+  q: string;
+
+  @IsInt()
+  @IsOptional()
+  page: number;
+
+  @IsInt()
+  @IsOptional()
+  pageSize: number;
+}

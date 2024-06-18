@@ -13,6 +13,14 @@ export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Version(VERSION_ONE)
+  @Get('/report/activities')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetUsersActivitiesReports(@Query() query: Dto.GetUsersActivitiesReportsQuery) {
+    const data = await this.admin.HttpHandleGetUsersActivitiesReports(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/report/activities/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetQuestionnaireActivityReports() {

@@ -949,4 +949,50 @@ export class AdminService {
 
     return dataWithCPI;
   }
+
+  async HttpHandleGetUsersActivitiesReports({ q, page = 1, pageSize = 50 }: Dto.GetUsersActivitiesReportsQuery) {
+    const searchQuery = `%${q}%`;
+    const { limit, offset } = getPage({ page, pageSize });
+
+    const queryFilter = q
+      ? or(
+          ilike(User.email, searchQuery),
+          ilike(User.firstName, searchQuery),
+          ilike(User.lastName, searchQuery),
+          ilike(User.phone, searchQuery),
+        )
+      : undefined;
+
+    const [{ total }] = await this.provider.db
+      .select({ total: sql<number>`cast(count(${User.id}) as int)` })
+      .from(User)
+      .where(and(eq(User.role, 'PATIENT'), queryFilter));
+
+    const data = await this.provider.db
+      .selectDistinctOn([User.id], {
+        id: User.id,
+        ses: Wallet.point,
+        location: User.location,
+        createdAt: User.createdAt,
+        updatedAt: User.updatedAt,
+        totalRewards: Wallet.balance,
+        dailyRewards: Wallet.dailyReward,
+        totalRatings: countDistinct(QuestionnaireRating.id),
+        questionnaires: countDistinct(QuestionnaireActivity.id),
+      })
+      .from(User)
+      .leftJoin(Wallet, eq(User.id, Wallet.userId))
+      .leftJoin(QuestionnaireRating, eq(User.id, QuestionnaireRating.userId))
+      .leftJoin(
+        QuestionnaireActivity,
+        and((eq(User.id, QuestionnaireActivity.userId), eq(QuestionnaireActivity.status, 'COMPLETED'))),
+      )
+      .limit(limit)
+      .offset(offset)
+      .where(and(eq(User.role, 'PATIENT'), queryFilter))
+      .groupBy(User.id, Wallet.point, Wallet.balance, Wallet.dailyReward, QuestionnaireActivity.userId)
+      .orderBy(User.id);
+
+    return { data, pagination: generatePagination(page, pageSize, total) };
+  }
 }
