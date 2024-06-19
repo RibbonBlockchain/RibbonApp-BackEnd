@@ -202,4 +202,20 @@ export class AdminController {
     const data = await this.admin.HttpHandleWalletHistory(query);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @Version(VERSION_ONE)
+  @Get('/wallet/claimed-points')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleWalletClaimedPoints(@Query() query: Dto.GetTotalClaimedPoints) {
+    const data = await this.admin.HttpHandleWalletClaimedPoints(query);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/wallet/balance')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleWalletBalance(@ReqUser() reqUser: TUser, @Query() query: Dto.GetWalletBalance) {
+    const data = await this.admin.HttpHandleWalletBalance(query, reqUser);
+    return { data, message: RESPONSE.SUCCESS };
+  }
 }

@@ -34,16 +34,17 @@ import * as XLSX from 'xlsx';
 import fs, { promises } from 'fs';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import { endOfDay, oneYearAgo } from '@/core/utils';
+import { endOfDay, httpPost, oneYearAgo } from '@/core/utils';
 import { MailerService } from '@nestjs-modules/mailer';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
 import { ContractService } from '../contract/contract.service';
 import { generatePagination, getPage } from '@/core/utils/page';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 import excelToJson from 'convert-excel-to-json';
+import parsePhoneNumberFromString from 'libphonenumber-js';
 
 @Injectable()
 export class AdminService {
@@ -681,7 +682,12 @@ export class AdminService {
   }
 
   async HttpHandleGetRewardPartnerById(id: number) {
-    return await this.provider.db.query.RewardPartner.findFirst({ with: {}, where: eq(RewardPartner.id, id) });
+    const partner: any = await this.provider.db.query.RewardPartner.findFirst({
+      with: {},
+      where: eq(RewardPartner.id, id),
+    });
+    partner.balance = await this.contract.getVaultBalance(partner.vaultAddress);
+    return partner;
   }
 
   async HttpHandleGetRewardPartners({ q, page, pageSize }: Dto.GetRewardPartners) {
@@ -900,7 +906,9 @@ export class AdminService {
     const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
 
     const userRatingsIds = ratings.map((r) => r.userId);
-    const mapUserCode = users.filter((u) => u.phone).map((u) => ({ code: u.phone.substring(0, 4), id: u.id }));
+    const mapUserCode = users
+      .filter((u) => u.phone)
+      .map((u) => ({ code: parsePhoneNumberFromString(u.phone)?.countryCallingCode, id: u.id }));
 
     const idMap = mapUserCode.reduce((acc, item) => {
       acc[item.id] = item;
@@ -1255,5 +1263,32 @@ export class AdminService {
     });
 
     return { user, data: result };
+  }
+
+  async HttpHandleWalletClaimedPoints(query: Dto.GetTotalClaimedPoints) {
+    const [res, err] = await httpPost<any, any>({
+      url: 'https://api.studio.thegraph.com/query/79390/ribbon/v1',
+      body: {
+        query: `
+        {
+          pointsClaimeds (where: { and: [{timestamp_gte: "${query.from}" }, { timestamp_lte: "${query.to}" }] })
+          { id user timestamp amount blockNumber blockTimestamp transactionHash }
+        }
+    `,
+      },
+    });
+
+    if (err) throw new UnprocessableEntityException(err);
+    return { data: res.data.pointsClaimeds };
+  }
+
+  async HttpHandleWalletBalance(query: Dto.GetWalletBalance, reqUser: TUser) {
+    const partner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.id, query?.partnerId || reqUser.partnerId),
+    });
+
+    if (!partner?.vaultAddress) throw new BadRequestException('Vault not available for reward partner');
+    const balance = await this.contract.getVaultBalance(partner.vaultAddress);
+    return { balance };
   }
 }
