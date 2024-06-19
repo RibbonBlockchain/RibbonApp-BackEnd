@@ -104,9 +104,8 @@ export class AdminController {
   @Version(VERSION_ONE)
   @Get('/cpi')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))
-  async getCpiData(@Body() body: { year: string }) {
-    const data = await this.admin.HttpHandleGetCpiData(body);
+  async getCpiData(@Query() query: { year: string }) {
+    const data = await this.admin.HttpHandleGetCpiData(query.year);
     return { data, message: RESPONSE.SUCCESS };
   }
 

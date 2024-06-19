@@ -906,8 +906,8 @@ export class AdminService {
     fs.rm(file.path, () => {});
   }
 
-  async HttpHandleGetCpiData(body: { year: string }) {
-    const data = await this.provider.db.select().from(Cpi).where(eq(Cpi.year, body.year));
+  async HttpHandleGetCpiData(year: string) {
+    const data = await this.provider.db.select().from(Cpi).where(eq(Cpi.year, year));
 
     const months = [
       'january',
