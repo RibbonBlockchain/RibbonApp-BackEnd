@@ -86,6 +86,64 @@ export class AdminService {
   }
 
   async HttpHandleDownloadReport(admin: TUser) {
+    const questionnaires = await this.provider.db
+      .selectDistinctOn([Question.text], {
+        userId: User.id,
+        ses: Wallet.point,
+        answer: Answer.text,
+        location: User.location,
+        balance: Wallet.balance,
+        response: QuestionOptions.text,
+        category: QuestionnaireCategory.name,
+        question: Question.text,
+        reward: Questionnaire.reward,
+        rating: QuestionnaireRating.rating,
+      })
+      .from(QuestionnaireActivity)
+      .leftJoin(User, eq(QuestionnaireActivity.userId, User.id))
+      .leftJoin(Wallet, eq(Wallet.userId, User.id))
+      .leftJoin(QuestionnaireRating, eq(User.id, QuestionnaireRating.userId))
+      .leftJoin(Questionnaire, eq(Questionnaire.id, QuestionnaireActivity.taskId))
+      .leftJoin(Question, eq(Question.taskId, Questionnaire.id))
+      .leftJoin(QuestionnaireCategory, eq(Questionnaire.categoryId, QuestionnaireCategory.id))
+      .leftJoin(Answer, eq(Answer.questionId, Question.id))
+      .leftJoin(QuestionOptions, eq(Answer.optionId, QuestionOptions.id))
+      .where(and(eq(QuestionnaireActivity.status, 'COMPLETED'), ne(QuestionnaireActivity.type, 'DAILY_REWARD')))
+      .groupBy(
+        User.id,
+        Answer.id,
+        Question.id,
+        Wallet.point,
+        Wallet.balance,
+        Questionnaire.id,
+        QuestionOptions.id,
+        QuestionnaireRating.id,
+        QuestionnaireCategory.id,
+        QuestionnaireActivity.id,
+      );
+
+    const questionGroups = {};
+
+    questionnaires.forEach((entry) => {
+      const { question, response, category } = entry;
+      if (!questionGroups[question]) {
+        questionGroups[question] = { category: category, answers: {} };
+      }
+      if (!questionGroups[question].answers[response]) {
+        questionGroups[question].answers[response] = 0;
+      }
+      questionGroups[question].answers[response] += 1;
+    });
+
+    // Step 2: Construct the output structure
+    const output = Object.keys(questionGroups).map((question) => {
+      return {
+        category: questionGroups[question].category,
+        question: question,
+        answers: questionGroups[question].answers,
+      };
+    });
+
     const users = await this.provider.db
       .select({
         'User ID': User.id,
@@ -112,9 +170,11 @@ export class AdminService {
       .orderBy(User.id)
       .groupBy(User.id, Wallet.point, Wallet.balance, QuestionnaireActivity.userId);
 
+    const qsheet = XLSX.utils.json_to_sheet(output);
     const worksheet = XLSX.utils.json_to_sheet(users);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Dates');
+    XLSX.utils.book_append_sheet(workbook, qsheet, 'Questionnaire');
 
     XLSX.writeFile(workbook, 'Reports.xlsx', { compression: true });
     const file = await promises.readFile('Reports.xlsx');
