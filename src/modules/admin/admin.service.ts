@@ -24,6 +24,7 @@ import {
   TasskCategory,
   Question,
   QuestionOptions,
+  CpiHistory,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -862,7 +863,7 @@ export class AdminService {
     return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated, geoDistribution };
   }
 
-  async HttpHandleUploadCpi(file: Express.Multer.File) {
+  async HttpHandleUploadCpi(file: Express.Multer.File, user: TUser) {
     const sheets = excelToJson({
       sourceFile: file.path,
       columnToKey: { '*': '{{columnHeader}}' },
@@ -902,6 +903,7 @@ export class AdminService {
     });
 
     await this.provider.db.insert(Cpi).values(cpiData);
+    await this.provider.db.insert(CpiHistory).values({ userId: user.auth.userId, fileName: file.originalname });
 
     fs.rm(file.path, () => {});
   }
@@ -950,6 +952,15 @@ export class AdminService {
     });
 
     return dataWithCPI;
+  }
+
+  async HttpHandleGetCpiHistory() {
+    const data = await this.provider.db.query.CpiHistory.findMany({
+      with: {
+        user: true,
+      },
+    });
+    return data;
   }
 
   async HttpHandleGetUsersActivitiesReports({ q, page = 1, pageSize = 50 }: Dto.GetUsersActivitiesReportsQuery) {

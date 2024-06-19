@@ -511,6 +511,15 @@ export const Cpi = ribbonSchema.table('cpi', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const CpiHistory = ribbonSchema.table('cpi_upload_history', {
+  id: serial('id').primaryKey(),
+  fileName: varchar('fileName'),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => User.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
 // Relations
 
 //
@@ -626,3 +635,8 @@ export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
   user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
 }));
 // Tassk
+
+/// Cpi
+export const CpiHistoryRelations = relations(CpiHistory, ({ one }) => ({
+  user: one(User, { fields: [CpiHistory.userId], references: [User.id] }),
+}));
