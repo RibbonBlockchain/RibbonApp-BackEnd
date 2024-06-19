@@ -44,6 +44,7 @@ import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 import excelToJson from 'convert-excel-to-json';
+import parsePhoneNumberFromString from 'libphonenumber-js';
 
 @Injectable()
 export class AdminService {
@@ -905,7 +906,9 @@ export class AdminService {
     const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
 
     const userRatingsIds = ratings.map((r) => r.userId);
-    const mapUserCode = users.filter((u) => u.phone).map((u) => ({ code: u.phone.substring(0, 4), id: u.id }));
+    const mapUserCode = users
+      .filter((u) => u.phone)
+      .map((u) => ({ code: parsePhoneNumberFromString(u.phone)?.countryCallingCode, id: u.id }));
 
     const idMap = mapUserCode.reduce((acc, item) => {
       acc[item.id] = item;
