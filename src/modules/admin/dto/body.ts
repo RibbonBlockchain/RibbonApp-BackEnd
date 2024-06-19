@@ -116,3 +116,9 @@ export class GetTotalClaimedPoints {
   @IsNumber()
   to: number;
 }
+
+export class GetWalletBalance {
+  @IsNumber()
+  @IsOptional()
+  partnerId: number;
+}

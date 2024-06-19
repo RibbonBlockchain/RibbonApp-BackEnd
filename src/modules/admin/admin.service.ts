@@ -681,7 +681,12 @@ export class AdminService {
   }
 
   async HttpHandleGetRewardPartnerById(id: number) {
-    return await this.provider.db.query.RewardPartner.findFirst({ with: {}, where: eq(RewardPartner.id, id) });
+    const partner: any = await this.provider.db.query.RewardPartner.findFirst({
+      with: {},
+      where: eq(RewardPartner.id, id),
+    });
+    partner.balance = await this.contract.getVaultBalance(partner.vaultAddress);
+    return partner;
   }
 
   async HttpHandleGetRewardPartners({ q, page, pageSize }: Dto.GetRewardPartners) {
@@ -1272,5 +1277,15 @@ export class AdminService {
 
     if (err) throw new UnprocessableEntityException(err);
     return { data: res.data.pointsClaimeds };
+  }
+
+  async HttpHandleWalletBalance(query: Dto.GetWalletBalance, reqUser: TUser) {
+    const partner = await this.provider.db.query.RewardPartner.findFirst({
+      where: eq(RewardPartner.id, query?.partnerId || reqUser.partnerId),
+    });
+
+    if (!partner?.vaultAddress) throw new BadRequestException('Vault not available for reward partner');
+    const balance = await this.contract.getVaultBalance(partner.vaultAddress);
+    return { balance };
   }
 }

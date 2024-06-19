@@ -21,6 +21,13 @@ export class ContractService {
     @Inject(POINT) private readonly PointsABI: any,
   ) {}
 
+  async getVaultBalance(address: string) {
+    const contract = this.pointsContract();
+    const value = await contract.balanceOf(address);
+    const balance = value?._hex;
+    return value ? parseInt(balance) : 0;
+  }
+
   async createVault(body: { name: string; address: string; points: any }) {
     try {
       const contract0 = this.pointsContract();
