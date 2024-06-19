@@ -1,5 +1,5 @@
 import { HasLowerCase, HasNumber, HasSpecialCharacter, HasUpperCase } from '@/core/validators';
-import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, IsNumberString } from 'class-validator';
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, IsNumberString, IsNumber } from 'class-validator';
 
 export class AdminLoginBody {
   @IsString()
@@ -107,4 +107,12 @@ export class GetUsersActivitiesReportsQuery {
   @IsInt()
   @IsOptional()
   pageSize: number;
+}
+
+export class GetTotalClaimedPoints {
+  @IsNumber()
+  from: number;
+
+  @IsNumber()
+  to: number;
 }

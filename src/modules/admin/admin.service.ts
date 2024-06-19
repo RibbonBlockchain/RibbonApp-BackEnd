@@ -34,14 +34,14 @@ import * as XLSX from 'xlsx';
 import fs, { promises } from 'fs';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import { endOfDay, oneYearAgo } from '@/core/utils';
+import { endOfDay, httpPost, oneYearAgo } from '@/core/utils';
 import { MailerService } from '@nestjs-modules/mailer';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
 import { ContractService } from '../contract/contract.service';
 import { generatePagination, getPage } from '@/core/utils/page';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 import excelToJson from 'convert-excel-to-json';
 
@@ -1255,5 +1255,22 @@ export class AdminService {
     });
 
     return { user, data: result };
+  }
+
+  async HttpHandleWalletClaimedPoints(query: Dto.GetTotalClaimedPoints) {
+    const [res, err] = await httpPost<any, any>({
+      url: 'https://api.studio.thegraph.com/query/79390/ribbon/v1',
+      body: {
+        query: `
+        {
+          pointsClaimeds (where: { and: [{timestamp_gte: "${query.from}" }, { timestamp_lte: "${query.to}" }] })
+          { id user timestamp amount blockNumber blockTimestamp transactionHash }
+        }
+    `,
+      },
+    });
+
+    if (err) throw new UnprocessableEntityException(err);
+    return { data: res.data.pointsClaimeds };
   }
 }
