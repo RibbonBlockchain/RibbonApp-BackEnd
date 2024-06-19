@@ -24,6 +24,8 @@ import {
   TasskCategory,
   Question,
   QuestionOptions,
+  SurveyQuestion,
+  SurveyQuestionOptions,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -998,7 +1000,7 @@ export class AdminService {
     return { data, pagination: generatePagination(page, pageSize, total) };
   }
 
-  async HttpHandleGetUserActivitiesReport(id: number) {
+  async HttpHandleGetUserQuestionnaireReport(id: number) {
     const questionnaires = await this.provider.db
       .selectDistinctOn([Question.text], {
         userId: User.id,
@@ -1007,7 +1009,7 @@ export class AdminService {
         location: User.location,
         balance: Wallet.balance,
         response: QuestionOptions.text,
-        category: Questionnaire.name,
+        category: QuestionnaireCategory.name,
         question: Question.text,
         reward: Questionnaire.reward,
         rating: QuestionnaireRating.rating,
@@ -1018,6 +1020,7 @@ export class AdminService {
       .leftJoin(QuestionnaireRating, eq(User.id, QuestionnaireRating.userId))
       .leftJoin(Questionnaire, eq(Questionnaire.id, QuestionnaireActivity.taskId))
       .leftJoin(Question, eq(Question.taskId, Questionnaire.id))
+      .leftJoin(QuestionnaireCategory, eq(Questionnaire.categoryId, QuestionnaireCategory.id))
       .leftJoin(Answer, eq(Answer.questionId, Question.id))
       .leftJoin(QuestionOptions, eq(Answer.optionId, QuestionOptions.id))
       .where(
@@ -1036,9 +1039,91 @@ export class AdminService {
         Questionnaire.id,
         QuestionOptions.id,
         QuestionnaireRating.id,
+        QuestionnaireCategory.id,
         QuestionnaireActivity.id,
       );
 
-    return questionnaires;
+    const question = questionnaires?.[0];
+    const user = {
+      id: question?.userId,
+      location: question?.location,
+      ses: question?.ses,
+      rating: question.rating,
+      totalReward: question.balance,
+    };
+
+    const result = {};
+
+    questionnaires.forEach((item) => {
+      const { category, question, reward, rating, response, answer } = item;
+
+      if (!result[category]) {
+        result[category] = [];
+      }
+
+      result[category].push({ question, reward, rating, response, answer });
+    });
+
+    return { user, data: result };
+  }
+
+  async HttpHandleGetUserSurveyReport(id: number) {
+    const surveys = await this.provider.db
+      .selectDistinctOn([SurveyQuestion.text], {
+        userId: User.id,
+        ses: Wallet.point,
+        reward: Survey.reward,
+        location: User.location,
+        balance: Wallet.balance,
+        rating: SurveyRating.rating,
+        category: SurveyCategory.name,
+        question: SurveyQuestion.text,
+        response: SurveyQuestionOptions.text,
+      })
+      .from(SurveyActivity)
+      .leftJoin(User, eq(SurveyActivity.userId, User.id))
+      .leftJoin(Wallet, eq(Wallet.userId, User.id))
+      .leftJoin(Survey, eq(Survey.id, SurveyActivity.surveyId))
+      .leftJoin(SurveyRating, eq(User.id, SurveyRating.userId))
+      .leftJoin(SurveyCategory, eq(Survey.categoryId, SurveyCategory.id))
+      .leftJoin(SurveyQuestion, eq(SurveyQuestion.surveyId, Survey.id))
+      .leftJoin(SurveyQuestionAnswer, eq(SurveyQuestionAnswer.questionId, SurveyQuestion.id))
+      .leftJoin(SurveyQuestionOptions, eq(SurveyQuestionAnswer.optionId, SurveyQuestionOptions.id))
+      .where(and(eq(SurveyActivity.userId, id), eq(SurveyActivity.status, 'COMPLETED')))
+      .groupBy(
+        User.id,
+        Survey.id,
+        Wallet.point,
+        Wallet.balance,
+        SurveyRating.id,
+        SurveyCategory.id,
+        SurveyActivity.id,
+        SurveyQuestion.id,
+        SurveyQuestionAnswer.id,
+        SurveyQuestionOptions.id,
+      );
+
+    const survey = surveys?.[0];
+    const user = {
+      id: survey?.userId,
+      location: survey?.location,
+      ses: survey?.ses,
+      rating: survey?.rating,
+      totalReward: survey?.balance,
+    };
+
+    const result = {};
+
+    surveys.forEach((item) => {
+      const { category, question, reward, rating, response } = item;
+
+      if (!result[category]) {
+        result[category] = [];
+      }
+
+      result[category].push({ question, reward, rating, response });
+    });
+
+    return { user, data: result };
   }
 }

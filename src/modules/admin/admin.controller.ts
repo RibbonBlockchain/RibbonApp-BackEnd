@@ -13,10 +13,18 @@ export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Version(VERSION_ONE)
-  @Get('/report/activities/user/:id')
+  @Get('/report/activities/user/:id/questionnaire')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async HttpHandleGetUserActivitiesReport(@Param('id') id: number) {
-    const data = await this.admin.HttpHandleGetUserActivitiesReport(id);
+  async HttpHandleGetUserQuestionnaireReport(@Param('id') id: number) {
+    const data = await this.admin.HttpHandleGetUserQuestionnaireReport(id);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/report/activities/user/:id/survey')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetUserSurveyReport(@Param('id') id: number) {
+    const data = await this.admin.HttpHandleGetUserSurveyReport(id);
     return { data, message: RESPONSE.SUCCESS };
   }
 
