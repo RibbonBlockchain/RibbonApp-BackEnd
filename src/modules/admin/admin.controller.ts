@@ -29,6 +29,14 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/report/activities/user/:id/task')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetUserTaskReport(@Param('id') id: number) {
+    const data = await this.admin.HttpHandleGetUserTaskReport(id);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/report/activities')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetUsersActivitiesReports(@Query() query: Dto.GetUsersActivitiesReportsQuery) {

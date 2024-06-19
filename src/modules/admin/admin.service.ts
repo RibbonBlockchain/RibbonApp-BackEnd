@@ -26,6 +26,7 @@ import {
   QuestionOptions,
   SurveyQuestion,
   SurveyQuestionOptions,
+  TasskQuestion,
 } from '../drizzle/schema';
 import * as Dto from './dto';
 import * as XLSX from 'xlsx';
@@ -1048,8 +1049,8 @@ export class AdminService {
       id: question?.userId,
       location: question?.location,
       ses: question?.ses,
-      rating: question.rating,
-      totalReward: question.balance,
+      rating: question?.rating,
+      totalReward: question?.balance,
     };
 
     const result = {};
@@ -1115,6 +1116,64 @@ export class AdminService {
     const result = {};
 
     surveys.forEach((item) => {
+      const { category, question, reward, rating, response } = item;
+
+      if (!result[category]) {
+        result[category] = [];
+      }
+
+      result[category].push({ question, reward, rating, response });
+    });
+
+    return { user, data: result };
+  }
+
+  async HttpHandleGetUserTaskReport(id: number) {
+    const questionnaires = await this.provider.db
+      .selectDistinctOn([TasskQuestion.text], {
+        userId: User.id,
+        ses: Wallet.point,
+        reward: Tassk.reward,
+        location: User.location,
+        balance: Wallet.balance,
+        rating: TasskRating.rating,
+        category: TasskCategory.name,
+        question: TasskQuestion.text,
+        response: TasskQuestionAnswer.response,
+      })
+      .from(TasskActivity)
+      .leftJoin(User, eq(TasskActivity.userId, User.id))
+      .leftJoin(Wallet, eq(Wallet.userId, User.id))
+      .leftJoin(Tassk, eq(Tassk.id, TasskActivity.taskId))
+      .leftJoin(TasskRating, eq(User.id, TasskRating.userId))
+      .leftJoin(TasskQuestion, eq(TasskQuestion.taskId, Tassk.id))
+      .leftJoin(TasskCategory, eq(Tassk.categoryId, TasskCategory.id))
+      .leftJoin(TasskQuestionAnswer, eq(TasskQuestionAnswer.questionId, TasskQuestion.id))
+      .where(and(eq(TasskActivity.userId, id), eq(TasskActivity.status, 'COMPLETED')))
+      .groupBy(
+        User.id,
+        Tassk.id,
+        Wallet.point,
+        TasskRating.id,
+        Wallet.balance,
+        TasskCategory.id,
+        TasskActivity.id,
+        TasskQuestion.id,
+        TasskQuestionAnswer.id,
+      );
+
+    const question = questionnaires?.[0];
+    const user = {
+      id: question?.userId,
+      location: question?.location,
+      ses: question?.ses,
+      rating: question?.rating,
+      totalReward: question?.balance,
+    };
+
+    const result = {};
+
+    questionnaires.forEach((item) => {
       const { category, question, reward, rating, response } = item;
 
       if (!result[category]) {
