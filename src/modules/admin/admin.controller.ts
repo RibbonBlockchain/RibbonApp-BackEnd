@@ -112,8 +112,8 @@ export class AdminController {
   @Post('/cpi/upload')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))
-  async uploadCpiData(@UploadedFile() file: Express.Multer.File) {
-    const data = await this.admin.HttpHandleUploadCpi(file);
+  async uploadCpiData(@UploadedFile() file: Express.Multer.File, @ReqUser() user: TUser) {
+    const data = await this.admin.HttpHandleUploadCpi(file, user);
     return { data, message: RESPONSE.SUCCESS };
   }
 
@@ -122,6 +122,14 @@ export class AdminController {
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async getCpiData(@Query() query: { year: string }) {
     const data = await this.admin.HttpHandleGetCpiData(query.year);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/cpi-history')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getCpiHistory() {
+    const data = await this.admin.HttpHandleGetCpiHistory();
     return { data, message: RESPONSE.SUCCESS };
   }
 
