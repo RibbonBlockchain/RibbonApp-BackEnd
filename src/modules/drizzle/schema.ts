@@ -622,7 +622,11 @@ export const TasskRelations = relations(Tassk, ({ one, many }) => ({
 
 export const TasskQuestionRelations = relations(TasskQuestion, ({ one, many }) => ({
   options: many(TasskQuestionOptions),
-  survey: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
+  task: one(Tassk, { fields: [TasskQuestion.taskId], references: [Tassk.id] }),
+}));
+
+export const TasskOptionsRelations = relations(TasskQuestionOptions, ({ one }) => ({
+  question: one(TasskQuestion, { fields: [TasskQuestionOptions.questionId], references: [TasskQuestion.id] }),
 }));
 
 export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => ({

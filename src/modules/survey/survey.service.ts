@@ -9,7 +9,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { generatePagination, getPage } from '@/core/utils/page';
@@ -462,5 +462,27 @@ export class SurveyService {
     });
 
     return {};
+  }
+
+  async HttpHandleGetUserUnCompletedSurveys(user: TUser) {
+    const completedSurveysId = [];
+
+    const userSurveyActivity = await this.provider.db.query.SurveyActivity.findMany({
+      where: and(eq(SurveyActivity.userId, user.id)),
+    });
+
+    userSurveyActivity.forEach((survey) => {
+      completedSurveysId.push(survey.surveyId);
+    });
+
+    const completedFilter = completedSurveysId?.length ? notInArray(Survey.id, completedSurveysId) : undefined;
+
+    const data = await this.provider.db.query.Survey.findMany({
+      orderBy: desc(Survey.updatedAt),
+      with: { questions: { with: { options: true } } },
+      where: and(eq(Survey.status, 'ACTIVE'), completedFilter),
+    });
+
+    return { data };
   }
 }

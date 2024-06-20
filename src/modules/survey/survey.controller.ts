@@ -110,4 +110,11 @@ export class SurveyController {
   async updateSes(@Body() body: Dto.UpdateSesBody[]) {
     return await this.survey.HttpHandleUpdateSes(body);
   }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('survey/uncompleted')
+  async userUncompletedTasks(@ReqUser() user: TUser) {
+    return await this.survey.HttpHandleGetUserUnCompletedSurveys(user);
+  }
 }

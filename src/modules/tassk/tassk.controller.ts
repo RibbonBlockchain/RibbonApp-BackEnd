@@ -103,4 +103,11 @@ export class TasskController {
     const data = await this.tassk.HttpHandleRateTassk(body, user);
     return { data, message: RESPONSE.SUCCESS };
   }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('taask/uncompleted')
+  async userUncompletedTasks(@ReqUser() user: TUser) {
+    return await this.tassk.HttpHandleGetUserUnCompletedTasks(user);
+  }
 }
