@@ -9,7 +9,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { generatePagination, getPage } from '@/core/utils/page';
@@ -120,7 +120,7 @@ export class TasskService {
     });
   }
 
-  async HttphandleGetTasskById(id: number) {
+  async HttphandleAdminGetTasskById(id: number) {
     return await this.provider.db.query.Tassk.findFirst({
       where: eq(Tassk.id, id),
       with: { questions: true, category: true },
@@ -382,12 +382,25 @@ export class TasskService {
       completedTasksId.push(task.taskId);
     });
 
+    console.log(completedTasksId);
+
     const completedFilter = completedTasksId?.length ? notInArray(Tassk.id, completedTasksId) : undefined;
 
     const data = await this.provider.db.query.Tassk.findMany({
       orderBy: desc(Tassk.updatedAt),
       with: { questions: { with: { options: true } } },
       where: and(eq(Tassk.status, 'ACTIVE'), completedFilter),
+    });
+
+    return { data };
+  }
+
+  async HttpHandleGetTasskById(id: string) {
+    const taskId = parseInt(id);
+    const field = isNaN(taskId) ? Tassk.slug : Tassk.id;
+    const data = await this.provider.db.query.Tassk.findFirst({
+      where: eq(field, id),
+      with: { questions: { with: { options: true }, orderBy: asc(Tassk.id) } },
     });
 
     return { data };

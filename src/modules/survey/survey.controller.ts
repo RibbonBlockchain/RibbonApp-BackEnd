@@ -58,8 +58,8 @@ export class SurveyController {
   @Version(VERSION_ONE)
   @Get('/admin/survey/:id')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getSurveyById(@Param('id') id: number) {
-    const data = await this.survey.HttphandleGetSurveyById(id);
+  async adminGetSurveyById(@Param('id') id: number) {
+    const data = await this.survey.HttphandleAdminGetSurveyById(id);
     return { data, message: RESPONSE.SUCCESS };
   }
 
@@ -116,5 +116,12 @@ export class SurveyController {
   @Get('survey/uncompleted')
   async userUncompletedTasks(@ReqUser() user: TUser) {
     return await this.survey.HttpHandleGetUserUnCompletedSurveys(user);
+  }
+
+  @AuthGuard()
+  @Get('survey/:id')
+  @Version(VERSION_ONE)
+  async getSurveyById(@Param() params: { id: string }) {
+    return await this.survey.HttpHandleGetSurveyById(params.id);
   }
 }

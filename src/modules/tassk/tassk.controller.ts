@@ -58,8 +58,8 @@ export class TasskController {
   @Version(VERSION_ONE)
   @Get('/admin/task/:id')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getTasskById(@Param('id') id: number) {
-    const data = await this.tassk.HttphandleGetTasskById(id);
+  async adminGetTasskById(@Param('id') id: number) {
+    const data = await this.tassk.HttphandleAdminGetTasskById(id);
     return { data, message: RESPONSE.SUCCESS };
   }
 
@@ -109,5 +109,12 @@ export class TasskController {
   @Get('tassk/uncompleted')
   async userUncompletedTasks(@ReqUser() user: TUser) {
     return await this.tassk.HttpHandleGetUserUnCompletedTasks(user);
+  }
+
+  @AuthGuard()
+  @Get('tassk/:id')
+  @Version(VERSION_ONE)
+  async getTasskById(@Param() params: { id: string }) {
+    return await this.tassk.HttpHandleGetTasskById(params.id);
   }
 }

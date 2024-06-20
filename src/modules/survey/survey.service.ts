@@ -9,7 +9,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { generatePagination, getPage } from '@/core/utils/page';
@@ -115,7 +115,7 @@ export class SurveyService {
     });
   }
 
-  async HttphandleGetSurveyById(id: number) {
+  async HttphandleAdminGetSurveyById(id: number) {
     return await this.provider.db.query.Survey.findFirst({
       where: eq(Survey.id, id),
       with: { questions: { with: { options: true } }, category: true },
@@ -481,6 +481,17 @@ export class SurveyService {
       orderBy: desc(Survey.updatedAt),
       with: { questions: { with: { options: true } } },
       where: and(eq(Survey.status, 'ACTIVE'), completedFilter),
+    });
+
+    return { data };
+  }
+
+  async HttpHandleGetSurveyById(id: string) {
+    const surveyId = parseInt(id);
+    const field = isNaN(surveyId) ? Survey.slug : Survey.id;
+    const data = await this.provider.db.query.Survey.findFirst({
+      where: eq(field, id),
+      with: { questions: { with: { options: true }, orderBy: asc(Survey.id) } },
     });
 
     return { data };
