@@ -106,7 +106,7 @@ export class TasskController {
 
   @AuthGuard()
   @Version(VERSION_ONE)
-  @Get('taask/uncompleted')
+  @Get('tassk/uncompleted')
   async userUncompletedTasks(@ReqUser() user: TUser) {
     return await this.tassk.HttpHandleGetUserUnCompletedTasks(user);
   }
