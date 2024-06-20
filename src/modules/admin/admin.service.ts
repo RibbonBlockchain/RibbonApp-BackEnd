@@ -908,7 +908,7 @@ export class AdminService {
     const userRatingsIds = ratings.map((r) => r.userId);
     const mapUserCode = users
       .filter((u) => u.phone)
-      .map((u) => ({ code: '+' + parsePhoneNumberFromString(u.phone)?.countryCallingCode, id: u.id }));
+      .map((u) => ({ code: `+${parsePhoneNumberFromString(u.phone)?.countryCallingCode}`, id: u.id }));
 
     const idMap = mapUserCode.reduce((acc, item) => {
       acc[item.id] = item;
