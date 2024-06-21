@@ -250,9 +250,7 @@ export const SurveyQuestionAnswer = ribbonSchema.table('survey_question_answer',
   questionId: integer('question_id')
     .notNull()
     .references(() => SurveyQuestion.id),
-  optionId: integer('option_id')
-    .notNull()
-    .references(() => SurveyQuestionOptions.id),
+  optionId: integer('option_id').references(() => SurveyQuestionOptions.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),
