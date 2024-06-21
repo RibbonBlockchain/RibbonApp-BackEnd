@@ -100,3 +100,16 @@ export class RateTasskBody {
   @IsNotEmpty()
   taskId: number;
 }
+
+export class AnswerTaskDto {
+  @IsNotEmpty()
+  @IsNumber()
+  questionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  taskId: number;
+
+  @IsString()
+  response: string;
+}

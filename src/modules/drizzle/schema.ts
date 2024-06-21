@@ -246,12 +246,11 @@ export const SurveyQuestionOptions = ribbonSchema.table('survey_question_options
 
 export const SurveyQuestionAnswer = ribbonSchema.table('survey_question_answer', {
   id: serial('id').primaryKey(),
+  text: varchar('text'),
   questionId: integer('question_id')
     .notNull()
     .references(() => SurveyQuestion.id),
-  optionId: integer('option_id')
-    .notNull()
-    .references(() => SurveyQuestionOptions.id),
+  optionId: integer('option_id').references(() => SurveyQuestionOptions.id),
   userId: integer('user_id')
     .notNull()
     .references(() => User.id),

@@ -15,8 +15,11 @@ import {
   TasskQuestion,
   TasskQuestionOptions,
   TasskRating,
+  Wallet,
+  TasskQuestionAnswer,
 } from '../drizzle/schema';
 import * as Dto from './dto';
+import { and, asc, desc, eq, ilike, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 
 @Injectable()
@@ -404,5 +407,114 @@ export class TasskService {
     });
 
     return { data };
+  }
+
+  async HttpHandleGetCompletedTasks(user: TUser, query: { completedDate: string }) {
+    const { completedDate } = query;
+    const completedTasksId: { taskId: number; completedDate: string }[] = [];
+
+    const userTaskActivity = completedDate
+      ? await this.provider.db.query.TasskActivity.findMany({
+          where: and(
+            eq(TasskActivity.userId, user.id),
+            eq(TasskActivity.status, 'COMPLETED'),
+            eq(TasskActivity.completedDate, completedDate),
+          ),
+        })
+      : await this.provider.db.query.TasskActivity.findMany({
+          where: and(eq(TasskActivity.userId, user.id), eq(TasskActivity.status, 'COMPLETED')),
+        });
+
+    userTaskActivity.forEach((task) => {
+      completedTasksId.push({ taskId: task.taskId, completedDate: task.completedDate });
+    });
+
+    let data = [];
+
+    console.log(completedTasksId);
+
+    const taskActivity =
+      completedTasksId.length > 0
+        ? await this.provider.db.query.Tassk.findMany({
+            where: inArray(
+              Tassk.id,
+              completedTasksId.map(({ taskId }) => taskId),
+            ),
+            // with: { ratings: true },
+          }).then((tasks) =>
+            tasks.map((task) => ({
+              ...task,
+              completedDate: completedTasksId.find(({ taskId }) => taskId === task.id)?.completedDate,
+            })),
+          )
+        : [];
+
+    data = [...taskActivity];
+
+    return { data };
+  }
+
+  async HttpHandleGetProcessingTasks(user: TUser) {
+    const processingTasksId = [];
+
+    const userTaskActivity = await this.provider.db.query.TasskActivity.findMany({
+      where: and(eq(TasskActivity.userId, user.id), eq(TasskActivity.status, 'PROCESSING')),
+    });
+
+    userTaskActivity.forEach((task) => {
+      processingTasksId.push(task.taskId);
+    });
+
+    if (!processingTasksId?.length) return { data: [] };
+
+    const tasks = await this.provider.db.query.Tassk.findMany({
+      where: inArray(Tassk.id, processingTasksId),
+    });
+    return { data: tasks };
+  }
+
+  async HttpHandleAnswerTask(input: Dto.AnswerTaskDto, user: TUser) {
+    const { questionId, taskId, response } = input;
+
+    const task = await this.provider.db.query.Tassk.findFirst({
+      where: eq(Tassk.id, taskId),
+    });
+
+    const wallet = await this.provider.db.query.Wallet.findFirst({
+      where: eq(Wallet.userId, user.id),
+    });
+
+    const userTaskActivity = await this.provider.db.query.TasskActivity.findFirst({
+      where: and(eq(TasskActivity.userId, user.id), eq(TasskActivity.taskId, input.taskId)),
+    });
+
+    const question = await this.provider.db.query.TasskQuestion.findFirst({
+      with: { options: true },
+      where: eq(TasskQuestion.id, questionId),
+    });
+
+    if (!question) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
+    // @TODO change option_id relations to comma separated strings
+
+    if (!userTaskActivity) {
+      await this.provider.db.insert(TasskActivity).values({ taskId, userId: user.id }).execute();
+    }
+
+    if (question.isLast) {
+      await this.provider.db
+        .update(TasskActivity)
+        .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
+        .where(and(eq(TasskActivity.id, userTaskActivity.id), eq(TasskActivity.userId, user.id)));
+
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: wallet.balance + task.reward })
+        .where(eq(Wallet.userId, user.id));
+    }
+
+    return await this.provider.db
+      .insert(TasskQuestionAnswer)
+      .values({ questionId, response, userId: user.id })
+      .execute();
   }
 }

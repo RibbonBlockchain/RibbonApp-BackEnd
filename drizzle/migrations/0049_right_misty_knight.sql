@@ -1,0 +1,1 @@
+ALTER TABLE "ribbon"."survey_question_answer" ADD COLUMN "text" varchar;

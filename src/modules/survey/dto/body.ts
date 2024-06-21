@@ -110,3 +110,16 @@ export class UpdateSesBody {
   @IsNumber()
   point: number;
 }
+
+export class AnswerSurveyDto {
+  @IsNotEmpty()
+  @IsNumber()
+  questionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  surveyId: number;
+
+  @IsOptional()
+  optionId: string | number | string[];
+}

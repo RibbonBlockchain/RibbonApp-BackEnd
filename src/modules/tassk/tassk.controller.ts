@@ -117,4 +117,25 @@ export class TasskController {
   async getTasskById(@Param() params: { id: string }) {
     return await this.tassk.HttpHandleGetTasskById(params.id);
   }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('tassk/completed')
+  async getCompletedTasks(@ReqUser() user: TUser, @Query() query: { completedDate: string }) {
+    return await this.tassk.HttpHandleGetCompletedTasks(user, query);
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('tassk/processing')
+  async getProcessingTasks(@ReqUser() user: TUser) {
+    return await this.tassk.HttpHandleGetProcessingTasks(user);
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Post('tassk/respond')
+  async respondToTask(@Body() body: Dto.AnswerTaskDto, @ReqUser() user: TUser) {
+    return await this.tassk.HttpHandleAnswerTask(body, user);
+  }
 }
