@@ -4,7 +4,7 @@ import { generateCode } from '@/core/utils/code';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import excelToJson from 'convert-excel-to-json';
-import { and, asc, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, notInArray, or, sql, inArray } from 'drizzle-orm';
 import fs from 'fs';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import {
@@ -19,7 +19,6 @@ import {
   TasskQuestionAnswer,
 } from '../drizzle/schema';
 import * as Dto from './dto';
-import { and, asc, desc, eq, ilike, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 
 @Injectable()
