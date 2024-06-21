@@ -98,5 +98,18 @@ export class RateTasskBody {
 
   @IsInt()
   @IsNotEmpty()
-  surveyId: number;
+  taskId: number;
+}
+
+export class AnswerTaskDto {
+  @IsNotEmpty()
+  @IsNumber()
+  questionId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  taskId: number;
+
+  @IsString()
+  response: string;
 }
