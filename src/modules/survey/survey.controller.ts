@@ -119,6 +119,13 @@ export class SurveyController {
   }
 
   @AuthGuard()
+  @Post('survey/respond')
+  @Version(VERSION_ONE)
+  async respondToTask(@Body() body: Dto.AnswerSurveyDto, @ReqUser() user: TUser) {
+    return await this.survey.HttpHandleAnswerSurvey(body, user);
+  }
+
+  @AuthGuard()
   @Get('survey/:id')
   @Version(VERSION_ONE)
   async getSurveyById(@Param() params: { id: string }) {

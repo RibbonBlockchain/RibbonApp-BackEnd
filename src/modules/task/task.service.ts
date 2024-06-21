@@ -142,6 +142,8 @@ export class TaskService {
       where: eq(Question.id, questionId),
     });
 
+    if (!question) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
+
     const isTextAnswer = (!question?.options?.length && question.type !== 'BOOLEAN') || question.type === 'LONG_ANSWER';
     if (isTextAnswer && typeof optionId !== 'string') throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
 
@@ -171,8 +173,6 @@ export class TaskService {
         .set({ balance: wallet.balance + task.reward, point: option.point + wallet.point })
         .where(eq(Wallet.userId, user.id));
     }
-
-    console.log(singleOption, answer);
 
     return await this.provider.db
       .insert(Answer)

@@ -6,6 +6,8 @@ import {
   SurveyCategory,
   SurveyQuestion,
   SurveyQuestionOptions,
+  Wallet,
+  SurveyQuestionAnswer,
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
@@ -495,5 +497,66 @@ export class SurveyService {
     });
 
     return { data };
+  }
+
+  async HttpHandleAnswerSurvey(input: Dto.AnswerSurveyDto, user: TUser) {
+    const { optionId, questionId, surveyId } = input;
+
+    const task = await this.provider.db.query.Survey.findFirst({
+      where: eq(Survey.id, surveyId),
+    });
+
+    const wallet = await this.provider.db.query.Wallet.findFirst({
+      where: eq(Wallet.userId, user.id),
+    });
+
+    const userSurveyActivity = await this.provider.db.query.SurveyActivity.findFirst({
+      where: and(eq(SurveyActivity.userId, user.id), eq(SurveyActivity.surveyId, input.surveyId)),
+    });
+
+    const question = await this.provider.db.query.SurveyQuestion.findFirst({
+      with: { options: true },
+      where: eq(SurveyQuestion.id, questionId),
+    });
+
+    if (!question) throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
+
+    const isTextAnswer =
+      (!question?.options?.length && question.type !== 'BOOLEAN') ||
+      question.type === 'LONG_ANSWER' ||
+      question.type === 'SHORT_ANSWER';
+    if (isTextAnswer && typeof optionId !== 'string') throw new BadRequestException(RESPONSE.INVALID_RESPONSE);
+
+    let answer = '';
+    let singleOption: any = 0;
+
+    if (typeof optionId === 'string') answer = optionId;
+    if (typeof optionId === 'number') singleOption = optionId;
+    if (Array.isArray(optionId)) singleOption = optionId?.[0];
+
+    const option = await this.provider.db.query.SurveyQuestionOptions.findFirst({
+      where: eq(SurveyQuestionOptions.id, singleOption),
+    });
+
+    if (!userSurveyActivity) {
+      await this.provider.db.insert(SurveyActivity).values({ surveyId, userId: user.id }).execute();
+    }
+
+    if (question.isLast) {
+      await this.provider.db
+        .update(SurveyActivity)
+        .set({ status: 'COMPLETED', completedDate: new Date().toISOString() })
+        .where(and(eq(SurveyActivity.id, userSurveyActivity.id), eq(SurveyActivity.userId, user.id)));
+
+      await this.provider.db
+        .update(Wallet)
+        .set({ balance: wallet.balance + task.reward, point: option.point + wallet.point })
+        .where(eq(Wallet.userId, user.id));
+    }
+
+    return await this.provider.db
+      .insert(SurveyQuestionAnswer)
+      .values({ questionId, optionId: singleOption || 75, text: answer, userId: user.id })
+      .execute();
   }
 }
