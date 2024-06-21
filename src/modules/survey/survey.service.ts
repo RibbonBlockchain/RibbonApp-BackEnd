@@ -11,7 +11,7 @@ import {
 } from '../drizzle/schema';
 import fs from 'fs';
 import * as Dto from './dto';
-import { and, asc, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
 import { generatePagination, getPage } from '@/core/utils/page';
@@ -530,6 +530,8 @@ export class SurveyService {
     let answer = '';
     let singleOption: any = 0;
 
+    // @TODO change option_id relations to comma separated strings
+
     if (typeof optionId === 'string') answer = optionId;
     if (typeof optionId === 'number') singleOption = optionId;
     if (Array.isArray(optionId)) singleOption = optionId?.[0];
@@ -556,7 +558,71 @@ export class SurveyService {
 
     return await this.provider.db
       .insert(SurveyQuestionAnswer)
-      .values({ questionId, optionId: singleOption || 75, text: answer, userId: user.id })
+      .values({ questionId, optionId: singleOption || undefined, text: answer || undefined, userId: user.id })
       .execute();
+  }
+
+  async HttpHandleGetProcessingSurveys(user: TUser) {
+    const processingSurveysId = [];
+
+    const userSurveyActivity = await this.provider.db.query.SurveyActivity.findMany({
+      where: and(eq(SurveyActivity.userId, user.id), eq(SurveyActivity.status, 'PROCESSING')),
+    });
+
+    userSurveyActivity.forEach((survey) => {
+      processingSurveysId.push(survey.surveyId);
+    });
+
+    if (!processingSurveysId?.length) return { data: [] };
+
+    const tasks = await this.provider.db.query.Survey.findMany({
+      where: inArray(Survey.id, processingSurveysId),
+    });
+    return { data: tasks };
+  }
+
+  async HttpHandleGetCompletedSurveys(user: TUser, query: { completedDate: string }) {
+    const { completedDate } = query;
+    const completedSurveysId: { surveyId: number; completedDate: string }[] = [];
+
+    const userSurveyActivity = completedDate
+      ? await this.provider.db.query.SurveyActivity.findMany({
+          where: and(
+            eq(SurveyActivity.userId, user.id),
+            eq(SurveyActivity.status, 'COMPLETED'),
+            eq(SurveyActivity.completedDate, completedDate),
+          ),
+        })
+      : await this.provider.db.query.SurveyActivity.findMany({
+          where: and(eq(SurveyActivity.userId, user.id), eq(SurveyActivity.status, 'COMPLETED')),
+        });
+
+    userSurveyActivity.forEach((survey) => {
+      completedSurveysId.push({ surveyId: survey.surveyId, completedDate: survey.completedDate });
+    });
+
+    let data = [];
+
+    console.log(completedSurveysId);
+
+    const surveyActivity =
+      completedSurveysId.length > 0
+        ? await this.provider.db.query.Survey.findMany({
+            where: inArray(
+              Survey.id,
+              completedSurveysId.map(({ surveyId }) => surveyId),
+            ),
+            // with: { ratings: true },
+          }).then((surveys) =>
+            surveys.map((survey) => ({
+              ...survey,
+              completedDate: completedSurveysId.find(({ surveyId }) => surveyId === survey.id)?.completedDate,
+            })),
+          )
+        : [];
+
+    data = [...surveyActivity];
+
+    return { data };
   }
 }

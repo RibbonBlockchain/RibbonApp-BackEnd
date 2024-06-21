@@ -114,8 +114,22 @@ export class SurveyController {
   @AuthGuard()
   @Version(VERSION_ONE)
   @Get('survey/uncompleted')
-  async userUncompletedTasks(@ReqUser() user: TUser) {
+  async getUncompletedSurveys(@ReqUser() user: TUser) {
     return await this.survey.HttpHandleGetUserUnCompletedSurveys(user);
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('survey/completed')
+  async getCompletedSurveys(@ReqUser() user: TUser, @Query() query: { completedDate: string }) {
+    return await this.survey.HttpHandleGetCompletedSurveys(user, query);
+  }
+
+  @AuthGuard()
+  @Version(VERSION_ONE)
+  @Get('survey/processing')
+  async getProcessingSurvey(@ReqUser() user: TUser) {
+    return await this.survey.HttpHandleGetProcessingSurveys(user);
   }
 
   @AuthGuard()
