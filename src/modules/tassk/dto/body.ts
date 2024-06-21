@@ -98,5 +98,5 @@ export class RateTasskBody {
 
   @IsInt()
   @IsNotEmpty()
-  surveyId: number;
+  taskId: number;
 }

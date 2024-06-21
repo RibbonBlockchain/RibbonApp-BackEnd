@@ -16,4 +16,6 @@ export const RESPONSE = {
 
   INVALID_TASK: 'Invalid task',
   COMPLETE_QUESTIONNAIRE_TO_CONTINUE: 'You need to complete the questionnaire to continue',
+  COMPLETE_TASK_TO_CONTINUE: 'You need to complete the task to continue',
+  COMPLETE_SURVEY_TO_CONTINUE: 'You need to complete the survey to continue',
 };
