@@ -786,152 +786,386 @@ export class AdminService {
   }
 
   async HttpHandleRatingOverview(type: 's' | 't' | 'q') {
-    let data;
-    let typeData;
+    // let data;
+    // let typeData;
+    // let activitiesRated;
     const users = await this.provider.db.select().from(User);
 
     if (type === 's') {
-      data = await this.provider.db.select().from(SurveyRating).innerJoin(Survey, eq(SurveyRating.surveyId, Survey.id));
+      const data = await this.provider.db
+        .select()
+        .from(SurveyRating)
+        .innerJoin(Survey, eq(SurveyRating.surveyId, Survey.id));
 
-      typeData = await this.provider.db
+      const typeData = await this.provider.db
         .select()
         .from(Survey)
         .innerJoin(SurveyCategory, eq(Survey.categoryId, SurveyCategory.id));
+
+      const activitiesRated = typeData.map((s) => ({
+        activity: s.survey_category.name,
+        surveyId: s.survey.id,
+        total: 0,
+        sum: 0,
+        average: 0,
+        status: '',
+      }));
+
+      const sIds: any[] = typeData.map((s) => s.survey.id);
+      const ratings = data.map((r) => r.survey_rating);
+
+      ratings.forEach((r) => {
+        const activity = activitiesRated.find((a) => a.surveyId === r.surveyId);
+        if (activity) {
+          activity.total++;
+          activity.sum += r.rating;
+          activity.average = +(activity.sum / activity.total).toFixed(2);
+        }
+      });
+
+      let totalSum = activitiesRated.reduce((sum, activity) => sum + activity.sum, 0);
+
+      activitiesRated.forEach((a) => {
+        delete a.surveyId;
+        a.status = `${((a.sum / totalSum) * 100).toFixed(2)}%`;
+      });
+
+      const sidsWithRatings = [...new Set(data.map((r) => r.survey).map((q) => q.id))];
+      const sidsWithoutRatings = sIds.filter((id) => !sidsWithRatings.includes(id));
+
+      const ratedActivities = ((sidsWithRatings.length / sIds.length) * 100).toFixed(0);
+      const unratedActivities = ((sidsWithoutRatings.length / sIds.length) * 100).toFixed(0);
+
+      let ratingDistributions = [
+        {
+          type: 0,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 1,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 2,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 3,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 4,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 5,
+          total: 0,
+          percentage: 0,
+        },
+      ];
+
+      ratings.forEach((item) => {
+        const distribution = ratingDistributions.find((rd) => rd.type === item.rating);
+        if (distribution) distribution.total += 1;
+      });
+
+      const totalRatings = ratingDistributions.reduce((sum, rating) => sum + rating.total, 0);
+
+      ratingDistributions = ratingDistributions.map((rating) => ({
+        ...rating,
+        percentage: totalRatings ? +((rating.total / totalRatings) * 100).toFixed(1) : 0,
+      }));
+
+      const ratingsStatus = {
+        ratedActivities,
+        unratedActivities,
+        total: ratings.length,
+      };
+
+      const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
+
+      const userRatingsIds = ratings.map((r) => r.userId);
+      const mapUserCode = users
+        .filter((u) => u.phone)
+        .map((u) => ({ code: `+${parsePhoneNumberFromString(u.phone)?.countryCallingCode}`, id: u.id }));
+
+      const idMap = mapUserCode.reduce((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
+
+      const codeCount = userRatingsIds.reduce((acc, id) => {
+        const code = idMap[id]?.code;
+        if (code) {
+          acc[code] = (acc[code] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      const totalCount = userRatingsIds.length;
+
+      const geoDistribution = Object.keys(codeCount).map((code) => ({
+        code: code,
+        count: codeCount[code],
+        percentage: ((codeCount[code] / totalCount) * 100).toFixed(0) + '%',
+      }));
+
+      return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated, geoDistribution };
     } else if (type === 'q') {
-      data = await this.provider.db
+      const data = await this.provider.db
         .select()
         .from(QuestionnaireRating)
         .innerJoin(Questionnaire, eq(QuestionnaireRating.questionId, Questionnaire.id));
 
-      typeData = await this.provider.db
+      const typeData = await this.provider.db
         .select()
         .from(Questionnaire)
         .innerJoin(QuestionnaireCategory, eq(Questionnaire.categoryId, QuestionnaireCategory.id));
-    } else if (type === 't') {
-      data = await this.provider.db.select().from(TasskRating).innerJoin(Tassk, eq(TasskRating.taskId, Tassk.id));
 
-      typeData = await this.provider.db
+      const activitiesRated = typeData.map((q) => ({
+        activity: q.questionnaire_category.name,
+        questionnaireId: q.questionnaire.id,
+        total: 0,
+        sum: 0,
+        average: 0,
+        status: '',
+      }));
+
+      const qIds: any[] = typeData.map((q) => q.questionnaire.id);
+      const ratings = data.map((r) => r.questionnaire_rating);
+
+      ratings.forEach((r) => {
+        const activity = activitiesRated.find((a) => a.questionnaireId === r.questionId);
+        if (activity) {
+          activity.total++;
+          activity.sum += r.rating;
+          activity.average = +(activity.sum / activity.total).toFixed(2);
+        }
+      });
+
+      let totalSum = activitiesRated.reduce((sum, activity) => sum + activity.sum, 0);
+
+      activitiesRated.forEach((a) => {
+        delete a.questionnaireId;
+        a.status = `${((a.sum / totalSum) * 100).toFixed(2)}%`;
+      });
+
+      const qidsWithRatings = [...new Set(data.map((r) => r.questionnaire).map((q) => q.id))];
+      const qidsWithoutRatings = qIds.filter((id) => !qidsWithRatings.includes(id));
+
+      const ratedActivities = ((qidsWithRatings.length / qIds.length) * 100).toFixed(0);
+      const unratedActivities = ((qidsWithoutRatings.length / qIds.length) * 100).toFixed(0);
+
+      let ratingDistributions = [
+        {
+          type: 0,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 1,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 2,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 3,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 4,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 5,
+          total: 0,
+          percentage: 0,
+        },
+      ];
+
+      ratings.forEach((item) => {
+        const distribution = ratingDistributions.find((rd) => rd.type === item.rating);
+        if (distribution) distribution.total += 1;
+      });
+
+      const totalRatings = ratingDistributions.reduce((sum, rating) => sum + rating.total, 0);
+
+      ratingDistributions = ratingDistributions.map((rating) => ({
+        ...rating,
+        percentage: totalRatings ? +((rating.total / totalRatings) * 100).toFixed(1) : 0,
+      }));
+
+      const ratingsStatus = {
+        ratedActivities,
+        unratedActivities,
+        total: ratings.length,
+      };
+
+      const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
+
+      const userRatingsIds = ratings.map((r) => r.userId);
+      const mapUserCode = users
+        .filter((u) => u.phone)
+        .map((u) => ({ code: `+${parsePhoneNumberFromString(u.phone)?.countryCallingCode}`, id: u.id }));
+
+      const idMap = mapUserCode.reduce((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
+
+      const codeCount = userRatingsIds.reduce((acc, id) => {
+        const code = idMap[id]?.code;
+        if (code) {
+          acc[code] = (acc[code] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      const totalCount = userRatingsIds.length;
+
+      const geoDistribution = Object.keys(codeCount).map((code) => ({
+        code: code,
+        count: codeCount[code],
+        percentage: ((codeCount[code] / totalCount) * 100).toFixed(0) + '%',
+      }));
+
+      return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated, geoDistribution };
+    } else if (type === 't') {
+      const data = await this.provider.db.select().from(TasskRating).innerJoin(Tassk, eq(TasskRating.taskId, Tassk.id));
+
+      const typeData = await this.provider.db
         .select()
         .from(Tassk)
         .innerJoin(TasskCategory, eq(Tassk.categoryId, TasskCategory.id));
+
+      const activitiesRated = typeData.map((t) => ({
+        activity: t.task_category.name,
+        taskId: t.tassk.id,
+        total: 0,
+        sum: 0,
+        average: 0,
+        status: '',
+      }));
+
+      const tIds: any[] = typeData.map((t) => t.tassk.id);
+      const ratings = data.map((r) => r.task_rating);
+
+      ratings.forEach((r) => {
+        const activity = activitiesRated.find((a) => a.taskId === r.taskId);
+        if (activity) {
+          activity.total++;
+          activity.sum += r.rating;
+          activity.average = +(activity.sum / activity.total).toFixed(2);
+        }
+      });
+
+      let totalSum = activitiesRated.reduce((sum, activity) => sum + activity.sum, 0);
+
+      activitiesRated.forEach((a) => {
+        delete a.taskId;
+        a.status = `${((a.sum / totalSum) * 100).toFixed(2)}%`;
+      });
+
+      const sidsWithRatings = [...new Set(data.map((r) => r.tassk).map((q) => q.id))];
+      const sidsWithoutRatings = tIds.filter((id) => !sidsWithRatings.includes(id));
+
+      const ratedActivities = ((sidsWithRatings.length / tIds.length) * 100).toFixed(0);
+      const unratedActivities = ((sidsWithoutRatings.length / tIds.length) * 100).toFixed(0);
+
+      let ratingDistributions = [
+        {
+          type: 0,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 1,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 2,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 3,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 4,
+          total: 0,
+          percentage: 0,
+        },
+        {
+          type: 5,
+          total: 0,
+          percentage: 0,
+        },
+      ];
+
+      ratings.forEach((item) => {
+        const distribution = ratingDistributions.find((rd) => rd.type === item.rating);
+        if (distribution) distribution.total += 1;
+      });
+
+      const totalRatings = ratingDistributions.reduce((sum, rating) => sum + rating.total, 0);
+
+      ratingDistributions = ratingDistributions.map((rating) => ({
+        ...rating,
+        percentage: totalRatings ? +((rating.total / totalRatings) * 100).toFixed(1) : 0,
+      }));
+
+      const ratingsStatus = {
+        ratedActivities,
+        unratedActivities,
+        total: ratings.length,
+      };
+
+      const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
+
+      const userRatingsIds = ratings.map((r) => r.userId);
+      const mapUserCode = users
+        .filter((u) => u.phone)
+        .map((u) => ({ code: `+${parsePhoneNumberFromString(u.phone)?.countryCallingCode}`, id: u.id }));
+
+      const idMap = mapUserCode.reduce((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+      }, {});
+
+      const codeCount = userRatingsIds.reduce((acc, id) => {
+        const code = idMap[id]?.code;
+        if (code) {
+          acc[code] = (acc[code] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      const totalCount = userRatingsIds.length;
+
+      const geoDistribution = Object.keys(codeCount).map((code) => ({
+        code: code,
+        count: codeCount[code],
+        percentage: ((codeCount[code] / totalCount) * 100).toFixed(0) + '%',
+      }));
+
+      return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated, geoDistribution };
     } else {
       return {};
     }
-
-    const activitiesRated = typeData.map((q) => ({
-      activity: q.questionnaire_category.name,
-      questionnaireId: q.questionnaire.id,
-      total: 0,
-      sum: 0,
-      average: 0,
-      status: '',
-    }));
-
-    const qIds: any[] = typeData.map((q) => q.questionnaire.id);
-    const ratings = data.map((r) => r.questionnaire_rating);
-
-    ratings.forEach((r) => {
-      const activity = activitiesRated.find((a) => a.questionnaireId === r.questionId);
-      if (activity) {
-        activity.total++;
-        activity.sum += r.rating;
-        activity.average = +(activity.sum / activity.total).toFixed(2);
-      }
-    });
-
-    let totalSum = activitiesRated.reduce((sum, activity) => sum + activity.sum, 0);
-
-    activitiesRated.forEach((a) => {
-      delete a.questionnaireId;
-      a.status = `${((a.sum / totalSum) * 100).toFixed(2)}%`;
-    });
-
-    const qidsWithRatings = [...new Set(data.map((r) => r.questionnaire).map((q) => q.id))];
-    const qidsWithoutRatings = qIds.filter((id) => !qidsWithRatings.includes(id));
-
-    const ratedActivities = ((qidsWithRatings.length / qIds.length) * 100).toFixed(0);
-    const unratedActivities = ((qidsWithoutRatings.length / qIds.length) * 100).toFixed(0);
-
-    let ratingDistributions = [
-      {
-        type: 0,
-        total: 0,
-        percentage: 0,
-      },
-      {
-        type: 1,
-        total: 0,
-        percentage: 0,
-      },
-      {
-        type: 2,
-        total: 0,
-        percentage: 0,
-      },
-      {
-        type: 3,
-        total: 0,
-        percentage: 0,
-      },
-      {
-        type: 4,
-        total: 0,
-        percentage: 0,
-      },
-      {
-        type: 5,
-        total: 0,
-        percentage: 0,
-      },
-    ];
-
-    ratings.forEach((item) => {
-      const distribution = ratingDistributions.find((rd) => rd.type === item.rating);
-      if (distribution) distribution.total += 1;
-    });
-
-    const totalRatings = ratingDistributions.reduce((sum, rating) => sum + rating.total, 0);
-
-    ratingDistributions = ratingDistributions.map((rating) => ({
-      ...rating,
-      percentage: totalRatings ? +((rating.total / totalRatings) * 100).toFixed(1) : 0,
-    }));
-
-    const ratingsStatus = {
-      ratedActivities,
-      unratedActivities,
-      total: ratings.length,
-    };
-
-    const totalAverageRatings = (ratings.reduce((sum, task) => sum + task.rating, 0) / ratings.length).toFixed(1);
-
-    const userRatingsIds = ratings.map((r) => r.userId);
-    const mapUserCode = users
-      .filter((u) => u.phone)
-      .map((u) => ({ code: `+${parsePhoneNumberFromString(u.phone)?.countryCallingCode}`, id: u.id }));
-
-    const idMap = mapUserCode.reduce((acc, item) => {
-      acc[item.id] = item;
-      return acc;
-    }, {});
-
-    const codeCount = userRatingsIds.reduce((acc, id) => {
-      const code = idMap[id]?.code;
-      if (code) {
-        acc[code] = (acc[code] || 0) + 1;
-      }
-      return acc;
-    }, {});
-
-    const totalCount = userRatingsIds.length;
-
-    const geoDistribution = Object.keys(codeCount).map((code) => ({
-      code: code,
-      count: codeCount[code],
-      percentage: ((codeCount[code] / totalCount) * 100).toFixed(0) + '%',
-    }));
-
-    return { ratingsStatus, totalAverageRatings, ratingDistributions, activitiesRated, geoDistribution };
   }
 
   async HttpHandleUploadCpi(file: Express.Multer.File, user: TUser) {

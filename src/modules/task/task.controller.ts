@@ -1,10 +1,10 @@
-import * as Dto from './dto';
-import { TUser } from '../drizzle/schema';
-import { TaskService } from './task.service';
 import { VERSION_ONE } from '@/core/constants';
-import { ReqUser } from '../auth/decorators/user.decorator';
-import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
 import { Body, Controller, Get, Param, Patch, Post, Query, Version } from '@nestjs/common';
+import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
+import { ReqUser } from '../auth/decorators/user.decorator';
+import { TUser } from '../drizzle/schema';
+import * as Dto from './dto';
+import { TaskService } from './task.service';
 
 @Controller('task')
 export class TaskController {

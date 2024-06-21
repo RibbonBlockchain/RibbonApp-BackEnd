@@ -139,7 +139,7 @@ export class SurveyService {
       ),
     });
 
-    if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_QUESTIONNAIRE_TO_CONTINUE);
+    if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_SURVEY_TO_CONTINUE);
 
     const rating = Math.max(0, Math.min(body.rating, 5));
 

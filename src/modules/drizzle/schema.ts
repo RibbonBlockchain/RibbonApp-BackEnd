@@ -634,7 +634,7 @@ export const TasskAnswerRelations = relations(TasskQuestionAnswer, ({ one }) => 
 }));
 
 export const TasskActivityRelations = relations(TasskActivity, ({ one }) => ({
-  survey: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
+  task: one(Tassk, { fields: [TasskActivity.taskId], references: [Tassk.id] }),
   user: one(User, { fields: [TasskActivity.userId], references: [User.id] }),
 }));
 // Tassk

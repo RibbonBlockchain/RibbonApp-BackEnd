@@ -1,25 +1,26 @@
+import { DATABASE } from '@/core/constants';
+import { createSlug, getRewardValue } from '@/core/utils';
+import { generateCode } from '@/core/utils/code';
+import { generatePagination, getPage } from '@/core/utils/page';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import excelToJson from 'convert-excel-to-json';
+import { and, asc, desc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
+import fs from 'fs';
+import { TDbProvider } from '../drizzle/drizzle.module';
 import {
-  Tassk,
   TUser,
-  TasskRating,
+  Tassk,
   TasskActivity,
   TasskCategory,
   TasskQuestion,
   TasskQuestionOptions,
+  TasskRating,
   Wallet,
   TasskQuestionAnswer,
 } from '../drizzle/schema';
-import fs from 'fs';
 import * as Dto from './dto';
 import { and, asc, desc, eq, ilike, inArray, notInArray, or, sql } from 'drizzle-orm';
 import { RESPONSE } from '@/core/responses';
-import { DATABASE } from '@/core/constants';
-import { generatePagination, getPage } from '@/core/utils/page';
-import excelToJson from 'convert-excel-to-json';
-import { generateCode } from '@/core/utils/code';
-import { TDbProvider } from '../drizzle/drizzle.module';
-import { createSlug, getRewardValue } from '@/core/utils';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TasskService {
@@ -131,7 +132,7 @@ export class TasskService {
 
   async HttpHandleRateTassk(body: Dto.RateTasskBody, user: TUser) {
     const activity = await this.provider.db.query.TasskActivity.findFirst({
-      with: { survey: { columns: { id: true } } },
+      with: { task: { columns: { id: true } } },
       where: and(
         eq(TasskActivity.userId, user.id),
         eq(TasskActivity.status, 'COMPLETED'),
@@ -139,7 +140,7 @@ export class TasskService {
       ),
     });
 
-    if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_QUESTIONNAIRE_TO_CONTINUE);
+    if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_TASK_TO_CONTINUE);
 
     const rating = Math.max(0, Math.min(body.rating, 5));
 

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsPhoneNumber, Length } from 'class-validator';
+import { IsInt, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsPhoneNumber, Length } from 'class-validator';
 
 export class TaskQuestionResponseDto {
   @IsNotEmpty()
@@ -38,4 +38,14 @@ export class UpdateSesData {
   @IsNotEmpty()
   @IsNumber()
   point: number;
+}
+
+export class RateTaskBody {
+  @IsInt()
+  @IsNotEmpty()
+  rating: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  taskId: number;
 }
