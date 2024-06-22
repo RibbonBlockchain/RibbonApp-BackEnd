@@ -744,7 +744,7 @@ export class AdminService {
     // TODO: connect partners to admin account
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-4'),
+      where: eq(RewardPartner.name, 'Worldcoin'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
@@ -766,7 +766,7 @@ export class AdminService {
     const { limit, offset } = getPage({ page, pageSize });
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-4'),
+      where: eq(RewardPartner.name, 'Worldcoin'),
     });
 
     const data = await this.provider.db.query.BlockTransaction.findMany({

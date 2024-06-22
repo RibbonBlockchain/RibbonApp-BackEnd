@@ -190,7 +190,7 @@ export class UserService {
     }
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-4'),
+      where: eq(RewardPartner.name, 'Worldcoin'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
@@ -211,7 +211,7 @@ export class UserService {
     if (+body.amount < minPoint) throw new BadRequestException('You cannot swap less than 10,000 points');
 
     const worldCoinPartner = await this.provider.db.query.RewardPartner.findFirst({
-      where: eq(RewardPartner.name, 'Worldcoin-4'),
+      where: eq(RewardPartner.name, 'Worldcoin'),
     });
 
     if (!worldCoinPartner?.vaultAddress) throw new BadRequestException('Reward Partner not active');
