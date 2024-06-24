@@ -1501,7 +1501,7 @@ export class AdminService {
 
   async HttpHandleWalletClaimedPoints(query: Dto.GetTotalClaimedPoints) {
     const [res, err] = await httpPost<any, any>({
-      url: 'https://api.studio.thegraph.com/query/79390/ribbon/v1',
+      url: 'https://api.studio.thegraph.com/query/79390/worldcoin-vault/v1',
       body: {
         query: `
         {
