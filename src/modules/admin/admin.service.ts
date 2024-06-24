@@ -1519,12 +1519,15 @@ export class AdminService {
 
     if (err) throw new UnprocessableEntityException(err);
 
-    await this.provider.db
-      .update(RewardPartner)
-      .set({ createdAt: res.data.pointsClaimeds })
-      .where(eq(RewardPartner.token, 'WLD'));
+    let sum = 0;
+    res?.data?.pointsClaimeds.forEach((obj) => {
+      let amount = parseFloat(obj.amount);
+      sum += amount;
+    });
 
-    return { data: res.data.pointsClaimeds };
+    await this.provider.db.update(RewardPartner).set({ claimedPoints: sum }).where(eq(RewardPartner.token, 'WLD'));
+
+    return { data: { points: sum } };
   }
 
   async HttpHandleWalletBalance(query: Dto.GetWalletBalance, reqUser: TUser) {
