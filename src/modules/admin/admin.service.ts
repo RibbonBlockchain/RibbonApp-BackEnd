@@ -690,7 +690,7 @@ export class AdminService {
     const balance = await this.contract.getVaultBalance(partner.vaultAddress);
 
     partner.balance = balance;
-    await this.provider.db.update(RewardPartner).set({ volume: balance, value: balance });
+    await this.provider.db.update(RewardPartner).set({ volume: balance }).where(eq(RewardPartner.id, id));
     return partner;
   }
 
