@@ -15,6 +15,7 @@ export const RESPONSE = {
   SERVER_ERROR: 'A error occurred while processing your request',
 
   INVALID_TASK: 'Invalid task',
+  INVALID_SURVEY: 'Invalid survey',
   COMPLETE_QUESTIONNAIRE_TO_CONTINUE: 'You need to complete the questionnaire to continue',
   COMPLETE_TASK_TO_CONTINUE: 'You need to complete the task to continue',
   COMPLETE_SURVEY_TO_CONTINUE: 'You need to complete the survey to continue',

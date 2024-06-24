@@ -141,12 +141,23 @@ export class SurveyService {
 
     if (!activity?.id) throw new BadRequestException(RESPONSE.COMPLETE_SURVEY_TO_CONTINUE);
 
+    const survey = await this.provider.db.query.Survey.findFirst({
+      where: eq(Survey.id, activity.surveyId),
+    });
+
+    if (!survey) throw new BadRequestException(RESPONSE.INVALID_SURVEY);
+
     const rating = Math.max(0, Math.min(body.rating, 5));
 
     await this.provider.db
       .insert(SurveyRating)
       .values({ surveyId: activity.surveyId, userId: user.id, rating })
       .onConflictDoNothing();
+
+    const totalRatings = (survey.totalRatings || 0) + 1;
+    const ratings = ((survey.ratings || 0) + body.rating) / totalRatings;
+    console.log(body.rating, totalRatings, ratings);
+    await this.provider.db.update(Survey).set({ ratings, totalRatings }).where(eq(Survey.id, survey.id));
 
     return {};
   }

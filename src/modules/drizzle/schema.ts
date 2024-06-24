@@ -155,6 +155,8 @@ export const Survey = ribbonSchema.table('survey', {
   image: varchar('image'),
   name: varchar('name'),
   slug: varchar('slug'),
+  ratings: doublePrecision('ratings').default(0),
+  totalRatings: integer('total_ratings').default(0),
   description: varchar('description'),
   reward: doublePrecision('reward').default(0.1),
   categoryId: integer('category_id')
