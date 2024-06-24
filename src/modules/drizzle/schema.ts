@@ -475,6 +475,7 @@ export const RewardPartner = ribbonSchema.table('reward_partner', {
   vaultAddress: text('vault_address'),
   value: doublePrecision('value').default(0),
   volume: doublePrecision('volume').default(0),
+  claimedPoints: doublePrecision('claimed_points').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

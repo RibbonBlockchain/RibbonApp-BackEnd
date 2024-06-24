@@ -686,7 +686,11 @@ export class AdminService {
       with: {},
       where: eq(RewardPartner.id, id),
     });
-    partner.balance = await this.contract.getVaultBalance(partner.vaultAddress);
+
+    const balance = await this.contract.getVaultBalance(partner.vaultAddress);
+
+    partner.balance = balance;
+    await this.provider.db.update(RewardPartner).set({ volume: balance, value: balance });
     return partner;
   }
 
@@ -1501,6 +1505,7 @@ export class AdminService {
 
   async HttpHandleWalletClaimedPoints(query: Dto.GetTotalClaimedPoints) {
     const [res, err] = await httpPost<any, any>({
+      // TODO make this dynamic
       url: 'https://api.studio.thegraph.com/query/79390/worldcoin-vault/v1',
       body: {
         query: `
@@ -1513,6 +1518,12 @@ export class AdminService {
     });
 
     if (err) throw new UnprocessableEntityException(err);
+
+    await this.provider.db
+      .update(RewardPartner)
+      .set({ createdAt: res.data.pointsClaimeds })
+      .where(eq(RewardPartner.token, 'WLD'));
+
     return { data: res.data.pointsClaimeds };
   }
 

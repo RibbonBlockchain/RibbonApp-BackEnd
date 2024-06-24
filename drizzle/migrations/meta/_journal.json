@@ -358,6 +358,13 @@
       "when": 1719215000616,
       "tag": "0051_conscious_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "5",
+      "when": 1719226701128,
+      "tag": "0052_productive_prowler",
+      "breakpoints": true
     }
   ]
 }
