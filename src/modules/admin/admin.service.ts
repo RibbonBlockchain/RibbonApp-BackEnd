@@ -683,14 +683,11 @@ export class AdminService {
 
   async HttpHandleGetRewardPartnerById(id: number) {
     const partner: any = await this.provider.db.query.RewardPartner.findFirst({
-      with: {},
       where: eq(RewardPartner.id, id),
     });
 
-    const balance = await this.contract.getVaultBalance(partner.vaultAddress);
-
-    partner.balance = balance;
-    await this.provider.db.update(RewardPartner).set({ volume: balance }).where(eq(RewardPartner.id, id));
+    partner.balance = partner?.vaultAddress ? await this.contract.getVaultBalance(partner.vaultAddress) : 0;
+    await this.provider.db.update(RewardPartner).set({ volume: partner.balance }).where(eq(RewardPartner.id, id));
     return partner;
   }
 
