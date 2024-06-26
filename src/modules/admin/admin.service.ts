@@ -1507,7 +1507,7 @@ export class AdminService {
       body: {
         query: `
         {
-          pointsClaimeds (where: { and: [{timestamp_gte: "${query.from}" }, { timestamp_lte: "${query.to}" }] })
+          pointsClaimeds (where: { and: [{timestamp_gte: "${parseInt(String(query.from / 1000))}" }, { timestamp_lte: "${parseInt(String(query.to / 1000))}" }] })
           { id user timestamp amount blockNumber blockTimestamp transactionHash }
         }
     `,
