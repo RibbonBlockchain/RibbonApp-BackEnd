@@ -1524,7 +1524,14 @@ export class AdminService {
 
     await this.provider.db.update(RewardPartner).set({ claimedPoints: sum }).where(eq(RewardPartner.token, 'WLD'));
 
-    return { data: { points: sum } };
+    const rewardPartners = await this.provider.db.query.RewardPartner.findMany({});
+
+    const points = rewardPartners.map((partner) => {
+      if (partner.token === 'WLD') return { name: partner.name, sum };
+      return { name: partner.name, sum: 0 };
+    });
+
+    return { points };
   }
 
   async HttpHandleWalletBalance(query: Dto.GetWalletBalance, reqUser: TUser) {
