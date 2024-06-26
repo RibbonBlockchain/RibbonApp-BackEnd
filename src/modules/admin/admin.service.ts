@@ -1526,12 +1526,17 @@ export class AdminService {
 
     const rewardPartners = await this.provider.db.query.RewardPartner.findMany({});
 
-    const points = rewardPartners.map((partner) => {
-      if (partner.token === 'WLD') return { name: partner.name, sum };
-      return { name: partner.name, sum: 0 };
+    const points: any = {};
+
+    rewardPartners.forEach((partner: any) => {
+      if (partner.token === 'WLD') {
+        points[partner.token] = sum;
+      } else {
+        points[partner.token] = 0;
+      }
     });
 
-    return { points };
+    return { data: points };
   }
 
   async HttpHandleWalletBalance(query: Dto.GetWalletBalance, reqUser: TUser) {
