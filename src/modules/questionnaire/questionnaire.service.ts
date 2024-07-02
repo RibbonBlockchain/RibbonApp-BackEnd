@@ -392,9 +392,9 @@ export class QuestionnaireService {
               await this.provider.db.insert(QuestionOptions).values({ questionId: res.id, text: option });
             });
           }
-        }
 
-        index++;
+          index++;
+        }
       }),
     );
 
