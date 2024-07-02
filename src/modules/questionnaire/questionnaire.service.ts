@@ -344,6 +344,7 @@ export class QuestionnaireService {
 
     await Promise.all(
       Object.keys(sheets).map(async (category) => {
+        let index = 0;
         let questionnaireId = 0;
         const questions = sheets[category];
 
@@ -379,7 +380,8 @@ export class QuestionnaireService {
             questionnaireId = res?.id;
           } else {
             const isFirst = question.id === 1;
-            const isLast = question.id === questions?.length - 1;
+            const nextQuestion = questions?.[index + 1];
+            const isLast = !nextQuestion || nextQuestion?.id === 'id' ? true : false;
 
             const [res] = await this.provider.db
               .insert(Question)
@@ -391,6 +393,8 @@ export class QuestionnaireService {
             });
           }
         }
+
+        index++;
       }),
     );
 
