@@ -1,9 +1,8 @@
 import { Pool } from 'pg';
 import * as env from 'dotenv';
-import * as Argon2 from 'argon2';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { createSlug, isProduction } from '../src/core/utils';
-import { Auth, QuestionnaireCategory, Questionnaire, User } from '../src/modules/drizzle/schema';
+import { Questionnaire } from '../src/modules/drizzle/schema';
 
 env.config();
 
@@ -11,77 +10,23 @@ if (!('DATABASE_URL' in process.env)) {
   throw new Error('DATABASE_URL not found on .env');
 }
 
-const admins = [
-  {
-    pin: '0000',
-    lastName: 'Admin',
-    firstName: 'Super',
-    phone: '+2349026503960',
-    password: 'Password123?',
-    status: 'ACTIVE' as const,
-    role: 'SUPER_ADMIN' as const,
-    email: 'superadmin@ribbon.com',
-  },
-  {
-    pin: '0000',
-    lastName: 'Admin',
-    firstName: 'Super',
-    phone: '+2349026503961',
-    password: 'Password123?',
-    status: 'ACTIVE' as const,
-    role: 'SUPER_ADMIN' as const,
-    email: 'sadmin@ribbon.com',
-  },
-  {
-    pin: '0000',
-    lastName: 'Admin',
-    firstName: 'Super',
-    phone: '+2349026503962',
-    password: 'Password123?',
-    status: 'ACTIVE' as const,
-    role: 'SUPER_ADMIN' as const,
-    email: 's2admin@ribbon.com',
-  },
-  {
-    pin: '0000',
-    lastName: 'Admin',
-    firstName: 'Super',
-    phone: '+2349026503963',
-    password: 'Password123?',
-    status: 'ACTIVE' as const,
-    role: 'SUPER_ADMIN' as const,
-    email: 's3admin@ribbon.com',
-  },
-];
-
 const tasks = [
   {
     point: 15,
-    reward: 3,
+    reward: 0.1,
     duration: 60,
     categoryId: 1,
     title: 'Verify your phone number',
     description: 'Verify your phone number',
   },
   {
-    reward: 5,
     point: 15,
+    reward: 0.1,
     duration: 60,
     categoryId: 1,
     title: 'Complete your profile',
     description: 'Complete your profile',
   },
-];
-
-const questionnaireCategories = [
-  { name: 'APP' },
-  { name: 'Health' },
-  { name: 'Home' },
-  { name: 'Environment' },
-  { name: 'Migration' },
-  { name: 'Relationship' },
-  { name: 'Education' },
-  { name: 'Employment' },
 ];
 
 const main = async () => {
@@ -107,36 +52,6 @@ const main = async () => {
           description: task.description,
         })
         .onConflictDoNothing();
-    });
-
-    questionnaireCategories.forEach(async (cat) => {
-      await tx
-        .insert(QuestionnaireCategory)
-        .values({ name: cat.name, slug: createSlug(cat.name) })
-        .onConflictDoNothing();
-    });
-
-    admins.forEach(async (admin) => {
-      const [user] = await tx
-        .insert(User)
-        .values({
-          role: admin.role,
-          phone: admin.phone,
-          email: admin.email,
-          status: admin.status,
-          lastName: admin.lastName,
-          firstName: admin.firstName,
-        })
-        .onConflictDoNothing()
-        .returning();
-
-      if (user?.id) {
-        await tx.insert(Auth).values({
-          userId: user.id,
-          password: await Argon2.hash(admin.password, { secret: Buffer.from(process.env.PASSWORD_HASHING_SECRET) }),
-          pin: await Argon2.hash(admin.pin, { secret: Buffer.from(process.env.PASSWORD_HASHING_SECRET) }),
-        });
-      }
     });
   });
 };
