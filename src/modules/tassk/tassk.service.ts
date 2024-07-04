@@ -384,11 +384,10 @@ export class TasskService {
       completedTasksId.push(task.taskId);
     });
 
-    console.log(completedTasksId);
-
     const completedFilter = completedTasksId?.length ? notInArray(Tassk.id, completedTasksId) : undefined;
 
     const data = await this.provider.db.query.Tassk.findMany({
+      limit: 5,
       orderBy: desc(Tassk.updatedAt),
       with: { questions: { with: { options: true } } },
       where: and(eq(Tassk.status, 'ACTIVE'), completedFilter),
