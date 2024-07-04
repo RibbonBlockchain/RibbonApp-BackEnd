@@ -260,6 +260,7 @@ export class TaskService {
     const completedFilter = completedTasksId?.length ? notInArray(Questionnaire.id, completedTasksId) : undefined;
 
     const data = await this.provider.db.query.Questionnaire.findMany({
+      limit: 5,
       orderBy: desc(Questionnaire.updatedAt),
       with: { questions: { with: { options: true } } },
       where: and(eq(Questionnaire.status, 'ACTIVE'), completedFilter),

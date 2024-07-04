@@ -491,6 +491,7 @@ export class SurveyService {
     const completedFilter = completedSurveysId?.length ? notInArray(Survey.id, completedSurveysId) : undefined;
 
     const data = await this.provider.db.query.Survey.findMany({
+      limit: 5,
       orderBy: desc(Survey.updatedAt),
       with: { questions: { with: { options: true } } },
       where: and(eq(Survey.status, 'ACTIVE'), completedFilter),
