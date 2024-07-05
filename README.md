@@ -74,7 +74,7 @@ $ pnpm run start:dev
 $ pnpm run start:prod
 ```
 
-Open [http://localhost:3000](http://localhost:5000) to access the API.
+Open [http://localhost:5000](http://localhost:5000) to access the API.
 
 For next steps, take a look at documentation for the individual package(s) you want to run and/or develop. Each package can be run from the root directory using pnpm or npm.
 
@@ -84,7 +84,7 @@ See `.env.example` file to see the configurations used in this project.
 
 Environment Variables
 
-PORT: Port number the server should listen on (Default is 3000).
+PORT: Port number the server should listen on (Default is 5000).
 
 Database
 
@@ -93,6 +93,16 @@ A postgress database URL was used to connect to to the server
 ## Deployment
 
 The app is deployed using [heroku](https://heroku.com/)
+
+## Documentation
+
+To simplify the process of exploring and testing our API, we have created a Postman collection that includes all the endpoints, complete with descriptions, request parameters, and example responses.
+You can access the Postman documentation by following this [link](https://www.postman.com/lively-capsule-996856/workspace/ribbon-protocol/collection/11645039-17beb076-c0cf-4af7-b98b-e940738f1747?action=share&creator=11645039).
+
+-  Detailed Endpoints: Each endpoint is documented with detailed descriptions, parameters, and expected responses.
+-  Example Requests: Pre-configured example requests to help you quickly understand how to use each endpoint.
+-  Environment Setup: Easily configurable environment variables to manage authentication and other settings.
+
 
 ## Contributing
 
