@@ -97,7 +97,7 @@ The app is deployed using [heroku](https://heroku.com/)
 ## Documentation
 
 To simplify the process of exploring and testing our API, we have created a Postman collection that includes all the endpoints, complete with descriptions, request parameters, and example responses.
-You can access the Postman documentation by following this [link](https://www.postman.com/lively-capsule-996856/workspace/ribbon-protocol/collection/11645039-17beb076-c0cf-4af7-b98b-e940738f1747?action=share&creator=11645039).
+You can access the Postman documentation by following this [link](https://www.postman.com/arpeiks/workspace/ribbonprotocol-worldcoin/collection/11645039-03c8199f-d4d0-46fb-ae46-e9759eef3415?action=share&creator=11645039).
 
 -  Detailed Endpoints: Each endpoint is documented with detailed descriptions, parameters, and expected responses.
 -  Example Requests: Pre-configured example requests to help you quickly understand how to use each endpoint.
