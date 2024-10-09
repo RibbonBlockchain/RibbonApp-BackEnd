@@ -4,11 +4,11 @@ Front End CI production:
 
 Front End CI staging:
 
-Home page: [ribbon-app.vercel.app](https://ribbon-app.vercel.app)
+Home page: [ribbon-app-ten.vercel.app](https://ribbon-app-ten.vercel.app)
 
-Staging: [ribbon-app.vercel.app/](https://ribbon-app.vercel.app)
+Staging: [ribbon-app-ten.vercel.app](https://ribbon-app-ten.vercel.app)
 
-Production: [ribbon-app.vercel.app/](https://ribbon-app.vercel.app)
+Production: [ribbon-app-ten.vercel.app](https://ribbon-app-ten.vercel.app)
 
 ## [RibbonProtocol <a href="https://ibb.co/pfpWc5b"><img src="https://i.ibb.co/8rVzqtN/ribbon-app-logo-copy.png" alt="ribbon-app-logo-copy" border="0"></a>](https://ribbon-app.vercel.app)
 
@@ -38,7 +38,7 @@ This RibbonProtocol App contains JavaScript tools and applications that enables 
 | Name                                                                                           | Description                                                                                                                    |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | [`@ribbonprotocol/api`](https://github.com/RibbonBlockchain/RibbonApp-BackEnd)                 | Backend API built with Typescript and NestJS restful API that handles data capture for users and all system wide interactions. |
-| [`@ribbonprotoccol/frontend`](https://github.com/RibbonBlockchain/RibbonApp)                   | Frontend NextJS application that users interact with. [Link](https://ribbon-app.vercel.app)                                    |
+| [`@ribbonprotoccol/frontend`](https://github.com/RibbonBlockchain/RibbonApp)                   | Frontend NextJS application that users interact with. [Link](https://ribbon-app-ten.vercel.app)                                    |
 | [`@ribbonprotoccol/admin-panel`](https://github.com/RibbonBlockchain/RibbonAdminPanelFrontEnd) | Frontend NextJS application for admin management.                                                                              |
 
 Each section has it's own repository and has it's own readme within the package that explains how to set it up and get running with that specific component.
@@ -74,7 +74,7 @@ $ pnpm run start:dev
 $ pnpm run start:prod
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to access the API.
+Open [http://localhost:5000](http://localhost:5000) to access the API.
 
 For next steps, take a look at documentation for the individual package(s) you want to run and/or develop. Each package can be run from the root directory using pnpm or npm.
 
@@ -84,7 +84,7 @@ See `.env.example` file to see the configurations used in this project.
 
 Environment Variables
 
-PORT: Port number the server should listen on (Default is 3000).
+PORT: Port number the server should listen on (Default is 5000).
 
 Database
 
@@ -92,7 +92,17 @@ A postgress database URL was used to connect to to the server
 
 ## Deployment
 
-The app is deployed using [render](https://render.com/)
+The app is deployed using [heroku](https://heroku.com/)
+
+## Documentation
+
+To simplify the process of exploring and testing our API, we have created a Postman collection that includes all the endpoints, complete with descriptions, request parameters, and example responses.
+You can access the Postman documentation by following this [link](https://www.postman.com/arpeiks/workspace/ribbonprotocol-worldcoin/collection/11645039-03c8199f-d4d0-46fb-ae46-e9759eef3415?action=share&creator=11645039).
+
+-  Detailed Endpoints: Each endpoint is documented with detailed descriptions, parameters, and expected responses.
+-  Example Requests: Pre-configured example requests to help you quickly understand how to use each endpoint.
+-  Environment Setup: Easily configurable environment variables to manage authentication and other settings.
+
 
 ## Contributing
 
@@ -113,5 +123,5 @@ We happily await your pull requests and/or involvement in our [issues page](http
 
 To get a full idea of what RibbonProtocol is about, be sure to take a look at these other resources
 
-1. [Website](https://ribbon-app.vercel.app)
+1. [Website](https://ribbon-app-ten.vercel.app)
 2. [Twitter]()
