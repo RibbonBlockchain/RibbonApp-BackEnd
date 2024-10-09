@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumberString, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsNumberString, IsString } from 'class-validator';
 
 export class CreateVaultBody {
   @IsString()
@@ -30,4 +30,14 @@ export class WithdrawPointBody {
   @IsNotEmpty()
   @IsNumberString()
   amount: string;
+}
+
+export class BaseClaimBody {
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+
+  @IsString()
+  @IsNotEmpty()
+  address: string;
 }

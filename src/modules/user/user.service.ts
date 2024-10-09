@@ -9,23 +9,33 @@ import {
   RewardPartner,
 } from '../drizzle/schema';
 import * as Dto from './dto';
+import { ethers } from 'ethers';
 import { and, eq } from 'drizzle-orm';
 import { DATABASE } from '@/core/constants';
 import { RESPONSE } from '@/core/responses';
 import { quickOTP } from '@/core/utils/code';
 import { hasTimeExpired } from '@/core/utils';
+import { ConfigService } from '@nestjs/config';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
 import { ContractService } from '../contract/contract.service';
-import { ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BaseClaimBody, ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 
 const minPoint = 10_000;
 const factor = 1000_000_000_000_000_000;
 
 @Injectable()
 export class UserService {
+  private readonly rpc = this.config.getOrThrow('CONTRACT_RPC_V2');
+  private readonly vaultOwner = this.config.getOrThrow('VAULT_OWNER');
+  private readonly tokenAddress = this.config.getOrThrow('BASE_TOKEN_ADDRESS');
+  private readonly jsonProvider = new ethers.providers.JsonRpcProvider(this.rpc);
+  private readonly contractPrivateKey = this.config.getOrThrow('CONTRACT_PRIVATE_KEY');
+  private readonly wallet = new ethers.Wallet(this.contractPrivateKey, this.jsonProvider);
+
   constructor(
+    private readonly config: ConfigService,
     private readonly twilio: TwilioService,
     private readonly contract: ContractService,
     @Inject(DATABASE) private readonly provider: TDbProvider,
@@ -240,5 +250,41 @@ export class UserService {
       .where(eq(Wallet.id, wallet.id));
 
     return {};
+  }
+
+  async baseClaim(body: BaseClaimBody) {
+    // Define the EIP-712 domain
+    const domain = {
+      name: 'Ribbon',
+      version: '1',
+      chainId: 84532, // Mainnet
+      verifyingContract: this.tokenAddress,
+    };
+
+    const types = {
+      Permit: [
+        { name: 'owner', type: 'address' },
+        { name: 'spender', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+      ],
+    };
+
+    // Define the permit message
+    const spender = body.address;
+    const owner = this.vaultOwner;
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
+    const value = ethers.utils.parseUnits(String(body.amount), 18);
+
+    const message = {
+      owner: owner,
+      value: value,
+      spender: spender,
+      deadline: deadline,
+    };
+
+    const signature = await this.wallet._signTypedData(domain, types, message);
+    const { v, r, s } = ethers.utils.splitSignature(signature);
+    return { v, r, s, deadline, vaultAddress: this.tokenAddress };
   }
 }

@@ -4,7 +4,7 @@ import { RESPONSE } from '@/core/responses';
 import { UserService } from './user.service';
 import { VERSION_ONE } from '@/core/constants';
 import { ReqUser } from '../auth/decorators/user.decorator';
-import { ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
+import { BaseClaimBody, ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
 import { Body, Controller, Get, Patch, Post, Version } from '@nestjs/common';
 
@@ -72,6 +72,14 @@ export class UserController {
   @Get('/notification')
   async HttpHandleGetUserNotifications(@ReqUser() user: TUser) {
     const data = await this.userService.HttpHandleGetUserNotifications(user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @AuthGuard()
+  @Post('/base-claim')
+  @Version(VERSION_ONE)
+  async baseClaim(@Body() body: BaseClaimBody) {
+    const data = await this.userService.baseClaim(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 }
