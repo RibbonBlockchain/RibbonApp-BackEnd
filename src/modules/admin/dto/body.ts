@@ -1,5 +1,18 @@
+import {
+  IsInt,
+  IsEmail,
+  IsArray,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsNotEmpty,
+  ArrayMinSize,
+  IsNumberString,
+  ValidateNested,
+} from 'class-validator';
+
+import { Type } from 'class-transformer';
 import { HasLowerCase, HasNumber, HasSpecialCharacter, HasUpperCase } from '@/core/validators';
-import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, IsNumberString, IsNumber } from 'class-validator';
 
 export class AdminLoginBody {
   @IsString()
@@ -121,4 +134,25 @@ export class GetWalletBalance {
   @IsNumber()
   @IsOptional()
   partnerId: number;
+}
+
+export class TransferBody {
+  @IsString()
+  @IsNotEmpty()
+  address: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+
+  err: string;
+  status: string;
+}
+
+export class MassTransferBody {
+  @IsArray()
+  @ArrayMinSize(1)
+  @Type(() => TransferBody)
+  @ValidateNested({ each: true })
+  data: TransferBody[];
 }

@@ -134,6 +134,26 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
+  @Post('/reward-partner/:id/wallet')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleCreateRewardPartnerWallet(@Param('id') id: number) {
+    const data = await this.admin.HttpHandleCreateRewardPartnerWallet(id);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Post('/reward-partner/:id/payout')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleRewardPartnerMassPayout(
+    @ReqUser() user: TUser,
+    @Param('id') id: number,
+    @Body() body: Dto.MassTransferBody,
+  ) {
+    const data = await this.admin.HttpHandlRewardPartnerMassPayout(id, body, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/reward-partner/:id')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetRewardPartnerById(@Param('id') id: number) {

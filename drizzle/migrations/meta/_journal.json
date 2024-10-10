@@ -365,6 +365,13 @@
       "when": 1719226701128,
       "tag": "0052_productive_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "5",
+      "when": 1728539322555,
+      "tag": "0053_sudden_vargas",
+      "breakpoints": true
     }
   ]
 }

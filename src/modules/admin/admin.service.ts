@@ -34,17 +34,18 @@ import * as XLSX from 'xlsx';
 import fs, { promises } from 'fs';
 import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import { endOfDay, httpPost, oneYearAgo } from '@/core/utils';
+import excelToJson from 'convert-excel-to-json';
 import { MailerService } from '@nestjs-modules/mailer';
 import { TDbProvider } from '../drizzle/drizzle.module';
+import parsePhoneNumberFromString from 'libphonenumber-js';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
+import { endOfDay, httpPost, oneYearAgo } from '@/core/utils';
 import { ContractService } from '../contract/contract.service';
+import { CoinbaseService } from '../coinbase/coinbase.service';
 import { generatePagination, getPage } from '@/core/utils/page';
 import { BadRequestException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
-import excelToJson from 'convert-excel-to-json';
-import parsePhoneNumberFromString from 'libphonenumber-js';
 
 @Injectable()
 export class AdminService {
@@ -53,6 +54,7 @@ export class AdminService {
     private readonly token: TokenService,
     private readonly mailer: MailerService,
     private readonly contract: ContractService,
+    private readonly coinbase: CoinbaseService,
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
@@ -688,6 +690,15 @@ export class AdminService {
 
     partner.balance = partner?.vaultAddress ? await this.contract.getVaultBalance(partner.vaultAddress) : 0;
     await this.provider.db.update(RewardPartner).set({ volume: partner.balance }).where(eq(RewardPartner.id, id));
+
+    if (!!partner.privateKey && !!partner.address && partner.provider === 'COINBASE') {
+      const [balance, err] = await this.coinbase.getBalance(partner.privateKey);
+
+      partner.walletBalance = 0;
+      if (balance) partner.walletBalance = balance;
+      if (err) console.error(err);
+    }
+
     return partner;
   }
 
@@ -1547,5 +1558,52 @@ export class AdminService {
     if (!partner?.vaultAddress) throw new BadRequestException('Vault not available for reward partner');
     const balance = await this.contract.getVaultBalance(partner.vaultAddress);
     return { balance };
+  }
+
+  async HttpHandleCreateRewardPartnerWallet(id: number) {
+    const partner = await this.provider.db.query.RewardPartner.findFirst({ where: eq(RewardPartner.id, id) });
+    if (!partner) throw new BadRequestException();
+
+    if (partner.address) return { address: partner.address };
+
+    const [coinbaseWallet] = await this.coinbase.createWallet();
+    const address = await coinbaseWallet?.address;
+
+    if (!coinbaseWallet || !address) throw new BadRequestException('Unable to create wallet');
+
+    await this.provider.db.update(RewardPartner).set({
+      provider: 'COINBASE',
+      updatedAt: new Date(),
+      address: address.getId(),
+      privateKey: btoa(JSON.stringify(coinbaseWallet.privateKey)),
+    });
+
+    return { address: address.getId() };
+  }
+
+  async HttpHandlRewardPartnerMassPayout(id: number, reqBody: Dto.MassTransferBody, user: TUser) {
+    const data = [...reqBody.data];
+
+    const partner = await this.provider.db.query.RewardPartner.findFirst({ where: eq(RewardPartner.id, id) });
+
+    if (!partner) throw new BadRequestException();
+    if (user.partnerId !== partner.id) throw new BadRequestException();
+    if (!partner?.privateKey) throw new BadRequestException(RESPONSE.NO_WALLET_ADDRESS);
+
+    for await (let addr of reqBody.data) {
+      const [res, err] = await this.coinbase.transfer({
+        amount: addr.amount,
+        address: addr.address,
+        privateKey: partner.privateKey,
+      });
+
+      const idx = data.findIndex((x) => x.address === addr.address);
+      if (idx < 0) continue;
+
+      data[idx].err = (err as any)?.message as any;
+      data[idx].status = !!res?.hash && !err ? 'complete' : 'failed';
+    }
+
+    return { data };
   }
 }
