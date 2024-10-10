@@ -84,7 +84,7 @@ export class UserController {
   }
 
   @Version(VERSION_ONE)
-  @Get('/transactions')
+  @Post('/transactions')
   async getTransactions(@Body() body: GetTransactionsBody) {
     const data = await this.userService.getTransactions(body);
     return { data, message: RESPONSE.SUCCESS };
