@@ -82,6 +82,9 @@ export class CoinbaseService {
   async transactions(privateKey: string) {
     return await go(async () => {
       const data = JSON.parse(atob(privateKey));
+
+      console.log(data);
+
       const wallet = await Wallet.import(data);
       const address = await wallet?.getDefaultAddress();
 
