@@ -30,6 +30,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@alch/alchemy-web3": "^1.4.7",
     "@coinbase/coinbase-sdk": "^0.8.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.3.7",

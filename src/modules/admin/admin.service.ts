@@ -1581,6 +1581,18 @@ export class AdminService {
     return { address: address.getId() };
   }
 
+  async HttpHandleGetRewardPartnerWallet(id: number, user: TUser) {
+    const partner = await this.provider.db.query.RewardPartner.findFirst({ where: eq(RewardPartner.id, id) });
+    if (!partner) throw new BadRequestException();
+    if (user.partnerId !== partner.id) throw new BadRequestException();
+    if (!partner?.privateKey) throw new BadRequestException(RESPONSE.NO_WALLET_ADDRESS);
+
+    const [res, err] = await this.coinbase.transactions(partner.privateKey);
+    if (err) throw new BadRequestException(err);
+
+    return res;
+  }
+
   async HttpHandlRewardPartnerMassPayout(id: number, reqBody: Dto.MassTransferBody, user: TUser) {
     const data = [...reqBody.data];
 

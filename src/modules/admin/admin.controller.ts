@@ -154,6 +154,14 @@ export class AdminController {
   }
 
   @Version(VERSION_ONE)
+  @Get('/reward-partner/:id/wallet')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async HttpHandleGetRewardPartnerWallet(@Param('id') id: number, @ReqUser() user: TUser) {
+    const data = await this.admin.HttpHandleGetRewardPartnerWallet(id, user);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
   @Get('/reward-partner/:id')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
   async HttpHandleGetRewardPartnerById(@Param('id') id: number) {
