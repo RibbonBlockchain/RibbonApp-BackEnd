@@ -18,9 +18,10 @@ import { hasTimeExpired } from '@/core/utils';
 import { ConfigService } from '@nestjs/config';
 import { TDbProvider } from '../drizzle/drizzle.module';
 import { TwilioService } from '../twiio/twilio.service';
+import { CoinbaseService } from '../coinbase/coinbase.service';
 import { ContractService } from '../contract/contract.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { BaseClaimBody, ClaimPointBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
+import { BaseClaimBody, ClaimPointBody, GetTransactionsBody, SwapPointBody, WithdrawPointBody } from '../contract/dto';
 
 const minPoint = 10_000;
 const factor = 1000_000_000_000_000_000;
@@ -38,6 +39,7 @@ export class UserService {
     private readonly config: ConfigService,
     private readonly twilio: TwilioService,
     private readonly contract: ContractService,
+    private readonly coinbase: CoinbaseService,
     @Inject(DATABASE) private readonly provider: TDbProvider,
   ) {}
 
@@ -286,5 +288,12 @@ export class UserService {
     const signature = await this.wallet._signTypedData(domain, types, message);
     const { v, r, s } = ethers.utils.splitSignature(signature);
     return { v, r, s, deadline, vaultAddress: this.tokenAddress };
+  }
+
+  async getTransactions(body: GetTransactionsBody) {
+    const [res, err] = await this.coinbase.allTransactions(body.address);
+    if (err) throw new BadRequestException(err);
+
+    return res;
   }
 }

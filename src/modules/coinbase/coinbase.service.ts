@@ -109,4 +109,28 @@ export class CoinbaseService {
       return { in: inb, out };
     });
   }
+
+  async allTransactions(address: string) {
+    return await go(async () => {
+      const web3 = createAlchemyWeb3(this.CONTRACT_RPC);
+
+      const out = await web3.alchemy.getAssetTransfers({
+        maxCount: 10,
+        fromAddress: address,
+        // withMetadata: true,
+        order: AssetTransfersOrder.DESCENDING,
+        category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721],
+      });
+
+      const inb = await web3.alchemy.getAssetTransfers({
+        maxCount: 10,
+        fromAddress: address,
+        // withMetadata: true,
+        order: AssetTransfersOrder.DESCENDING,
+        category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20],
+      });
+
+      return { in: inb, out };
+    });
+  }
 }
