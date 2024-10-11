@@ -6,7 +6,7 @@ import { AssetTransfersCategory, AssetTransfersOrder, createAlchemyWeb3 } from '
 
 @Injectable()
 export class CoinbaseService {
-  private readonly CONTRACT_RPC = this.config.getOrThrow('CONTRACT_RPC_V2');
+  private readonly CONTRACT_RPC = this.config.getOrThrow('CONTRACT_RPC');
   private readonly CONTRACT_RPC_V2 = this.config.getOrThrow('CONTRACT_RPC_V2');
   private readonly COINBASE_API_KEY = this.config.getOrThrow('COINBASE_API_KEY');
   private readonly COINBASE_PRIVATE_KEY = this.config.getOrThrow('COINBASE_PRIVATE_KEY')?.replaceAll('\\n', '\n');
