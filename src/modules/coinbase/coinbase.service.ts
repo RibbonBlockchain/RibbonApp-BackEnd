@@ -82,6 +82,11 @@ export class CoinbaseService {
 
   async transactions(privateKey: string) {
     return await go(async () => {
+      Coinbase.configure({
+        apiKeyName: this.COINBASE_API_KEY,
+        privateKey: this.COINBASE_PRIVATE_KEY,
+      });
+
       const data = JSON.parse(atob(privateKey));
 
       const wallet = await Wallet.import(data);
@@ -111,6 +116,11 @@ export class CoinbaseService {
 
   async allBaseTransactions(address: string) {
     return await go(async () => {
+      Coinbase.configure({
+        apiKeyName: this.COINBASE_API_KEY,
+        privateKey: this.COINBASE_PRIVATE_KEY,
+      });
+
       const web3 = createAlchemyWeb3(this.CONTRACT_RPC_V2);
 
       const out = await web3.alchemy.getAssetTransfers({
@@ -135,6 +145,11 @@ export class CoinbaseService {
 
   async allOptimismTransactions(address: string) {
     return await go(async () => {
+      Coinbase.configure({
+        apiKeyName: this.COINBASE_API_KEY,
+        privateKey: this.COINBASE_PRIVATE_KEY,
+      });
+
       const web3 = createAlchemyWeb3(this.CONTRACT_RPC);
 
       const out = await web3.alchemy.getAssetTransfers({
