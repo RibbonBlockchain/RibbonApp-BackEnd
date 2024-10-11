@@ -1553,12 +1553,15 @@ export class AdminService {
 
     if (!coinbaseWallet || !address) throw new BadRequestException('Unable to create wallet');
 
-    await this.provider.db.update(RewardPartner).set({
-      provider: 'COINBASE',
-      updatedAt: new Date(),
-      address: address.getId(),
-      privateKey: btoa(JSON.stringify(coinbaseWallet.privateKey)),
-    });
+    await this.provider.db
+      .update(RewardPartner)
+      .set({
+        provider: 'COINBASE',
+        updatedAt: new Date(),
+        address: address.getId(),
+        privateKey: btoa(JSON.stringify(coinbaseWallet.privateKey)),
+      })
+      .where(eq(RewardPartner.id, partner.id));
 
     return { address: address.getId() };
   }

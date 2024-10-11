@@ -129,6 +129,8 @@ export class CoinbaseService {
         category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20],
       } as any);
 
+      console.log(inb, out);
+
       return { in: inb, out };
     });
   }
