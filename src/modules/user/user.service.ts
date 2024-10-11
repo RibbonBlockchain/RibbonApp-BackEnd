@@ -290,8 +290,15 @@ export class UserService {
     return { v, r, s, deadline, vaultAddress: this.tokenAddress };
   }
 
-  async getTransactions(body: GetTransactionsBody) {
-    const [res, err] = await this.coinbase.allTransactions(body.address);
+  async getBaseTransactions(body: GetTransactionsBody) {
+    const [res, err] = await this.coinbase.allBaseTransactions(body.address);
+    if (err) throw new BadRequestException(err);
+
+    return res;
+  }
+
+  async getOptimismTransactions(body: GetTransactionsBody) {
+    const [res, err] = await this.coinbase.allOptimismTransactions(body.address);
     if (err) throw new BadRequestException(err);
 
     return res;

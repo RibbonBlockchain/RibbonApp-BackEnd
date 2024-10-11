@@ -84,9 +84,16 @@ export class UserController {
   }
 
   @Version(VERSION_ONE)
-  @Post('/transactions')
+  @Post('/transactions/base')
   async getTransactions(@Body() body: GetTransactionsBody) {
-    const data = await this.userService.getTransactions(body);
+    const data = await this.userService.getBaseTransactions(body);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Post('/transactions/optimism')
+  async getTransactionsOptimism(@Body() body: GetTransactionsBody) {
+    const data = await this.userService.getOptimismTransactions(body);
     return { data, message: RESPONSE.SUCCESS };
   }
 }

@@ -7,6 +7,7 @@ import { AssetTransfersCategory, AssetTransfersOrder, createAlchemyWeb3 } from '
 @Injectable()
 export class CoinbaseService {
   private readonly CONTRACT_RPC = this.config.getOrThrow('CONTRACT_RPC_V2');
+  private readonly CONTRACT_RPC_V2 = this.config.getOrThrow('CONTRACT_RPC_V2');
   private readonly COINBASE_API_KEY = this.config.getOrThrow('COINBASE_API_KEY');
   private readonly COINBASE_PRIVATE_KEY = this.config.getOrThrow('COINBASE_PRIVATE_KEY')?.replaceAll('\\n', '\n');
 
@@ -110,7 +111,31 @@ export class CoinbaseService {
     });
   }
 
-  async allTransactions(address: string) {
+  async allBaseTransactions(address: string) {
+    return await go(async () => {
+      const web3 = createAlchemyWeb3(this.CONTRACT_RPC_V2);
+
+      const out = await web3.alchemy.getAssetTransfers({
+        maxCount: 10,
+        withMetadata: true,
+        fromAddress: address,
+        order: AssetTransfersOrder.DESCENDING,
+        category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721],
+      } as any);
+
+      const inb = await web3.alchemy.getAssetTransfers({
+        maxCount: 10,
+        toAddress: address,
+        withMetadata: true,
+        order: AssetTransfersOrder.DESCENDING,
+        category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20],
+      } as any);
+
+      return { in: inb, out };
+    });
+  }
+
+  async allOptimismTransactions(address: string) {
     return await go(async () => {
       const web3 = createAlchemyWeb3(this.CONTRACT_RPC);
 
