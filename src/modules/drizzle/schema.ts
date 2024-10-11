@@ -72,6 +72,24 @@ export const ActivityTypeMap = ['DAILY_REWARD', 'APP_TASK'] as const;
 export const ActivityTypeEnum = pgEnum('activity_type', ActivityTypeMap);
 export type TActivityType = (typeof ActivityTypeEnum.enumValues)[number];
 
+export const CpiCategory = [
+  'CONSUMER_PRICE_INDEX',
+  'FOOD_AND_BEVERAGES',
+  'ALCOHOL_TOBACCO_NARCOTICS',
+  'CLOTHING_AND_FOOTWEAR',
+  'HOUSING_AND_UTILITIES',
+  'FURNISHINGS_AND_MAINTENANCE',
+  'HEALTH',
+  'TRANSPORT',
+  'COMMUNICATION',
+  'RECREATION_AND_CULTURE',
+  'EDUCATION',
+  'RESTAURANTS_AND_HOTELS',
+  'MISCELLANEOUS_GOODS_AND_SERVICES',
+] as const;
+export const CpiCategoryTypeEnum = pgEnum('cpi_category', CpiCategory);
+export type TCpiCategoryType = (typeof CpiCategoryTypeEnum.enumValues)[number];
+
 export const User = ribbonSchema.table('user', {
   id: serial('id').primaryKey(),
   avatar: varchar('avatar'),
@@ -525,7 +543,30 @@ export const CpiHistory = ribbonSchema.table('cpi_upload_history', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+export const CpiCountry = ribbonSchema.table('cpi_country', {
+  id: serial('id').primaryKey(),
+  name: varchar('name'),
+});
+
+export const CpiIndex = ribbonSchema.table('cpi_index', {
+  id: serial('id').primaryKey(),
+  value: doublePrecision('value'),
+  category: CpiCategoryTypeEnum('category'),
+  year: integer('year'),
+  month: integer('month'),
+  countryId: integer('country_id')
+    .notNull()
+    .references(() => CpiCountry.id),
+});
+
 // Relations
+export const CpiCountryRelations = relations(CpiCountry, ({ many }) => ({
+  indexes: many(CpiIndex),
+}));
+
+export const CpiIndexRelations = relations(CpiIndex, ({ one }) => ({
+  country: one(CpiCountry, { fields: [CpiIndex.countryId], references: [CpiCountry.id] }),
+}));
 
 //
 export const BlockTransactionRelations = relations(BlockTransaction, ({ one }) => ({

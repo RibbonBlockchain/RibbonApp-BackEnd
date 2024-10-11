@@ -1,12 +1,11 @@
-import * as Dto from './dto';
-import { TUser } from '../drizzle/schema';
-import { RESPONSE } from '@/core/responses';
-import { AdminService } from './admin.service';
 import { VERSION_ONE } from '@/core/constants';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ReqUser } from '../auth/decorators/user.decorator';
+import { RESPONSE } from '@/core/responses';
+import { Body, Controller, Get, Param, Post, Query, Version } from '@nestjs/common';
 import { Auth as AuthGuard } from '../auth/decorators/auth.decorator';
-import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
+import { ReqUser } from '../auth/decorators/user.decorator';
+import { TUser } from '../drizzle/schema';
+import { AdminService } from './admin.service';
+import * as Dto from './dto';
 
 @Controller('/admin')
 export class AdminController {
@@ -108,20 +107,28 @@ export class AdminController {
     return { data, message: RESPONSE.SUCCESS };
   }
 
-  @Version(VERSION_ONE)
-  @Post('/cpi/upload')
-  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))
-  async uploadCpiData(@UploadedFile() file: Express.Multer.File, @ReqUser() user: TUser) {
-    const data = await this.admin.HttpHandleUploadCpi(file, user);
-    return { data, message: RESPONSE.SUCCESS };
-  }
+  // @Version(VERSION_ONE)
+  // @Post('/cpi/upload')
+  // @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  // @UseInterceptors(FileInterceptor('file', { preservePath: true, dest: 'uploads' }))
+  // async uploadCpiData(@UploadedFile() file: Express.Multer.File, @ReqUser() user: TUser) {
+  //   const data = await this.admin.HttpHandleUploadCpi(file, user);
+  //   return { data, message: RESPONSE.SUCCESS };
+  // }
 
   @Version(VERSION_ONE)
   @Get('/cpi')
   @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
-  async getCpiData(@Query() query: { year: string }) {
-    const data = await this.admin.HttpHandleGetCpiData(query.year);
+  async getCpiData(@Query() query: { year: string; country: string }) {
+    const data = await this.admin.HttpHandleGetCpiData(+query.year, query.country);
+    return { data, message: RESPONSE.SUCCESS };
+  }
+
+  @Version(VERSION_ONE)
+  @Get('/cpi/countries')
+  @AuthGuard({ roles: ['ADMIN', 'SUPER_ADMIN'] })
+  async getCpiCountryData() {
+    const data = await this.admin.HttpHandleGetCpiCountryData();
     return { data, message: RESPONSE.SUCCESS };
   }
 

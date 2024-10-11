@@ -1,51 +1,49 @@
-import {
-  Auth,
-  User,
-  TUser,
-  Tassk,
-  Answer,
-  Survey,
-  Wallet,
-  TasskRating,
-  SurveyRating,
-  Notification,
-  Questionnaire,
-  RewardPartner,
-  TasskActivity,
-  SurveyActivity,
-  QuestionnaireRating,
-  TasskQuestionAnswer,
-  SurveyQuestionAnswer,
-  QuestionnaireActivity,
-  BlockTransaction,
-  QuestionnaireCategory,
-  Cpi,
-  SurveyCategory,
-  TasskCategory,
-  Question,
-  QuestionOptions,
-  CpiHistory,
-  SurveyQuestion,
-  SurveyQuestionOptions,
-  TasskQuestion,
-} from '../drizzle/schema';
-import * as Dto from './dto';
-import * as XLSX from 'xlsx';
-import fs, { promises } from 'fs';
-import { RESPONSE } from '@/core/responses';
 import { DATABASE } from '@/core/constants';
-import excelToJson from 'convert-excel-to-json';
-import { MailerService } from '@nestjs-modules/mailer';
-import { TDbProvider } from '../drizzle/drizzle.module';
-import parsePhoneNumberFromString from 'libphonenumber-js';
+import { RESPONSE } from '@/core/responses';
 import { ArgonService } from '@/core/services/argon.service';
 import { TokenService } from '@/core/services/token.service';
 import { endOfDay, httpPost, oneYearAgo } from '@/core/utils';
-import { ContractService } from '../contract/contract.service';
-import { CoinbaseService } from '../coinbase/coinbase.service';
 import { generatePagination, getPage } from '@/core/utils/page';
+import { MailerService } from '@nestjs-modules/mailer';
 import { BadRequestException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { and, count, countDistinct, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
+import { promises } from 'fs';
+import parsePhoneNumberFromString from 'libphonenumber-js';
+import * as XLSX from 'xlsx';
+import { CoinbaseService } from '../coinbase/coinbase.service';
+import { ContractService } from '../contract/contract.service';
+import { TDbProvider } from '../drizzle/drizzle.module';
+import {
+  Answer,
+  Auth,
+  BlockTransaction,
+  CpiCountry,
+  Notification,
+  Question,
+  QuestionOptions,
+  Questionnaire,
+  QuestionnaireActivity,
+  QuestionnaireCategory,
+  QuestionnaireRating,
+  RewardPartner,
+  Survey,
+  SurveyActivity,
+  SurveyCategory,
+  SurveyQuestion,
+  SurveyQuestionAnswer,
+  SurveyQuestionOptions,
+  SurveyRating,
+  TUser,
+  Tassk,
+  TasskActivity,
+  TasskCategory,
+  TasskQuestion,
+  TasskQuestionAnswer,
+  TasskRating,
+  User,
+  Wallet,
+} from '../drizzle/schema';
+import * as Dto from './dto';
 
 @Injectable()
 export class AdminService {
@@ -1180,95 +1178,79 @@ export class AdminService {
     }
   }
 
-  async HttpHandleUploadCpi(file: Express.Multer.File, user: TUser) {
-    const sheets = excelToJson({
-      sourceFile: file.path,
-      columnToKey: { '*': '{{columnHeader}}' },
+  // async HttpHandleUploadCpi(file: Express.Multer.File, user: TUser) {
+  //   const sheets = excelToJson({
+  //     sourceFile: file.path,
+  //     columnToKey: { '*': '{{columnHeader}}' },
+  //   });
+
+  //   const months = [
+  //     'january',
+  //     'february',
+  //     'march',
+  //     'april',
+  //     'may',
+  //     'june',
+  //     'july',
+  //     'august',
+  //     'september',
+  //     'october',
+  //     'november',
+  //     'december',
+  //   ];
+
+  //   const currentYear = new Date().getFullYear();
+
+  //   const cpiData = sheets[Object.keys(sheets)[0]].slice(1).map((entry) => {
+  //     const newEntry = { year: currentYear.toString() };
+  //     for (let key in entry) {
+  //       if (entry.hasOwnProperty(key)) {
+  //         newEntry[key.toLowerCase()] = entry[key];
+  //       }
+  //     }
+
+  //     months.forEach((month) => {
+  //       if (!(month in newEntry)) {
+  //         newEntry[month] = null;
+  //       }
+  //     });
+  //     return newEntry;
+  //   });
+
+  //   await this.provider.db.insert(Cpi).values(cpiData);
+  //   await this.provider.db.insert(CpiHistory).values({ userId: user.auth.userId, fileName: file.originalname });
+
+  //   fs.rm(file.path, () => {});
+  // }
+
+  async HttpHandleGetCpiData(year: number, country: string) {
+    const countryCpi = await this.provider.db.query.CpiCountry.findFirst({
+      with: {
+        indexes: true,
+      },
+      where: eq(CpiCountry.name, country),
     });
 
-    const months = [
-      'january',
-      'february',
-      'march',
-      'april',
-      'may',
-      'june',
-      'july',
-      'august',
-      'september',
-      'october',
-      'november',
-      'december',
-    ];
-
-    const currentYear = new Date().getFullYear();
-
-    const cpiData = sheets[Object.keys(sheets)[0]].slice(1).map((entry) => {
-      const newEntry = { year: currentYear.toString() };
-      for (let key in entry) {
-        if (entry.hasOwnProperty(key)) {
-          newEntry[key.toLowerCase()] = entry[key];
-        }
-      }
-
-      months.forEach((month) => {
-        if (!(month in newEntry)) {
-          newEntry[month] = null;
-        }
-      });
-      return newEntry;
-    });
-
-    await this.provider.db.insert(Cpi).values(cpiData);
-    await this.provider.db.insert(CpiHistory).values({ userId: user.auth.userId, fileName: file.originalname });
-
-    fs.rm(file.path, () => {});
+    return countryCpi.indexes.filter((cp) => cp.year === year);
   }
 
-  async HttpHandleGetCpiData(year: string) {
-    const data = await this.provider.db.select().from(Cpi).where(eq(Cpi.year, year));
+  async HttpHandleGetCpiCountryData() {
+    const cpi = await this.provider.db.query.CpiCountry.findMany({
+      with: {
+        indexes: true,
+      },
+    });
 
-    const months = [
-      'january',
-      'february',
-      'march',
-      'april',
-      'may',
-      'june',
-      'july',
-      'august',
-      'september',
-      'october',
-      'november',
-      'december',
-    ];
-
-    const dataWithCPI = data.map((entry) => {
-      let cpiValues = [];
-      let lastCPI = null;
-
-      // Loop through each month in the correct order and gather non-null values
-      for (let month of months) {
-        let value = entry[month];
-        if (value !== null && value !== undefined) {
-          let numValue = parseFloat(value);
-          cpiValues.push(numValue);
-          lastCPI = numValue;
-        }
-      }
-
-      // Calculate average CPI
-      let averageCPI = cpiValues.length > 0 ? cpiValues.reduce((sum, val) => sum + val, 0) / cpiValues.length : null;
-
-      // Return new entry with averageCPI and currentCPI
+    const data = cpi.map((country) => {
+      const uniqueYears = [...new Set(country.indexes.map((index) => index.year))];
       return {
-        ...entry,
-        averageCPI: averageCPI !== null ? averageCPI.toFixed(2) : null,
-        currentCPI: lastCPI !== null ? lastCPI.toFixed(2) : null,
+        id: country.id,
+        name: country.name,
+        years: uniqueYears,
       };
     });
 
-    return dataWithCPI;
+    return data;
   }
 
   async HttpHandleGetCpiHistory() {
