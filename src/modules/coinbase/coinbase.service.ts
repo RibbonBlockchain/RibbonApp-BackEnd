@@ -93,19 +93,19 @@ export class CoinbaseService {
 
       const out = await web3.alchemy.getAssetTransfers({
         maxCount: 10,
-        // withMetadata: true,
+        withMetadata: true,
         fromAddress: address.getId(),
         order: AssetTransfersOrder.DESCENDING,
         category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721],
-      });
+      } as any);
 
       const inb = await web3.alchemy.getAssetTransfers({
         maxCount: 10,
-        // withMetadata: true,
+        withMetadata: true,
         toAddress: address.getId(),
         order: AssetTransfersOrder.DESCENDING,
         category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20],
-      });
+      } as any);
 
       return { in: inb, out };
     });
