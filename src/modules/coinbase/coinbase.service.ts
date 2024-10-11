@@ -84,12 +84,34 @@ export class CoinbaseService {
     return await go(async () => {
       const data = JSON.parse(atob(privateKey));
 
-      console.log(data);
-
       const wallet = await Wallet.import(data);
       const address = await wallet?.getDefaultAddress();
 
+      console.log(address);
+
       const web3 = createAlchemyWeb3(this.CONTRACT_RPC);
+
+      const webx = createAlchemyWeb3(this.CONTRACT_RPC_V2);
+
+      console.log(
+        await webx.alchemy.getAssetTransfers({
+          maxCount: 10,
+          withMetadata: true,
+          fromAddress: address.getId(),
+          order: AssetTransfersOrder.DESCENDING,
+          category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721],
+        } as any),
+      );
+
+      console.log(
+        await webx.alchemy.getAssetTransfers({
+          maxCount: 10,
+          withMetadata: true,
+          toAddress: address.getId(),
+          order: AssetTransfersOrder.DESCENDING,
+          category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.ERC20],
+        } as any),
+      );
 
       const out = await web3.alchemy.getAssetTransfers({
         maxCount: 10,
